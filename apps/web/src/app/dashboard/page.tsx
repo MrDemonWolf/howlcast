@@ -1,27 +1,23 @@
-import { headers } from "next/headers";
-import { redirect } from "next/navigation";
+// Dashboard landing — Live → Stream stub for Phase 5.1. Phase 5.2 fills
+// this in with the Go Live button + RTMPS URL + animated counters.
+// Layout/auth guards live in dashboard/layout.tsx.
 
-import { authClient } from "@/lib/auth-client";
+import HeaderStrip from "@/components/dashboard/header-strip";
 
-import Dashboard from "./dashboard";
+export const metadata = { title: "Dashboard · HowlCast" };
 
-export default async function DashboardPage() {
-	const session = await authClient.getSession({
-		fetchOptions: {
-			headers: await headers(),
-			throw: true,
-		},
-	});
-
-	if (!session?.user) {
-		redirect("/login");
-	}
-
+export default function DashboardPage() {
 	return (
-		<div>
-			<h1>Dashboard</h1>
-			<p>Welcome {session.user.name}</p>
-			<Dashboard session={session} />
-		</div>
+		<>
+			<HeaderStrip title="Stream" subtitle="Live · go on air, configure visibility" />
+
+			<section className="rounded-lg border border-border bg-card p-6">
+				<h2 className="font-display font-semibold text-foreground text-lg">Coming up next</h2>
+				<p className="mt-2 text-muted-foreground text-sm">
+					Phase 5.2 lands here: Go Live button, public/private toggle, RTMPS URL + stream key for
+					OBS, animated viewer counter. The shell + role-gated middleware are in place.
+				</p>
+			</section>
+		</>
 	);
 }
