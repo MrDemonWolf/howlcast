@@ -24,10 +24,36 @@
 			"cache": false
 		},
 		"deploy": {
-			"cache": false
+			"cache": false,
+			"env": [
+				"CI",
+				"CLOUDFLARE_API_TOKEN",
+				"CLOUDFLARE_ACCOUNT_ID",
+				"ALCHEMY_PASSWORD",
+				"ALCHEMY_STATE_TOKEN",
+				"ALCHEMY_TELEMETRY_DISABLED",
+				"BETTER_AUTH_SECRET",
+				"BETTER_AUTH_URL",
+				"CORS_ORIGIN",
+				"NEXT_PUBLIC_SERVER_URL",
+				"MAIL_FROM",
+				"RESEND_API_KEY",
+				"SMTP_URL",
+				"STREAM_API_KEY",
+				"STREAM_API_SECRET",
+				"TWITCH_CLIENT_ID",
+				"TWITCH_CLIENT_SECRET"
+			]
 		},
 		"destroy": {
-			"cache": false
+			"cache": false,
+			"env": [
+				"CI",
+				"CLOUDFLARE_API_TOKEN",
+				"CLOUDFLARE_ACCOUNT_ID",
+				"ALCHEMY_PASSWORD",
+				"ALCHEMY_STATE_TOKEN"
+			]
 		}
 	}
 }
