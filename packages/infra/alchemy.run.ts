@@ -16,21 +16,29 @@ const app = await alchemy("howlcast", {
 	stateStore: process.env.CI ? (scope) => new CloudflareStateStore(scope) : undefined,
 });
 
+// adopt: true claims an existing Cloudflare resource into Alchemy's state
+// instead of failing with a "already exists" error. Needed because the
+// state store was migrated from local files to CloudflareStateStore — the
+// new store has no record of resources that earlier local deploys made.
 const db = await D1Database("database", {
 	name: "howlcast-db",
 	migrationsDir: "../../packages/db/src/migrations",
+	adopt: true,
 });
 
 const publicBucket = await R2Bucket("public", {
 	name: "howlcast-public",
+	adopt: true,
 });
 
 const isrBucket = await R2Bucket("isr", {
 	name: "howlcast-isr",
+	adopt: true,
 });
 
 const emotesKv = await KVNamespace("emotes", {
 	title: "HOWLCAST_EMOTES",
+	adopt: true,
 });
 
 export const server = await Worker("server", {
@@ -38,6 +46,7 @@ export const server = await Worker("server", {
 	cwd: "../../apps/server",
 	entrypoint: "src/index.ts",
 	compatibility: "node",
+	adopt: true,
 	bindings: {
 		DB: db,
 		PUBLIC_BUCKET: publicBucket,
@@ -69,6 +78,7 @@ export const server = await Worker("server", {
 export const web = await Nextjs("web", {
 	name: "howlcast",
 	cwd: "../../apps/web",
+	adopt: true,
 	bindings: {
 		NEXT_PUBLIC_SERVER_URL: server.url!,
 		DB: db,
