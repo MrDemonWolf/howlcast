@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>HowlCast — Brand assets</title>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@500;600;700&family=Geist+Mono:wght@400;500&family=Geist:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: oklch(0.183 0.067 271);
+    --bg-2: oklch(0.225 0.062 269);
+    --bg-3: oklch(0.265 0.055 268);
+    --line: oklch(1 0 0 / 0.08);
+    --line-2: oklch(1 0 0 / 0.14);
+    --fg: oklch(0.97 0.01 240);
+    --fg-2: oklch(0.82 0.012 240);
+    --fg-3: oklch(0.68 0.018 250);
+    --cyan: oklch(0.78 0.135 220);
+    --display: 'Bricolage Grotesque', sans-serif;
+    --ui: 'Geist', sans-serif;
+    --mono: 'Geist Mono', monospace;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--fg);
+    font-family: var(--ui);
+    min-height: 100vh;
+    padding: 64px 24px 96px;
+    -webkit-font-smoothing: antialiased;
+  }
+  .container { max-width: 1280px; margin: 0 auto; }
+  header { margin-bottom: 56px; max-width: 720px; }
+  .eyebrow {
+    font-family: var(--mono);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--cyan);
+    margin-bottom: 12px;
+  }
+  h1 {
+    font-family: var(--display);
+    font-size: 44px;
+    font-weight: 700;
+    letter-spacing: -0.03em;
+    line-height: 1.05;
+    margin-bottom: 14px;
+  }
+  .lede { color: var(--fg-2); font-size: 16px; line-height: 1.55; }
+  .lede strong { color: var(--fg); font-weight: 600; }
+
+  .meta {
+    display: flex; gap: 24px; flex-wrap: wrap;
+    margin-top: 24px; color: var(--fg-3); font-size: 13px;
+  }
+  .meta code {
+    font-family: var(--mono);
+    font-size: 12px;
+    background: var(--bg-2);
+    border: 1px solid var(--line);
+    padding: 3px 8px;
+    border-radius: 5px;
+    color: var(--fg-2);
+  }
+
+  .section {
+    margin-bottom: 64px;
+  }
+  .section-h {
+    display: flex; align-items: baseline; gap: 12px;
+    margin-bottom: 20px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--line);
+  }
+  .section-h h2 {
+    font-family: var(--display);
+    font-size: 20px;
+    font-weight: 600;
+    letter-spacing: -0.015em;
+  }
+  .section-h .file {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--fg-3);
+    letter-spacing: 0.04em;
+  }
+
+  .grid {
+    display: grid;
+    gap: 16px;
+  }
+  .grid-3 { grid-template-columns: repeat(3, 1fr); }
+  .grid-4 { grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
+  @media (max-width: 760px) {
+    .grid-3 { grid-template-columns: 1fr 1fr; }
+  }
+
+  .card {
+    background: var(--bg-2);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 32px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 200px;
+    gap: 18px;
+  }
+  .card.light { background: #f5f7fa; }
+  .card.cyan { background: var(--cyan); }
+  .card.photo {
+    background:
+      linear-gradient(135deg, rgba(0,0,0,0.4), rgba(0,0,0,0.6)),
+      radial-gradient(120% 80% at 70% 30%, oklch(0.42 0.12 245), transparent 60%),
+      radial-gradient(80% 60% at 20% 80%, oklch(0.32 0.1 268), transparent 60%),
+      linear-gradient(135deg, oklch(0.22 0.07 270), oklch(0.28 0.09 250));
+  }
+  .card-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--fg-3);
+  }
+  .card.light .card-label { color: #5a6478; }
+  .card.cyan .card-label { color: #091533; }
+  .card.photo .card-label { color: rgba(255,255,255,0.7); }
+
+  .sizes-row {
+    display: flex; align-items: flex-end; gap: 28px;
+    background: var(--bg);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 32px;
+    flex-wrap: wrap;
+  }
+  .size-item {
+    display: flex; flex-direction: column;
+    align-items: center; gap: 8px;
+  }
+  .size-item .px {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--fg-3);
+    letter-spacing: 0.04em;
+  }
+
+  .footer-note {
+    background: var(--bg-2);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 28px 32px;
+    margin-top: 48px;
+  }
+  .footer-note h3 {
+    font-family: var(--display);
+    font-size: 18px;
+    font-weight: 600;
+    margin-bottom: 10px;
+  }
+  .footer-note p {
+    color: var(--fg-2);
+    font-size: 14px;
+    line-height: 1.6;
+  }
+  .footer-note code {
+    font-family: var(--mono);
+    font-size: 12px;
+    background: var(--bg-3);
+    padding: 2px 7px;
+    border-radius: 4px;
+    color: var(--cyan);
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+<header>
+  <div class="eyebrow">Locked · Howl Arc</div>
+  <h1>HowlCast brand assets</h1>
+  <p class="lede">The chosen mark is the <strong>Howl Arc</strong> — broadcast arcs radiating from a wolf snout. Reads as "broadcasting" first, "wolf" on closer look. All 5 final files are below, ready to drop into the codebase.</p>
+  <div class="meta">
+    <span>colors <code>#091533</code> <code>#0FACED</code></span>
+    <span>format <code>SVG</code></span>
+    <span>files <code>assets/logos/howlcast-*.svg</code></span>
+  </div>
+</header>
+
+<!-- ━━━ Primary mark ━━━ -->
+<div class="section">
+  <div class="section-h">
+    <h2>Primary mark</h2>
+    <span class="file">howlcast-mark.svg</span>
+  </div>
+
+  <div class="grid grid-3">
+    <div class="card">
+      <svg width="160" height="160" viewBox="0 0 100 100" fill="none">
+        <path d="M 18 64 A 32 32 0 0 1 82 64" stroke="#0FACED" stroke-width="6" stroke-linecap="round"/>
+        <path d="M 30 64 A 20 20 0 0 1 70 64" stroke="#0FACED" stroke-width="6" stroke-linecap="round"/>
+        <path d="M 42 64 A 8 8 0 0 1 58 64" stroke="#0FACED" stroke-width="6" stroke-linecap="round"/>
+        <path d="M 42 64 L 50 80 L 58 64 Z" fill="#0FACED"/>
+      </svg>
+      <span class="card-label">on navy · default</span>
+    </div>
+
+    <div class="card light">
+      <svg width="160" height="160" viewBox="0 0 100 100" fill="none">
+        <path d="M 18 64 A 32 32 0 0 1 82 64" stroke="#0FACED" stroke-width="6" stroke-linecap="round"/>
+        <path d="M 30 64 A 20 20 0 0 1 70 64" stroke="#0FACED" stroke-width="6" stroke-linecap="round"/>
+        <path d="M 42 64 A 8 8 0 0 1 58 64" stroke="#0FACED" stroke-width="6" stroke-linecap="round"/>
+        <path d="M 42 64 L 50 80 L 58 64 Z" fill="#0FACED"/>
+      </svg>
+      <span class="card-label">on white · light surfaces</span>
+    </div>
+
+    <div class="card cyan">
+      <svg width="160" height="160" viewBox="0 0 100 100" fill="none">
+        <path d="M 18 64 A 32 32 0 0 1 82 64" stroke="#091533" stroke-width="6" stroke-linecap="round"/>
+        <path d="M 30 64 A 20 20 0 0 1 70 64" stroke="#091533" stroke-width="6" stroke-linecap="round"/>
+        <path d="M 42 64 A 8 8 0 0 1 58 64" stroke="#091533" stroke-width="6" stroke-linecap="round"/>
+        <path d="M 42 64 L 50 80 L 58 64 Z" fill="#091533"/>
+      </svg>
+      <span class="card-label">on cyan · reversed</span>
+    </div>
+  </div>
+</div>
+
+<!-- ━━━ Wordmark lockup ━━━ -->
+<div class="section">
+  <div class="section-h">
+    <h2>Wordmark lockup</h2>
+    <span class="file">howlcast-wordmark.svg</span>
+  </div>
+
+  <div class="card" style="padding: 56px;">
+    <svg width="380" height="108" viewBox="0 0 280 80" fill="none">
+      <g transform="translate(10, 10) scale(0.60)">
+        <path d="M 18 64 A 32 32 0 0 1 82 64" stroke="#0FACED" stroke-width="6" stroke-linecap="round"/>
+        <path d="M 30 64 A 20 20 0 0 1 70 64" stroke="#0FACED" stroke-width="6" stroke-linecap="round"/>
+        <path d="M 42 64 A 8 8 0 0 1 58 64" stroke="#0FACED" stroke-width="6" stroke-linecap="round"/>
+        <path d="M 42 64 L 50 80 L 58 64 Z" fill="#0FACED"/>
+      </g>
+      <text x="84" y="52" font-family="'Bricolage Grotesque', sans-serif" font-size="38" font-weight="700" letter-spacing="-1.2" fill="#ffffff">HowlCast</text>
+    </svg>
+    <span class="card-label">horizontal · dark</span>
+  </div>
+</div>
+
+<!-- ━━━ Monochrome variants ━━━ -->
+<div class="section">
+  <div class="section-h">
+    <h2>Monochrome</h2>
+    <span class="file">howlcast-mark-white.svg · howlcast-mark-on-cyan.svg</span>
+  </div>
+
+  <div class="grid grid-3">
+    <div class="card photo">
+      <svg width="120" height="120" viewBox="0 0 100 100" fill="none">
+        <path d="M 18 64 A 32 32 0 0 1 82 64" stroke="#fff" stroke-width="6" stroke-linecap="round"/>
+        <path d="M 30 64 A 20 20 0 0 1 70 64" stroke="#fff" stroke-width="6" stroke-linecap="round"/>
+        <path d="M 42 64 A 8 8 0 0 1 58 64" stroke="#fff" stroke-width="6" stroke-linecap="round"/>
+        <path d="M 42 64 L 50 80 L 58 64 Z" fill="#fff"/>
+      </svg>
+      <span class="card-label">white · over photo</span>
+    </div>
+
+    <div class="card">
+      <svg width="120" height="120" viewBox="0 0 100 100" fill="none">
+        <rect width="100" height="100" rx="22" fill="#0FACED"/>
+        <path d="M 18 64 A 32 32 0 0 1 82 64" stroke="#091533" stroke-width="6" stroke-linecap="round"/>
+        <path d="M 30 64 A 20 20 0 0 1 70 64" stroke="#091533" stroke-width="6" stroke-linecap="round"/>
+        <path d="M 42 64 A 8 8 0 0 1 58 64" stroke="#091533" stroke-width="6" stroke-linecap="round"/>
+        <path d="M 42 64 L 50 80 L 58 64 Z" fill="#091533"/>
+      </svg>
+      <span class="card-label">tile · navy on cyan</span>
+    </div>
+
+    <div class="card">
+      <svg width="120" height="120" viewBox="0 0 100 100" fill="none">
+        <path d="M 18 64 A 32 32 0 0 1 82 64" stroke="#fff" stroke-width="6" stroke-linecap="round"/>
+        <path d="M 30 64 A 20 20 0 0 1 70 64" stroke="#fff" stroke-width="6" stroke-linecap="round"/>
+        <path d="M 42 64 A 8 8 0 0 1 58 64" stroke="#fff" stroke-width="6" stroke-linecap="round"/>
+        <path d="M 42 64 L 50 80 L 58 64 Z" fill="#fff"/>
+      </svg>
+      <span class="card-label">white · on navy</span>
+    </div>
+  </div>
+</div>
+
+<!-- ━━━ Size test ━━━ -->
+<div class="section">
+  <div class="section-h">
+    <h2>Size test &amp; favicon</h2>
+    <span class="file">howlcast-favicon.svg (≤32px)</span>
+  </div>
+
+  <div class="sizes-row">
+    <div class="size-item">
+      <svg width="96" height="96" viewBox="0 0 100 100" fill="none">
+        <path d="M 18 64 A 32 32 0 0 1 82 64" stroke="#0FACED" stroke-width="6" stroke-linecap="round"/>
+        <path d="M 30 64 A 20 20 0 0 1 70 64" stroke="#0FACED" stroke-width="6" stroke-linecap="round"/>
+        <path d="M 42 64 A 8 8 0 0 1 58 64" stroke="#0FACED" stroke-width="6" stroke-linecap="round"/>
+        <path d="M 42 64 L 50 80 L 58 64 Z" fill="#0FACED"/>
+      </svg>
+      <span class="px">96px · avatar</span>
+    </div>
+    <div class="size-item">
+      <svg width="64" height="64" viewBox="0 0 100 100" fill="none">
+        <path d="M 18 64 A 32 32 0 0 1 82 64" stroke="#0FACED" stroke-width="6" stroke-linecap="round"/>
+        <path d="M 30 64 A 20 20 0 0 1 70 64" stroke="#0FACED" stroke-width="6" stroke-linecap="round"/>
+        <path d="M 42 64 A 8 8 0 0 1 58 64" stroke="#0FACED" stroke-width="6" stroke-linecap="round"/>
+        <path d="M 42 64 L 50 80 L 58 64 Z" fill="#0FACED"/>
+      </svg>
+      <span class="px">64px · header</span>
+    </div>
+    <div class="size-item">
+      <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
+        <path d="M 6 21 A 10 10 0 0 1 26 21" stroke="#0FACED" stroke-width="3" stroke-linecap="round"/>
+        <path d="M 10 21 A 6 6 0 0 1 22 21" stroke="#0FACED" stroke-width="3" stroke-linecap="round"/>
+        <path d="M 13 21 L 16 27 L 19 21 Z" fill="#0FACED"/>
+      </svg>
+      <span class="px">32px · favicon</span>
+    </div>
+    <div class="size-item">
+      <svg width="16" height="16" viewBox="0 0 32 32" fill="none">
+        <path d="M 6 21 A 10 10 0 0 1 26 21" stroke="#0FACED" stroke-width="3" stroke-linecap="round"/>
+        <path d="M 10 21 A 6 6 0 0 1 22 21" stroke="#0FACED" stroke-width="3" stroke-linecap="round"/>
+        <path d="M 13 21 L 16 27 L 19 21 Z" fill="#0FACED"/>
+      </svg>
+      <span class="px">16px · tab</span>
+    </div>
+  </div>
+</div>
+
+<div class="footer-note">
+  <h3>Files in <code>assets/logos/</code></h3>
+  <p>
+    <code>howlcast-mark.svg</code> — primary cyan mark, use everywhere by default.<br>
+    <code>howlcast-favicon.svg</code> — simplified version for 16-32px (only 2 arcs, chunkier wedge).<br>
+    <code>howlcast-wordmark.svg</code> — horizontal lockup with "HowlCast" in Bricolage Grotesque 700.<br>
+    <code>howlcast-mark-white.svg</code> — pure white version for photo or busy backgrounds.<br>
+    <code>howlcast-mark-on-cyan.svg</code> — navy on cyan rounded tile, for cyan callouts/buttons.<br>
+  </p>
+  <p style="margin-top:12px">
+    Replace the placeholder <code>.brand-mark</code> rule in <code>design-handoff/project/shared.css</code> with this mark when porting tokens to <code>globals.css</code>.
+  </p>
+</div>
+
+</div>
+</body>
+</html>

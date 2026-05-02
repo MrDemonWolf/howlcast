@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 280 80" fill="none" role="img" aria-label="HowlCast">
+  <!-- HowlCast wordmark — horizontal lockup
+       Icon at 60px scaled, text in Bricolage Grotesque 700 weight.
+       Pair with the wordmark in production using actual web font (this SVG embeds
+       the text as a path-rendered element, which means Bricolage Grotesque must be
+       loaded on the page when the SVG renders inline as text). For best results,
+       prefer rendering the wordmark as: <icon SVG> + <h1 text>.
+  -->
+
+  <!-- Icon mark, scaled to fit 60px height, placed left -->
+  <g transform="translate(10, 10) scale(0.60)">
+    <path d="M 18 64 A 32 32 0 0 1 82 64" stroke="#0FACED" stroke-width="6" stroke-linecap="round" fill="none"/>
+    <path d="M 30 64 A 20 20 0 0 1 70 64" stroke="#0FACED" stroke-width="6" stroke-linecap="round" fill="none"/>
+    <path d="M 42 64 A 8 8 0 0 1 58 64" stroke="#0FACED" stroke-width="6" stroke-linecap="round" fill="none"/>
+    <path d="M 42 64 L 50 80 L 58 64 Z" fill="#0FACED"/>
+  </g>
+
+  <!-- Wordmark text -->
+  <text x="84" y="52"
+        font-family="'Bricolage Grotesque', 'Geist', system-ui, sans-serif"
+        font-size="38"
+        font-weight="700"
+        letter-spacing="-1.2"
+        fill="#FFFFFF">HowlCast</text>
+</svg>

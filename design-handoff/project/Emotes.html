@@ -1,0 +1,351 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>HowlCast — Emotes</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@500;600;700&family=Geist+Mono:wght@400;500;600&family=Geist:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="shared.css" />
+  <link rel="stylesheet" href="dash-shell.css" />
+  <style>
+    .emote-grid{
+      display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:10px;
+    }
+    .emote-tile{
+      position:relative;
+      aspect-ratio:1;
+      background:var(--bg-3);border:1px solid var(--line);border-radius:var(--radius);
+      display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;
+      padding:10px;
+      transition:transform 120ms ease, border-color 120ms ease;
+      cursor:grab;
+    }
+    .emote-tile:hover{transform:translateY(-2px);border-color:var(--cyan-soft)}
+    .emote-tile .glyph{
+      width:48px;height:48px;border-radius:8px;
+      display:flex;align-items:center;justify-content:center;
+      font-size:28px;line-height:1;
+      background:linear-gradient(135deg,oklch(0.42 0.09 235 / 0.4),oklch(0.5 0.13 271 / 0.3));
+      border:1px solid var(--cyan-soft);
+      font-family:var(--font-display);font-weight:700;color:var(--cyan);
+    }
+    .emote-tile .glyph.warm{background:linear-gradient(135deg,oklch(0.55 0.18 50 / 0.35),oklch(0.5 0.15 30 / 0.3));border-color:oklch(0.55 0.18 50 / 0.5);color:oklch(0.85 0.12 65)}
+    .emote-tile .glyph.green{background:linear-gradient(135deg,oklch(0.45 0.13 162 / 0.35),oklch(0.5 0.16 162 / 0.3));border-color:oklch(0.5 0.13 162 / 0.5);color:oklch(0.85 0.16 162)}
+    .emote-tile .glyph.purple{background:linear-gradient(135deg,oklch(0.45 0.16 305 / 0.35),oklch(0.5 0.18 290 / 0.3));border-color:oklch(0.5 0.18 305 / 0.5);color:oklch(0.85 0.14 305)}
+    .emote-tile .code{font-family:var(--font-mono);font-size:11px;color:var(--fg-2);letter-spacing:0.02em}
+    .emote-tile .uses{font-family:var(--font-mono);font-size:9px;color:var(--fg-4);letter-spacing:0.04em}
+    .emote-tile .anim-dot{position:absolute;top:6px;right:6px;font-family:var(--font-mono);font-size:8px;color:oklch(0.85 0.16 162);letter-spacing:0.04em;background:oklch(0.4 0.1 162 / 0.5);padding:1px 4px;border-radius:3px;border:1px solid oklch(0.5 0.13 162 / 0.5)}
+
+    /* upload tile */
+    .emote-upload{
+      aspect-ratio:1;
+      background:transparent;border:1.5px dashed oklch(0.55 0.04 271);border-radius:var(--radius);
+      display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;
+      color:var(--fg-3);font-size:11px;font-family:var(--font-mono);letter-spacing:0.04em;
+      transition:border-color 120ms ease, color 120ms ease;cursor:pointer;
+    }
+    .emote-upload:hover{border-color:var(--cyan);color:var(--cyan)}
+    .emote-upload svg{width:20px;height:20px}
+
+    /* slot meter */
+    .slot-meter{
+      display:flex;align-items:center;gap:14px;
+      padding:14px 16px;background:var(--bg-3);border:1px solid var(--line);border-radius:var(--radius);
+    }
+    .slot-meter .ring{
+      width:48px;height:48px;border-radius:50%;flex:none;
+      background:conic-gradient(var(--cyan) 0 var(--p),var(--bg-2) var(--p) 100%);
+      display:flex;align-items:center;justify-content:center;
+    }
+    .slot-meter .ring::before{
+      content:"";width:36px;height:36px;border-radius:50%;background:var(--bg-3);
+    }
+    .slot-meter .ring span{
+      position:absolute;font-family:var(--font-mono);font-size:11px;font-weight:600;color:var(--fg);
+    }
+    .slot-meter .ring{position:relative}
+    .slot-meter .det{display:flex;flex-direction:column;gap:2px;flex:1;min-width:0}
+    .slot-meter .det b{font-size:13px;color:var(--fg);font-weight:500}
+    .slot-meter .det span{font-family:var(--font-mono);font-size:10px;color:var(--fg-3);letter-spacing:0.04em;text-transform:uppercase}
+
+    /* segmented filter */
+    .seg{display:flex;gap:2px;background:var(--bg-3);border:1px solid var(--line);border-radius:var(--radius-sm);padding:3px;width:fit-content}
+    .seg button{
+      height:28px;padding:0 12px;background:transparent;border:0;color:var(--fg-3);
+      font-size:12px;font-weight:500;border-radius:5px;font-family:inherit;
+    }
+    .seg button.active{background:var(--bg-2);color:var(--fg)}
+
+    /* recent activity strip */
+    .reax-strip{display:flex;flex-direction:column;gap:0}
+    .reax-row{display:grid;grid-template-columns:32px 1fr auto;gap:10px;padding:10px 0;border-top:1px solid var(--line);align-items:center}
+    .reax-row:first-child{border-top:0;padding-top:0}
+    .reax-row .g{
+      width:28px;height:28px;border-radius:6px;
+      display:flex;align-items:center;justify-content:center;
+      font-family:var(--font-display);font-weight:700;font-size:14px;
+      background:linear-gradient(135deg,oklch(0.42 0.09 235 / 0.4),oklch(0.5 0.13 271 / 0.3));
+      border:1px solid var(--cyan-soft);color:var(--cyan);
+    }
+    .reax-row .det{font-size:12px;color:var(--fg-2)}
+    .reax-row .det b{color:var(--fg);font-family:var(--font-mono);font-weight:500}
+    .reax-row .det small{display:block;font-family:var(--font-mono);font-size:10px;color:var(--fg-4);margin-top:1px;letter-spacing:0.04em}
+    .reax-row .n{font-family:var(--font-mono);font-size:11px;color:var(--fg-3)}
+
+    /* tier headers between sections */
+    .tier{
+      display:flex;align-items:center;gap:8px;
+      font-family:var(--font-mono);font-size:10px;letter-spacing:0.08em;text-transform:uppercase;color:var(--fg-3);
+      margin:18px 0 10px;
+    }
+    .tier::before{content:"";width:14px;height:1px;background:var(--line)}
+    .tier::after{content:"";flex:1;height:1px;background:var(--line)}
+    .tier .badge{
+      font-family:var(--font-mono);font-size:9px;color:var(--cyan);background:oklch(0.42 0.09 235 / 0.4);
+      border:1px solid var(--cyan-soft);padding:1px 6px;border-radius:3px;letter-spacing:0.04em;
+    }
+  </style>
+</head>
+<body>
+  <div class="view-switcher" aria-label="Prototype view switcher">
+    <div class="crumbs">
+      <span>HowlCast</span><span>›</span><span>Dashboard</span><span>›</span><b>Emotes</b>
+    </div>
+    <nav class="view-tabs" aria-label="Switch view">
+      <a href="HowlCast.html">Channel</a>
+      <a href="Dashboard.html" class="active">Dashboard</a>
+      <a href="Account.html">Account</a>
+      <a href="Email.html">Email</a>
+    </nav>
+    <span class="view-meta">v0.2 · prototype</span>
+  </div>
+
+  <div class="dash" data-screen-label="Dashboard — Emotes">
+    <aside class="dash-side">
+      <div class="ds-brand">
+        <div class="avatar md halo">M<span class="live-dot"></span></div>
+        <div class="who">
+          <b>MrDemonWolf
+            <svg class="verified" viewBox="0 0 24 24"><circle class="outer" cx="12" cy="12" r="11"/><path class="check" d="M7.5 12.5l3 3 6-6"/></svg>
+          </b>
+          <span>BROADCASTER</span>
+        </div>
+      </div>
+
+      <div class="ds-go">
+        <div class="left"><span class="dot"></span>On air · 02:14</div>
+        <button class="end">End</button>
+      </div>
+
+      <div>
+        <div class="ds-section" style="padding-bottom:6px">Live</div>
+        <nav class="ds-nav">
+          <a href="Dashboard.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="14" height="12" rx="2"/><path d="m22 8-6 4 6 4z"/></svg>Stream</a>
+          <a href="Stats.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="m7 14 4-4 4 4 5-5"/></svg>Stats</a>
+        </nav>
+      </div>
+
+      <div>
+        <div class="ds-section" style="padding-bottom:6px">Channel</div>
+        <nav class="ds-nav">
+          <a href="Panels.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9 12 2l9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>Panels</a>
+          <a class="active" href="Emotes.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4"/></svg>Emotes<span class="count">14</span></a>
+          <a href="Branding.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 4 6v6c0 5 3.5 8.5 8 10 4.5-1.5 8-5 8-10V6z"/></svg>Branding</a>
+
+          <a href="Email.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m2 7 10 7 10-7"/></svg>Invite emails</a>
+          <a href="StreamKey.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 4h6v6"/><path d="m20 4-9 9"/><path d="M21 15v3a3 3 0 0 1-3 3H6a3 3 0 0 1-3-3V6a3 3 0 0 1 3-3h3"/></svg>Stream key</a>
+          <a href="Notifications.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>Notifications</a>
+        </nav>
+      </div>
+
+      <div style="margin-top:auto">
+        <div class="ds-section" style="padding-bottom:6px">Server</div>
+        <nav class="ds-nav">
+          <a href="Account.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>Account</a>
+        </nav>
+      </div>
+    </aside>
+
+    <div class="dash-main">
+
+      <header class="dash-h">
+        <div>
+          <h1>Emotes</h1>
+          <p class="sub">14 of 25 slots used · drag to reorder, click to edit, the dumber the better</p>
+        </div>
+        <div class="right">
+          <div class="seg">
+            <button class="active">All</button>
+            <button>Static</button>
+            <button>Animated</button>
+          </div>
+          <button class="btn btn-primary">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+            New emote
+          </button>
+        </div>
+      </header>
+
+      <!-- slot meter strip -->
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px">
+        <div class="slot-meter">
+          <div class="ring" style="--p:56%"><span>14</span></div>
+          <div class="det">
+            <b>Library slots</b>
+            <span>14 of 25 · 11 free</span>
+          </div>
+        </div>
+        <div class="slot-meter">
+          <div class="ring" style="--p:80%"><span>4/5</span></div>
+          <div class="det">
+            <b>Animated quota</b>
+            <span>4 of 5 used · ≤ 1 MB each</span>
+          </div>
+        </div>
+        <div class="slot-meter">
+          <div class="ring" style="--p:32%"><span>8</span></div>
+          <div class="det">
+            <b>Emote-only mode</b>
+            <span>used 8× this week · /emoteonly</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- channel emotes - flat list, no tiers, no subscribers -->
+      <div class="card">
+        <div class="card-h">
+          <h3>Channel emotes</h3>
+          <span class="sub">free for everyone in chat</span>
+        </div>
+        <div class="card-body">
+          <div class="emote-grid">
+            <div class="emote-tile">
+              <div class="glyph warm">🐺</div>
+              <div class="code">:howl:</div>
+              <div class="uses">2,847 uses</div>
+            </div>
+            <div class="emote-tile">
+              <div class="glyph">Wo</div>
+              <div class="code">:wolfYes:</div>
+              <div class="uses">1,932</div>
+            </div>
+            <div class="emote-tile">
+              <div class="glyph green">✓</div>
+              <div class="code">:itWorks:</div>
+              <div class="uses">1,612</div>
+            </div>
+            <div class="emote-tile">
+              <div class="anim-dot">ANIM</div>
+              <div class="glyph purple">⌐</div>
+              <div class="code">:debugging:</div>
+              <div class="uses">1,204</div>
+            </div>
+            <div class="emote-tile">
+              <div class="glyph warm">F</div>
+              <div class="code">:pressF:</div>
+              <div class="uses">982</div>
+            </div>
+            <div class="emote-tile">
+              <div class="glyph">{}</div>
+              <div class="code">:codeBlock:</div>
+              <div class="uses">741</div>
+            </div>
+            <div class="emote-tile">
+              <div class="anim-dot">ANIM</div>
+              <div class="glyph purple">★</div>
+              <div class="code">:wolfStar:</div>
+              <div class="uses">418</div>
+            </div>
+            <div class="emote-tile">
+              <div class="glyph green">☕</div>
+              <div class="code">:caffeine:</div>
+              <div class="uses">312</div>
+            </div>
+            <div class="emote-tile">
+              <div class="anim-dot">ANIM</div>
+              <div class="glyph warm">🔥</div>
+              <div class="code">:onFire:</div>
+              <div class="uses">256</div>
+            </div>
+            <div class="emote-tile">
+              <div class="glyph">!?</div>
+              <div class="code">:wat:</div>
+              <div class="uses">198</div>
+            </div>
+
+            <button class="emote-upload">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+              <span>Drop png<br/>or click</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- two-up: requirements & most-used this week -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:18px">
+        <div class="card">
+          <div class="card-h">
+            <h3>Upload requirements</h3>
+            <span class="sub">keep them small &amp; chunky</span>
+          </div>
+          <div class="card-body" style="font-size:13px;color:var(--fg-2);line-height:1.55">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+              <div style="padding:12px;background:var(--bg-3);border:1px solid var(--line);border-radius:var(--radius-sm)">
+                <div style="font-family:var(--font-mono);font-size:10px;color:var(--fg-3);letter-spacing:0.06em;text-transform:uppercase;margin-bottom:4px">Static · png</div>
+                <div style="font-family:var(--font-mono);font-size:12px;color:var(--fg)">112×112 px</div>
+                <div style="font-family:var(--font-mono);font-size:11px;color:var(--fg-3);margin-top:2px">≤ 256 KB · transparent bg</div>
+              </div>
+              <div style="padding:12px;background:var(--bg-3);border:1px solid var(--line);border-radius:var(--radius-sm)">
+                <div style="font-family:var(--font-mono);font-size:10px;color:var(--fg-3);letter-spacing:0.06em;text-transform:uppercase;margin-bottom:4px">Animated · webp/gif</div>
+                <div style="font-family:var(--font-mono);font-size:12px;color:var(--fg)">112×112 px</div>
+                <div style="font-family:var(--font-mono);font-size:11px;color:var(--fg-3);margin-top:2px">≤ 1 MB · ≤ 60 frames · loop</div>
+              </div>
+            </div>
+            <p style="margin:0;color:var(--fg-3);font-size:12px">Codes must be 4–24 chars · letters &amp; digits · case-insensitive · global namespace per channel.</p>
+            <p style="margin:0;color:var(--fg-3);font-size:12px">Anything offensive gets pulled, no appeals — it's your channel and you don't owe anyone an explanation.</p>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-h">
+            <h3>Most-used this week</h3>
+            <span class="sub">7d · chat &amp; reactions</span>
+          </div>
+          <div class="card-body">
+            <div class="reax-strip">
+              <div class="reax-row">
+                <div class="g">🐺</div>
+                <div class="det"><b>:howl:</b><small>used by 412 unique viewers</small></div>
+                <div class="n">2,847</div>
+              </div>
+              <div class="reax-row">
+                <div class="g">Wo</div>
+                <div class="det"><b>:wolfYes:</b><small>used by 308 unique viewers</small></div>
+                <div class="n">1,932</div>
+              </div>
+              <div class="reax-row">
+                <div class="g" style="color:oklch(0.85 0.16 162);background:linear-gradient(135deg,oklch(0.45 0.13 162 / 0.35),oklch(0.5 0.16 162 / 0.3));border-color:oklch(0.5 0.13 162 / 0.5)">✓</div>
+                <div class="det"><b>:itWorks:</b><small>spike on Sat boss-fight win</small></div>
+                <div class="n">1,612</div>
+              </div>
+              <div class="reax-row">
+                <div class="g" style="color:oklch(0.85 0.14 305);background:linear-gradient(135deg,oklch(0.45 0.16 305 / 0.35),oklch(0.5 0.18 290 / 0.3));border-color:oklch(0.5 0.18 305 / 0.5)">⌐</div>
+                <div class="det"><b>:debugging:</b><small>animated · used during the websocket bug</small></div>
+                <div class="n">1,204</div>
+              </div>
+              <div class="reax-row">
+                <div class="g" style="color:oklch(0.85 0.12 65);background:linear-gradient(135deg,oklch(0.55 0.18 50 / 0.35),oklch(0.5 0.15 30 / 0.3));border-color:oklch(0.55 0.18 50 / 0.5)">F</div>
+                <div class="det"><b>:pressF:</b><small>respect paid 982 times</small></div>
+                <div class="n">982</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</body>
+</html>

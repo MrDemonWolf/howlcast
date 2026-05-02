@@ -1,0 +1,265 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>HowlCast — Account</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@500;600;700&family=Geist+Mono:wght@400;500;600&family=Geist:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="shared.css" />
+  <style>
+    body{padding-top:48px;background:var(--bg)}
+    .view-switcher{position:fixed;top:0;left:0;right:0;height:48px;z-index:100;
+      background:oklch(0.183 0.067 271 / 0.85);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+      border-bottom:1px solid var(--line);
+      display:flex;align-items:center;justify-content:space-between;padding:0 20px}
+    .view-switcher .crumbs{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--fg-3);font-family:var(--font-mono);letter-spacing:0.04em}
+    .view-switcher .crumbs b{color:var(--fg);font-weight:500}
+    .view-tabs{display:flex;gap:2px;background:var(--bg-2);border:1px solid var(--line);border-radius:var(--radius-sm);padding:3px}
+    .view-tabs a{height:28px;padding:0 12px;display:inline-flex;align-items:center;font-size:12px;font-weight:500;color:var(--fg-3);border-radius:5px}
+    .view-tabs a.active{background:var(--bg-3);color:var(--fg)}
+    .view-tabs a:hover{color:var(--fg)}
+    .view-meta{font-family:var(--font-mono);font-size:10px;color:var(--fg-4);letter-spacing:0.06em}
+
+    .acc{display:grid;grid-template-columns:240px minmax(0,1fr);min-height:calc(100vh - 48px)}
+    .acc-side{
+      border-right:1px solid var(--line);background:var(--bg);
+      padding:24px 14px;display:flex;flex-direction:column;gap:18px;
+      position:sticky;top:48px;height:calc(100vh - 48px);
+    }
+    .acc-side .who{display:flex;align-items:center;gap:10px;padding:0 6px 14px;border-bottom:1px solid var(--line)}
+    .acc-side .who b{font-size:13px;font-weight:600;color:var(--fg)}
+    .acc-side .who span{font-family:var(--font-mono);font-size:10px;color:var(--fg-3);letter-spacing:0.04em}
+
+    .acc-section{font-family:var(--font-mono);font-size:10px;letter-spacing:0.08em;text-transform:uppercase;color:var(--fg-3);padding:0 6px}
+    .acc-nav{display:flex;flex-direction:column;gap:1px;margin-top:6px}
+    .acc-nav a{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:var(--radius-sm);font-size:13px;color:var(--fg-2);font-weight:500}
+    .acc-nav a:hover{background:var(--bg-2);color:var(--fg)}
+    .acc-nav a.active{background:var(--bg-2);color:var(--fg)}
+    .acc-nav a.active::before{content:"";width:2px;height:14px;background:var(--cyan);border-radius:2px;margin-left:-4px;margin-right:8px}
+    .acc-nav svg{width:14px;height:14px;color:var(--fg-3);flex:none}
+    .acc-nav a.active svg{color:var(--fg)}
+
+    .acc-main{padding:32px 40px 64px;max-width:760px}
+    .acc-h{display:flex;flex-direction:column;gap:6px;margin-bottom:32px}
+    .acc-h h1{font-family:var(--font-display);font-weight:600;font-size:32px;letter-spacing:-0.02em;line-height:1.1;margin:0;color:var(--fg)}
+    .acc-h .sub{font-size:13px;color:var(--fg-3);font-family:var(--font-mono);letter-spacing:0.04em}
+
+    .sec{display:flex;flex-direction:column;gap:14px;padding:28px 0;border-top:1px solid var(--line)}
+    .sec:first-of-type{border-top:0;padding-top:0}
+    .sec h2{font-size:15px;font-weight:600;margin:0;color:var(--fg)}
+    .sec p.lead{font-size:13px;color:var(--fg-3);margin:0;line-height:1.55;max-width:560px}
+
+    .field-grid{display:grid;grid-template-columns:160px 1fr;gap:18px 24px;align-items:start;margin-top:6px}
+    .field-grid label{font-size:13px;color:var(--fg-2);padding-top:9px;font-weight:500}
+    .field-grid .ctrl{display:flex;flex-direction:column;gap:4px;min-width:0}
+    .field-grid .ctrl .hint{font-size:11px;color:var(--fg-3)}
+
+    .input-row{display:flex;align-items:center;gap:8px}
+
+    .avatar-row{display:flex;align-items:center;gap:18px;padding:6px 0}
+    .avatar-row .actions{display:flex;gap:8px}
+
+    .pn-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(72px,1fr));gap:6px;margin-top:6px}
+    .pn-chip{
+      height:30px;padding:0 10px;border-radius:6px;
+      background:var(--bg-3);border:1px solid var(--line-2);color:var(--fg-2);
+      font-family:var(--font-mono);font-size:12px;letter-spacing:0.02em;cursor:pointer;
+      display:inline-flex;align-items:center;justify-content:center;
+    }
+    .pn-chip.active{background:var(--cyan-soft);border-color:var(--cyan);color:var(--cyan)}
+    .pn-chip:hover{border-color:var(--line-3);color:var(--fg)}
+
+    /* danger */
+    .danger{
+      border:1px solid oklch(0.5 0.16 27 / 0.5);background:oklch(0.4 0.13 27 / 0.12);
+      border-radius:var(--radius);padding:18px;display:flex;align-items:center;justify-content:space-between;gap:18px
+    }
+    .danger .det b{display:block;font-size:13px;color:var(--fg);font-weight:600;margin-bottom:2px}
+    .danger .det span{font-size:12px;color:var(--fg-2)}
+
+    .save-bar{
+      position:sticky;bottom:0;background:var(--bg);border-top:1px solid var(--line);
+      margin:32px -40px -64px;padding:14px 40px;
+      display:flex;justify-content:space-between;align-items:center;gap:12px;
+    }
+    .save-bar .changes{font-family:var(--font-mono);font-size:11px;color:var(--fg-3);letter-spacing:0.04em}
+    .save-bar .changes b{color:var(--cyan);font-weight:500}
+
+    @media (max-width:900px){
+      .acc{grid-template-columns:1fr}
+      .acc-side{position:static;height:auto}
+      .field-grid{grid-template-columns:1fr;gap:6px 0}
+      .field-grid label{padding-top:0}
+    }
+  </style>
+</head>
+<body>
+  <div class="view-switcher" aria-label="Prototype view switcher">
+    <div class="crumbs">
+      <span>HowlCast</span><span>›</span><b>Account</b>
+    </div>
+    <nav class="view-tabs" aria-label="Switch view">
+      <a href="HowlCast.html">Channel</a>
+      <a href="Dashboard.html">Dashboard</a>
+      <a href="Account.html" class="active">Account</a>
+      <a href="Email.html">Email</a>
+    </nav>
+    <span class="view-meta">v0.3 · prototype</span>
+  </div>
+
+  <div class="acc" data-screen-label="Account — Viewer Settings">
+    <aside class="acc-side">
+      <div class="who">
+        <div class="avatar md">P</div>
+        <div style="display:flex;flex-direction:column;line-height:1.2;min-width:0">
+          <b>paw_print_22</b>
+          <span>VIEWER</span>
+        </div>
+      </div>
+
+      <div>
+        <div class="acc-section">Profile</div>
+        <nav class="acc-nav">
+          <a class="active" href="#profile"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>How you appear</a>
+        </nav>
+      </div>
+
+      <div>
+        <div class="acc-section">Account</div>
+        <nav class="acc-nav">
+          <a href="#login"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>Login &amp; security</a>
+          <a href="#sessions"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>Sessions</a>
+        </nav>
+      </div>
+
+      <div style="margin-top:auto;padding:0 6px;font-family:var(--font-mono);font-size:10px;color:var(--fg-4);letter-spacing:0.06em;text-transform:uppercase">
+        Joined April 2026
+      </div>
+    </aside>
+
+    <div class="acc-main">
+      <header class="acc-h">
+        <h1>Account</h1>
+      </header>
+
+      <!-- How you appear -->
+      <section class="sec" id="profile">
+        <h2>How you appear</h2>
+        <p class="lead">This is what shows up next to your messages in chat. Keep it warm and a little weird — chat's the whole point.</p>
+
+        <div class="field-grid">
+          <label>Profile picture</label>
+          <div class="ctrl">
+            <div class="avatar-row">
+              <div class="avatar lg" style="font-size:32px">P</div>
+              <div class="actions">
+                <button class="btn btn-secondary">Upload</button>
+                <button class="btn btn-ghost" style="color:var(--destructive)">Remove</button>
+              </div>
+            </div>
+            <span class="hint">PNG or JPG, square, 256px or larger.</span>
+          </div>
+
+          <label for="display">Display name</label>
+          <div class="ctrl">
+            <input class="input" id="display" value="paw_print_22"/>
+            <span class="hint">Shown in chat. 3–24 characters, lowercase letters / numbers / underscores.</span>
+          </div>
+
+          <label>Pronouns</label>
+          <div class="ctrl">
+            <div class="pn-grid">
+              <button class="pn-chip">she/her</button>
+              <button class="pn-chip active">he/him</button>
+              <button class="pn-chip">they/them</button>
+              <button class="pn-chip">she/they</button>
+              <button class="pn-chip">he/they</button>
+              <button class="pn-chip">any</button>
+              <button class="pn-chip">ask</button>
+              <button class="pn-chip" style="color:var(--cyan)">+ custom</button>
+            </div>
+            <span class="hint" style="margin-top:8px">Optional. Shown beside your name in chat &amp; the den directory.</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- Login & security -->
+      <section class="sec" id="login">
+        <h2>Login &amp; security</h2>
+        <p class="lead">Basic login stuff. Auth is handled by the broadcaster's self-hosted server.</p>
+
+        <div class="field-grid">
+          <label>Email</label>
+          <div class="ctrl">
+            <div class="input-row"><input class="input" value="paw@example.net"/><button class="btn btn-secondary">Change</button></div>
+            <span class="hint">Used for sign-in &amp; the very rare invite-renewal email.</span>
+          </div>
+
+          <label>Password</label>
+          <div class="ctrl">
+            <div class="input-row"><input class="input" type="password" value="••••••••••••" disabled/><button class="btn btn-secondary">Update</button></div>
+            <span class="hint">Last changed 3 months ago.</span>
+          </div>
+
+          <label>Two-factor</label>
+          <div class="ctrl">
+            <div class="input-row" style="gap:10px;align-items:center">
+              <span style="display:inline-flex;align-items:center;gap:6px;font-size:13px;color:var(--success)"><span style="width:6px;height:6px;border-radius:999px;background:var(--success);display:inline-block"></span>Enabled · TOTP</span>
+              <button class="btn btn-secondary" style="margin-left:auto">Manage</button>
+            </div>
+            <span class="hint">Recovery codes generated 3 months ago.</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- Sessions -->
+      <section class="sec" id="sessions">
+        <h2>Active sessions</h2>
+        <p class="lead">Anywhere you're signed in. Sign out remotely if something looks off.</p>
+
+        <div class="sessions" style="margin-top:6px">
+          <div class="sess">
+            <div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg></div>
+            <div class="det">
+              <b>macOS · Firefox · this device</b>
+              <span class="now">Active now · Portland, OR</span>
+            </div>
+            <span class="mono" style="color:var(--fg-3);font-size:11px">current</span>
+          </div>
+          <div class="sess">
+            <div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="2" width="12" height="20" rx="2"/><path d="M11 18h2"/></svg></div>
+            <div class="det">
+              <b>iPhone · Safari</b>
+              <span>4 hours ago · Portland, OR</span>
+            </div>
+            <button class="btn btn-secondary" style="height:28px;font-size:12px">Sign out</button>
+          </div>
+        </div>
+        <button class="btn btn-ghost" style="align-self:flex-start;margin-top:6px;color:var(--destructive)">Sign out everywhere else</button>
+      </section>
+
+      <!-- Danger zone -->
+      <section class="sec" id="danger">
+        <h2 style="color:var(--destructive)">Danger zone</h2>
+        <div class="danger">
+          <div class="det">
+            <b>Leave the den &amp; delete account</b>
+            <span>Removes your chat history and signs you out everywhere. You'll need a fresh invite to come back.</span>
+          </div>
+          <button class="btn btn-secondary" style="border-color:var(--destructive);color:var(--destructive)">Begin</button>
+        </div>
+      </section>
+
+      <div class="save-bar">
+        <span class="changes">No unsaved changes · last saved <b>just now</b></span>
+        <div style="display:flex;gap:8px">
+          <button class="btn btn-secondary">Discard</button>
+          <button class="btn btn-primary">Save changes</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

@@ -1,0 +1,93 @@
+/* ─── HowlCast dashboard shell ───────────────────────────────────────
+   Shared layout for Dashboard.html and all its subpages
+   (Stats, Emotes, StreamKey, Notifications, Panels, SelfHostStatus,
+   BroadcasterAccount). Loaded AFTER shared.css.
+*/
+
+body{padding-top:48px;background:var(--bg)}
+
+/* top view-switcher */
+.view-switcher{position:fixed;top:0;left:0;right:0;height:48px;z-index:100;
+  background:oklch(0.183 0.067 271 / 0.85);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+  border-bottom:1px solid var(--line);
+  display:flex;align-items:center;justify-content:space-between;padding:0 20px}
+.view-switcher .crumbs{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--fg-3);font-family:var(--font-mono);letter-spacing:0.04em}
+.view-switcher .crumbs b{color:var(--fg);font-weight:500}
+.view-tabs{display:flex;gap:2px;background:var(--bg-2);border:1px solid var(--line);border-radius:var(--radius-sm);padding:3px}
+.view-tabs a{height:28px;padding:0 12px;display:inline-flex;align-items:center;font-size:12px;font-weight:500;color:var(--fg-3);border-radius:5px}
+.view-tabs a.active{background:var(--bg-3);color:var(--fg)}
+.view-tabs a:hover{color:var(--fg)}
+.view-meta{font-family:var(--font-mono);font-size:10px;color:var(--fg-4);letter-spacing:0.06em}
+
+/* dashboard layout */
+.dash{display:grid;grid-template-columns:240px minmax(0,1fr);min-height:calc(100vh - 48px)}
+.dash-side{
+  border-right:1px solid var(--line);background:var(--bg);
+  padding:18px 14px;display:flex;flex-direction:column;gap:18px;
+  position:sticky;top:48px;height:calc(100vh - 48px);overflow-y:auto;
+}
+.ds-brand{display:flex;align-items:center;gap:10px;padding:0 6px 12px;border-bottom:1px solid var(--line)}
+.ds-brand .who{display:flex;flex-direction:column;line-height:1.2;min-width:0}
+.ds-brand .who b{font-size:13px;font-weight:600;color:var(--fg);display:inline-flex;align-items:center}
+.ds-brand .who b .verified{width:14px;height:14px;margin-left:4px;vertical-align:0}
+.ds-brand .who span{font-family:var(--font-mono);font-size:10px;color:var(--fg-3);letter-spacing:0.04em}
+
+.ds-go{
+  display:flex;align-items:center;justify-content:space-between;gap:8px;
+  padding:10px 12px;border-radius:var(--radius);
+  background:var(--bg-2);border:1px solid var(--line);
+}
+.ds-go .left{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--fg-2)}
+.ds-go .dot{width:8px;height:8px;border-radius:999px;background:var(--live);box-shadow:0 0 0 3px oklch(0.65 0.24 25 / 0.18)}
+.ds-go .dot.off{background:var(--fg-4);box-shadow:none}
+.ds-go button{
+  height:28px;padding:0 12px;border-radius:5px;
+  background:var(--cyan);color:#091533;border:0;font-weight:600;font-size:12px;font-family:inherit;
+}
+.ds-go button.end{background:var(--destructive);color:#fff}
+
+.ds-section{font-family:var(--font-mono);font-size:10px;letter-spacing:0.08em;text-transform:uppercase;color:var(--fg-4);padding:0 6px}
+.ds-nav{display:flex;flex-direction:column;gap:1px}
+.ds-nav a{
+  display:flex;align-items:center;gap:10px;
+  padding:8px 10px;border-radius:var(--radius-sm);
+  font-size:13px;color:var(--fg-2);font-weight:500;
+}
+.ds-nav a:hover{background:var(--bg-2);color:var(--fg)}
+.ds-nav a.active{background:var(--bg-2);color:var(--fg)}
+.ds-nav a.active::before{content:"";width:2px;height:14px;background:var(--cyan);border-radius:2px;margin-left:-4px;margin-right:8px}
+.ds-nav svg{width:14px;height:14px;color:var(--fg-3);flex:none}
+.ds-nav a.active svg{color:var(--fg)}
+.ds-nav .count{margin-left:auto;font-family:var(--font-mono);font-size:10px;color:var(--fg-3);background:var(--bg-3);padding:2px 6px;border-radius:4px}
+
+.dash-main{padding:24px 32px 48px;min-width:0;display:flex;flex-direction:column;gap:24px}
+.dash-h{display:flex;align-items:flex-end;justify-content:space-between;gap:24px;flex-wrap:wrap}
+.dash-h h1{
+  font-family:var(--font-display);font-weight:600;font-size:28px;letter-spacing:-0.02em;line-height:1.15;
+  margin:0;
+}
+.dash-h .sub{font-size:13px;color:var(--fg-3);margin:6px 0 0;font-family:var(--font-mono);letter-spacing:0.04em}
+.dash-h .right{display:flex;gap:8px;align-items:center}
+
+/* card primitives reused on subpages */
+.card{background:var(--bg-2);border:1px solid var(--line);border-radius:var(--radius-lg);overflow:hidden;display:flex;flex-direction:column}
+.card-h{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:14px 16px;border-bottom:1px solid var(--line)}
+.card-h h3{margin:0;font-size:14px;font-weight:600;color:var(--fg)}
+.card-h .sub{font-family:var(--font-mono);font-size:10px;letter-spacing:0.06em;text-transform:uppercase;color:var(--fg-3)}
+.card-body{padding:16px;display:flex;flex-direction:column;gap:12px}
+
+/* form bits */
+.field{display:flex;flex-direction:column;gap:6px}
+.field label{font-family:var(--font-mono);font-size:10px;letter-spacing:0.08em;text-transform:uppercase;color:var(--fg-3)}
+.field .hint{font-size:11px;color:var(--fg-4);margin-top:-2px}
+
+/* responsive */
+@media(max-width:1100px){
+  .dash{grid-template-columns:1fr}
+  .dash-side{position:static;height:auto;flex-direction:row;flex-wrap:wrap;border-right:0;border-bottom:1px solid var(--line)}
+  .ds-nav{flex-direction:row;flex-wrap:wrap}
+}
+
+/* lnk: small inline action link */
+.lnk{font-size:11px;color:var(--cyan);font-weight:500;font-family:var(--font-mono);letter-spacing:0.04em}
+.lnk:hover{color:var(--fg)}

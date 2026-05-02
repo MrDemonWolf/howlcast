@@ -1,0 +1,423 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>HowlCast</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@500;600;700&family=Geist+Mono:wght@400;500;600&family=Geist:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="shared.css" />
+
+  <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+
+  <style>
+    /* page chrome — view switcher */
+    body{padding-top:48px}
+    .view-switcher{
+      position:fixed;top:0;left:0;right:0;height:48px;z-index:100;
+      background:oklch(0.183 0.067 271 / 0.85);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+      border-bottom:1px solid var(--line);
+      display:flex;align-items:center;justify-content:space-between;padding:0 20px;
+    }
+    .view-switcher .crumbs{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--fg-3);font-family:var(--font-mono);letter-spacing:0.04em}
+    .view-switcher .crumbs b{color:var(--fg);font-weight:500}
+    .view-tabs{display:flex;gap:2px;background:var(--bg-2);border:1px solid var(--line);border-radius:var(--radius-sm);padding:3px}
+    .view-tabs a{
+      height:28px;padding:0 12px;display:inline-flex;align-items:center;
+      font-size:12px;font-weight:500;color:var(--fg-3);border-radius:5px;
+      font-family:var(--font-ui);
+    }
+    .view-tabs a.active{background:var(--bg-3);color:var(--fg)}
+    .view-tabs a:hover{color:var(--fg)}
+    .view-meta{font-family:var(--font-mono);font-size:10px;color:var(--fg-4);letter-spacing:0.06em}
+    .doc{padding:0;max-width:none}
+    [data-screen-label]{display:block}
+
+    /* Den layout has its own inner nav; the va-nav was 56px. Overrides for embedding stand-alone */
+    .va-shell{border:0;border-radius:0;min-height:calc(100vh - 48px)}
+    .va-page{min-height:calc(100vh - 48px - 56px - 1px)}
+    .va-nav{position:sticky;top:48px;z-index:5}
+    .va-tabs{top:104px}
+  </style>
+</head>
+<body>
+  <!-- view switcher: prototype-level only, not part of the product -->
+  <div class="view-switcher" aria-label="Prototype view switcher">
+    <div class="crumbs">
+      <span>HowlCast</span><span>›</span><b id="crumb-current">Channel</b>
+    </div>
+    <nav class="view-tabs" aria-label="Switch view">
+      <a href="HowlCast.html" class="active">Channel</a>
+      <a href="Dashboard.html">Dashboard</a>
+      <a href="Account.html">Account</a>
+      <a href="Email.html">Email</a>
+    </nav>
+    <span class="view-meta">v0.2 · prototype</span>
+  </div>
+
+  <!-- ─── DEN — channel page ─────────────────────────────────── -->
+  <div class="va-shell" id="va-live" data-screen-label="Channel — Live">
+    <div class="nav va-nav">
+      <a class="brand" href="HowlCast.html"><span class="brand-mark">H</span>HowlCast</a>
+      <div class="nav-search" role="search" aria-label="Emote picker">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><circle cx="9" cy="10" r="0.6" fill="currentColor"/><circle cx="15" cy="10" r="0.6" fill="currentColor"/></svg>
+        <span class="grow">Find an emote…</span>
+        <kbd>⌘ K</kbd>
+      </div>
+      <div class="nav-right">
+        <a class="nav-link active" href="HowlCast.html">Stream</a>
+        <a href="Account.html" class="avatar sm halo" aria-label="Account">M</a>
+      </div>
+    </div>
+
+    <div class="va-page">
+      <div class="va-main reveal">
+        <div class="va-player">
+          <div class="ph-video"><div class="label">live · 1080p · 60fps</div></div>
+          <span class="live-pill"><i></i>Live</span>
+          <span class="viewer-chip">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>
+            1,247
+          </span>
+        </div>
+
+        <div class="va-info">
+          <div class="avatar halo" aria-label="MrDemonWolf">M
+            <span class="live-dot" aria-hidden="true"></span>
+          </div>
+          <div class="who">
+            <div class="name">MrDemonWolf
+              <svg class="verified" viewBox="0 0 24 24" aria-label="verified">
+                <circle class="outer" cx="12" cy="12" r="11"/>
+                <path class="check" d="M7.5 12.5l3 3 6-6"/>
+              </svg>
+            </div>
+            <div class="title" data-tweak="headline">Late night chill stream — working on Wolf Run</div>
+          </div>
+          <div class="actions">
+            <span class="owner-pill" id="mode-pill" title="You're viewing as the broadcaster">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 0 1 18 0"/><path d="M12 3v9l4 2"/></svg>
+              Broadcaster view
+            </span>
+            <button class="btn btn-secondary" id="edit-toggle">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4v16h16v-7"/><path d="m18 2 4 4-10 10H8v-4z"/></svg>
+              Edit panels
+            </button>
+            <button class="btn-icon" aria-label="More"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="5" cy="12" r="1.4"/><circle cx="12" cy="12" r="1.4"/><circle cx="19" cy="12" r="1.4"/></svg></button>
+          </div>
+        </div>
+
+        <div id="panels-mount"></div>
+      </div>
+
+      <aside class="va-chat">
+        <div class="chat">
+          <div class="chat-h">
+            <span class="t" id="chat-title">Stream chat · 312 in den</span>
+            <div style="display:inline-flex;gap:2px">
+              <button class="btn-icon" aria-label="Pop out chat" title="Pop out chat" id="chat-popout">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 4h6v6"/><path d="m20 4-9 9"/><path d="M21 15v3a3 3 0 0 1-3 3H6a3 3 0 0 1-3-3V6a3 3 0 0 1 3-3h3"/></svg>
+              </button>
+              <button class="btn-icon" aria-label="Chat settings">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+              </button>
+            </div>
+          </div>
+          <div class="chat-pinned">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 17v5"/><path d="M9 11V5l-2-2h10l-2 2v6l4 4H5l4-4z"/></svg>
+            <div class="pp"><b>Pinned · MrDemonWolf —</b> Heads up: tonight is chill mode, working through the Wolf Run jump physics. New here? Say hi (no DM spam pls)</div>
+          </div>
+          <div class="chat-list">
+            <div class="msg"><span class="ts">22:41</span><span class="badge mod"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2 4 5v6c0 5 4 9 8 11 4-2 8-6 8-11V5z"/></svg></span><span class="who mod">silver_fox</span><span>:</span><span class="body">welcome back wolf, the audio is crisp tonight</span></div>
+            <div class="msg"><span class="ts">22:41</span><span class="who viewer">paw_print_22</span><span>:</span><span class="body">that bug was nasty lol <span class="emote code"></span></span></div>
+            <div class="msg"><span class="ts">22:42</span><span class="who viewer">tundra</span><span>:</span><span class="body">the jump arc feels way better now</span></div>
+            <div class="msg"><span class="ts">22:42</span><span class="badge broad"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2 4 5v6c0 5 4 9 8 11 4-2 8-6 8-11V5z"/></svg></span><span class="who broad">MrDemonWolf</span><span>:</span><span class="body">fixed it! coyote time was off by two frames <span class="emote howl"></span></span></div>
+            <div class="msg"><span class="ts">22:43</span><span class="who viewer">embers</span><span>:</span><span class="body">two frames you say</span></div>
+            <div class="msg"><span class="ts">22:43</span><span class="who viewer">hex_husky</span><span>:</span><span class="body">classic. ship it</span></div>
+            <div class="msg"><span class="ts">22:44</span><span class="who viewer">moonbark</span><span>:</span><span class="body">the hat physics is still sending me <span class="emote"></span><span class="emote"></span></span></div>
+            <div class="msg"><span class="ts">22:44</span><span class="who viewer">paw_print_22</span><span>:</span><span class="body">we need a sombrero variant</span></div>
+            <div class="msg"><span class="ts">22:45</span><span class="badge mod"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2 4 5v6c0 5 4 9 8 11 4-2 8-6 8-11V5z"/></svg></span><span class="who mod">silver_fox</span><span>:</span><span class="body">@newcomer please read the den rules linked under the player</span></div>
+            <div class="msg"><span class="ts">22:46</span><span class="who viewer">aurora</span><span>:</span><span class="body">first time catching a stream live, this is cozy</span></div>
+            <div class="msg"><span class="ts">22:46</span><span class="who viewer">kit</span><span>:</span><span class="body">+1, found this thru the discord invite</span></div>
+            <div class="msg"><span class="ts">22:47</span><span class="who viewer">tundra</span><span>:</span><span class="body">the cyan accent on the verified badge is so much nicer than blue</span></div>
+          </div>
+          <div class="chat-foot" id="chat-foot-broadcaster">
+            <div class="chat-input">
+              <input placeholder="Send a message" aria-label="Chat message"/>
+              <button class="btn-icon" aria-label="Emotes"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><circle cx="9" cy="10" r="0.6" fill="currentColor"/><circle cx="15" cy="10" r="0.6" fill="currentColor"/></svg></button>
+            </div>
+            <div class="chat-foot-row">
+              <span class="mono" style="color:var(--fg-3);font-size:11px">slow mode · 3s</span>
+              <button class="send">Send</button>
+            </div>
+          </div>
+          <div class="chat-foot chat-cta" id="chat-foot-public" style="display:none">
+            <div class="cta-inner">
+              <div class="cta-ico">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg>
+              </div>
+              <div class="cta-txt">
+                <b>Chat is invite-only.</b>
+                <span>Watching is open to anyone — posting is for the den. DM <span class="mono" style="color:var(--cyan)">@mrdemonwolf</span> to get in.</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </aside>
+    </div>
+  </div>
+
+  <style>
+    /* Mode pill in info bar */
+    .owner-pill{
+      display:inline-flex;align-items:center;gap:6px;
+      font-family:var(--font-mono);font-size:10px;letter-spacing:0.06em;text-transform:uppercase;
+      background:var(--cyan-soft);color:var(--cyan);
+      padding:5px 9px;border-radius:5px;border:1px solid var(--cyan);
+    }
+    .owner-pill svg{width:12px;height:12px}
+    .owner-pill.is-public{
+      background:oklch(0.4 0.13 162 / 0.18);color:var(--success);
+      border-color:oklch(0.78 0.17 162 / 0.4);
+    }
+    .owner-pill.is-private{
+      background:oklch(0.4 0.12 290 / 0.22);color:oklch(0.82 0.14 295);
+      border-color:oklch(0.6 0.16 290 / 0.5);
+    }
+
+    /* Public-mode chat read-only CTA */
+    .chat-cta{padding:14px 14px 16px}
+    .chat-cta .cta-inner{
+      display:flex;gap:12px;align-items:flex-start;
+      padding:12px;border-radius:var(--radius);
+      background:oklch(0.42 0.09 235 / 0.12);
+      border:1px solid var(--cyan-soft);
+    }
+    .chat-cta .cta-ico{
+      width:32px;height:32px;flex:none;border-radius:6px;
+      background:oklch(0.42 0.09 235 / 0.3);color:var(--cyan);
+      display:flex;align-items:center;justify-content:center;
+    }
+    .chat-cta .cta-ico svg{width:16px;height:16px}
+    .chat-cta .cta-txt{display:flex;flex-direction:column;gap:3px;min-width:0}
+    .chat-cta .cta-txt b{font-size:13px;color:var(--fg);font-weight:600}
+    .chat-cta .cta-txt span{font-size:12px;color:var(--fg-2);line-height:1.45}
+    #edit-toggle.is-on{background:var(--cyan);color:#091533;border-color:var(--cyan)}
+    #edit-toggle.is-on:hover{background:var(--cyan)}
+
+    /* Edit-mode visual chrome */
+    .panels-editing .va-panels::before{
+      content:"Edit mode · drag with arrows, click pencil to edit, trash to delete";
+      display:block;grid-column:1/-1;
+      font-family:var(--font-mono);font-size:10px;letter-spacing:0.08em;text-transform:uppercase;
+      color:var(--cyan);padding:8px 12px;
+      background:oklch(0.42 0.09 235 / 0.18);border:1px dashed var(--cyan-soft);
+      border-radius:var(--radius-sm);margin-bottom:4px;
+    }
+    .panel.is-edit{
+      outline:1px dashed oklch(0.45 0.06 240);outline-offset:-1px;
+      transition:outline-color 0.15s ease;
+    }
+    .panel.is-edit:hover{outline-color:var(--cyan)}
+    .panel-tools{
+      position:absolute;top:8px;right:8px;
+      display:flex;gap:2px;
+      background:var(--bg);border:1px solid var(--line);border-radius:6px;
+      padding:2px;z-index:2;
+      box-shadow:0 4px 12px rgba(0,0,0,0.4);
+    }
+    .ptool{
+      width:24px;height:24px;display:inline-flex;align-items:center;justify-content:center;
+      background:transparent;border:0;border-radius:4px;color:var(--fg-3);cursor:pointer;
+    }
+    .ptool:hover{background:var(--bg-3);color:var(--fg)}
+    .ptool:disabled{opacity:0.3;cursor:not-allowed}
+    .ptool svg{width:13px;height:13px}
+    .ptool.danger:hover{background:var(--destructive);color:#fff}
+    .panel{position:relative}
+
+    /* New panel content types */
+    .panel-img{
+      aspect-ratio:16/9;border-radius:var(--radius-sm);
+      background:linear-gradient(135deg, oklch(0.34 0.08 250), oklch(0.28 0.06 280));
+      margin-bottom:10px;position:relative;overflow:hidden;
+    }
+    .panel-img::after{
+      content:"";position:absolute;inset:0;
+      background:radial-gradient(circle at 30% 30%, oklch(0.5 0.16 230 / 0.4), transparent 60%);
+    }
+    .panel-embed{
+      aspect-ratio:16/9;border-radius:var(--radius-sm);
+      background:#000;border:1px solid var(--line);margin-bottom:10px;
+      display:flex;align-items:center;justify-content:center;color:var(--fg-3);
+      font-family:var(--font-mono);font-size:11px;letter-spacing:0.04em;
+    }
+    .panel-embed span{display:inline-flex;align-items:center;gap:8px}
+    .panel-list{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:6px}
+    .panel-list li{
+      font-size:13px;color:var(--fg-2);padding-left:14px;position:relative;
+    }
+    .panel-list li::before{
+      content:"";position:absolute;left:0;top:8px;width:4px;height:4px;
+      border-radius:999px;background:var(--cyan);
+    }
+
+    /* Add tile */
+    .panel-add{
+      grid-column:span 1;
+    }
+    .panel-add.is-open{grid-column:1/-1}
+    .add-bare{
+      width:100%;min-height:140px;border-radius:var(--radius-lg);
+      background:transparent;border:1.5px dashed oklch(0.42 0.04 240);
+      color:var(--fg-3);cursor:pointer;
+      display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;
+      transition:border-color 0.15s, color 0.15s, background 0.15s;
+      font-family:inherit;
+    }
+    .add-bare:hover{border-color:var(--cyan);color:var(--cyan);background:oklch(0.42 0.09 235 / 0.08)}
+    .add-bare .plus{font-size:32px;font-weight:300;line-height:1}
+    .add-bare .hint{font-family:var(--font-mono);font-size:10px;color:var(--fg-4);letter-spacing:0.06em}
+    .add-tray{
+      background:var(--bg-2);border:1px solid var(--cyan-soft);border-radius:var(--radius-lg);
+      padding:14px;
+    }
+    .add-h{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+    .add-h span{font-family:var(--font-mono);font-size:10px;letter-spacing:0.08em;text-transform:uppercase;color:var(--cyan)}
+    .add-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px}
+    .tpl{
+      display:flex;flex-direction:column;align-items:flex-start;gap:4px;
+      padding:14px;background:var(--bg-3);border:1px solid var(--line);border-radius:var(--radius-sm);
+      cursor:pointer;text-align:left;font-family:inherit;
+      transition:border-color 0.15s, background 0.15s;
+    }
+    .tpl:hover{border-color:var(--cyan);background:oklch(0.42 0.09 235 / 0.12)}
+    .tpl-ico{
+      width:28px;height:28px;border-radius:6px;background:var(--bg);
+      display:inline-flex;align-items:center;justify-content:center;color:var(--cyan);
+      margin-bottom:4px;
+    }
+    .tpl-ico svg{width:14px;height:14px}
+    .tpl b{font-size:13px;color:var(--fg);font-weight:600}
+    .tpl-desc{font-family:var(--font-mono);font-size:10px;color:var(--fg-3);letter-spacing:0.04em}
+
+    /* Edit drawer */
+    .drawer-backdrop{
+      position:fixed;inset:0;background:rgba(0,0,0,0.5);backdrop-filter:blur(4px);z-index:200;
+      display:flex;justify-content:flex-end;
+      animation:fadein 0.2s ease;
+    }
+    @keyframes fadein{from{opacity:0}to{opacity:1}}
+    .drawer{
+      width:480px;max-width:95vw;height:100vh;
+      background:var(--bg);border-left:1px solid var(--line);
+      display:flex;flex-direction:column;
+      animation:slidein 0.25s cubic-bezier(0.2,0.8,0.2,1);
+    }
+    @keyframes slidein{from{transform:translateX(40px);opacity:0}to{transform:translateX(0);opacity:1}}
+    .drawer-h{
+      display:flex;justify-content:space-between;align-items:flex-start;
+      padding:18px 20px 14px;border-bottom:1px solid var(--line);
+    }
+    .drawer-h h3{margin:6px 0 0;font-size:18px;font-weight:600;font-family:var(--font-display);letter-spacing:-0.01em}
+    .kind-pill{
+      font-family:var(--font-mono);font-size:9px;letter-spacing:0.1em;text-transform:uppercase;
+      background:var(--cyan-soft);color:var(--cyan);padding:3px 7px;border-radius:4px;font-weight:500;
+    }
+    .drawer-body{padding:20px;display:flex;flex-direction:column;gap:14px;overflow-y:auto;flex:1}
+    .drawer-body label{
+      display:flex;flex-direction:column;gap:6px;
+      font-family:var(--font-mono);font-size:10px;letter-spacing:0.08em;text-transform:uppercase;color:var(--fg-3);
+    }
+    .drawer-foot{
+      padding:14px 20px;border-top:1px solid var(--line);
+      display:flex;justify-content:flex-end;gap:8px;
+    }
+  </style>
+  <script type="text/babel" src="tweaks-panel.jsx"></script>
+  <script type="text/babel" src="panels-editor.jsx"></script>
+  <script type="text/babel">
+    const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
+      "accentHue": 204,
+      "accentChroma": 0.2,
+      "density": "compact",
+      "showChat": true,
+      "live": true,
+      "streamMode": "private",
+      "headline": "Late night chill stream — working on Wolf Run"
+    }/*EDITMODE-END*/;
+
+    function applyTweaks(t){
+      const root = document.documentElement;
+      root.style.setProperty('--cyan', `oklch(0.706 ${t.accentChroma} ${t.accentHue})`);
+      root.style.setProperty('--cyan-soft', `oklch(0.42 ${Math.min(t.accentChroma, 0.1)} ${t.accentHue})`);
+      root.style.setProperty('--cyan-glow', `oklch(0.706 ${t.accentChroma} ${t.accentHue} / 0.18)`);
+      const map = {compact: 12, regular: 14, comfy: 16};
+      document.body.style.fontSize = map[t.density] + 'px';
+      document.querySelectorAll('.va-chat').forEach(el => { el.style.display = t.showChat ? '' : 'none'; });
+      document.querySelectorAll('.va-page').forEach(el => { el.style.gridTemplateColumns = t.showChat ? '' : 'minmax(0,1fr)'; });
+      document.querySelectorAll('[data-tweak="headline"]').forEach(el => { el.textContent = t.headline; });
+
+      // stream mode: public = read-only chat CTA, private = real input
+      const isPrivate = t.streamMode === 'private';
+      const fb = document.getElementById('chat-foot-broadcaster');
+      const fp = document.getElementById('chat-foot-public');
+      if (fb) fb.style.display = isPrivate ? '' : 'none';
+      if (fp) fp.style.display = isPrivate ? 'none' : '';
+      const title = document.getElementById('chat-title');
+      if (title) title.textContent = isPrivate ? 'Stream chat · 312 in den' : 'Stream chat · public · 1,247 watching';
+      const pill = document.getElementById('mode-pill');
+      if (pill){
+        pill.classList.remove('is-public','is-private');
+        pill.classList.add(isPrivate ? 'is-private' : 'is-public');
+        // Replace label text node (last child after the SVG)
+        const svg = pill.querySelector('svg');
+        if (svg && svg.nextSibling) svg.nextSibling.nodeValue = isPrivate ? ' Private · invite-only' : ' Public · open watch';
+      }
+    }
+
+    function App(){
+      const [t, setTweak] = useTweaks(TWEAK_DEFAULTS);
+      React.useEffect(() => { applyTweaks(t); }, [t]);
+      return (
+        <TweaksPanel title="Tweaks">
+          <TweakSection label="Accent" />
+          <TweakSlider label="Hue" value={t.accentHue} min={180} max={320} step={1} onChange={(v) => setTweak('accentHue', v)} />
+          <TweakSlider label="Chroma" value={t.accentChroma} min={0.04} max={0.2} step={0.005} onChange={(v) => setTweak('accentChroma', v)} />
+          <TweakSection label="Stream" />
+          <TweakRadio label="Mode" value={t.streamMode} options={['public','private']} onChange={(v) => setTweak('streamMode', v)} />
+          <TweakSection label="Layout" />
+          <TweakRadio label="Density" value={t.density} options={['compact','regular','comfy']} onChange={(v) => setTweak('density', v)} />
+          <TweakToggle label="Show chat" value={t.showChat} onChange={(v) => setTweak('showChat', v)} />
+          <TweakSection label="Content" />
+          <TweakText label="Stream title" value={t.headline} onChange={(v) => setTweak('headline', v)} />
+        </TweaksPanel>
+      );
+    }
+    applyTweaks(TWEAK_DEFAULTS);
+    const mount = document.createElement('div');
+    document.body.appendChild(mount);
+    ReactDOM.createRoot(mount).render(<App />);
+
+    // Mount editable panels
+    const pmount = document.getElementById('panels-mount');
+    if (pmount) ReactDOM.createRoot(pmount).render(<PanelsApp />);
+
+    // Pop-out chat button — opens a minimal chat-only window
+    document.getElementById('chat-popout')?.addEventListener('click', () => {
+      const w = window.open('', 'howlcast-chat', 'width=380,height=640,menubar=no,toolbar=no');
+      if (!w) return;
+      const chatHTML = document.querySelector('.va-chat')?.outerHTML || '';
+      const sharedHref = new URL('shared.css', location.href).href;
+      w.document.write(`<!doctype html><html><head><title>HowlCast · Chat</title>
+        <link rel="stylesheet" href="${sharedHref}">
+        <style>body{margin:0;padding:0;background:var(--bg)}.va-chat{height:100vh;border:0;border-radius:0}.chat{height:100%}</style>
+        </head><body>${chatHTML}</body></html>`);
+      w.document.close();
+    });
+  </script>
+</body>
+</html>

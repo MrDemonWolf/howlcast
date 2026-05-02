@@ -1,0 +1,325 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>HowlCast — Panels</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@500;600;700&family=Geist+Mono:wght@400;500;600&family=Geist:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="shared.css" />
+  <link rel="stylesheet" href="dash-shell.css" />
+  <style>
+    /* horizontal sortable list of panels */
+    .panel-list{display:flex;flex-direction:column;gap:10px}
+    .panel-item{
+      display:grid;grid-template-columns:auto auto 1fr auto auto;gap:14px;align-items:center;
+      padding:14px 14px 14px 8px;
+      background:var(--bg-3);border:1px solid var(--line);border-radius:var(--radius);
+      cursor:default;transition:border-color 120ms ease,transform 120ms ease;
+    }
+    .panel-item:hover{border-color:var(--cyan-soft)}
+    .panel-item .grip{
+      width:18px;height:32px;display:flex;align-items:center;justify-content:center;color:var(--fg-4);cursor:grab;
+    }
+    .panel-item .grip svg{width:14px;height:14px}
+    .panel-item .thumb{
+      width:80px;height:60px;border-radius:6px;overflow:hidden;flex:none;
+      background:linear-gradient(135deg,var(--bg-2),var(--bg));
+      border:1px solid var(--line);
+      display:flex;align-items:center;justify-content:center;
+      font-family:var(--font-display);font-weight:700;font-size:18px;color:var(--fg);
+      position:relative;
+    }
+    .panel-item .thumb .mini{font-family:var(--font-mono);font-size:9px;color:var(--fg-3);letter-spacing:0.06em;text-transform:uppercase;position:absolute;bottom:4px;left:6px}
+    .panel-item .det{display:flex;flex-direction:column;gap:2px;min-width:0}
+    .panel-item .det b{font-size:14px;color:var(--fg);font-weight:600}
+    .panel-item .det span{font-size:12px;color:var(--fg-3);line-height:1.45}
+    .panel-item .det small{font-family:var(--font-mono);font-size:10px;color:var(--fg-4);letter-spacing:0.04em;text-transform:uppercase;display:flex;align-items:center;gap:6px;margin-top:2px}
+    .panel-item .det small .pill{background:var(--bg-2);border:1px solid var(--line);padding:1px 6px;border-radius:3px;color:var(--fg-3)}
+    .panel-item .det small .pill.cyan{color:var(--cyan);border-color:var(--cyan-soft);background:oklch(0.42 0.09 235 / 0.3)}
+    .panel-item .det small .pill.green{color:var(--success);border-color:oklch(0.5 0.13 162 / 0.5);background:oklch(0.4 0.1 162 / 0.3)}
+    .panel-item .det small .pill.warm{color:oklch(0.85 0.14 50);border-color:oklch(0.55 0.18 50 / 0.5);background:oklch(0.45 0.18 50 / 0.25)}
+    .panel-item .acts{display:flex;gap:6px;align-items:center}
+    .panel-item .acts button{
+      width:30px;height:30px;border-radius:6px;background:var(--bg-2);border:1px solid var(--line);
+      display:inline-flex;align-items:center;justify-content:center;color:var(--fg-3);
+    }
+    .panel-item .acts button:hover{color:var(--fg);border-color:var(--cyan-soft)}
+    .panel-item .acts button svg{width:14px;height:14px}
+    .panel-item .vis{display:flex;align-items:center;gap:8px;font-family:var(--font-mono);font-size:11px;color:var(--fg-3);letter-spacing:0.04em;text-transform:uppercase}
+    .panel-item .vis .dot{width:6px;height:6px;border-radius:50%;background:var(--success)}
+    .panel-item .vis.hidden .dot{background:var(--fg-4)}
+    .panel-item .vis.hidden{color:var(--fg-4)}
+
+    /* template picker */
+    .tpl-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:10px}
+    .tpl{
+      padding:14px 12px;background:var(--bg-3);border:1px solid var(--line);border-radius:var(--radius);
+      display:flex;flex-direction:column;gap:8px;cursor:pointer;
+      transition:border-color 120ms ease,transform 120ms ease;
+    }
+    .tpl:hover{border-color:var(--cyan-soft);transform:translateY(-2px)}
+    .tpl .ico{
+      width:32px;height:32px;border-radius:8px;
+      background:oklch(0.42 0.09 235 / 0.4);border:1px solid var(--cyan-soft);
+      display:flex;align-items:center;justify-content:center;color:var(--cyan);
+    }
+    .tpl .ico svg{width:14px;height:14px}
+    .tpl b{font-size:13px;color:var(--fg);font-weight:600}
+    .tpl span{font-size:11px;color:var(--fg-3);line-height:1.45}
+
+    /* live preview as it appears on the channel */
+    .channel-preview{
+      padding:18px;background:linear-gradient(135deg,var(--bg-2),var(--bg));
+      border:1px solid var(--line);border-radius:var(--radius);
+      display:grid;grid-template-columns:repeat(5,1fr);gap:10px;
+    }
+    .ch-panel{
+      padding:12px;background:var(--bg-3);border:1px solid var(--line);border-radius:var(--radius);
+      display:flex;flex-direction:column;gap:6px;min-height:120px;
+    }
+    .ch-panel .h{display:flex;align-items:center;gap:8px}
+    .ch-panel .h .dot{width:5px;height:5px;border-radius:50%;background:var(--cyan)}
+    .ch-panel .h b{font-size:12px;color:var(--fg);font-weight:600}
+    .ch-panel p{margin:0;font-size:11px;color:var(--fg-2);line-height:1.5}
+    .ch-panel .lnk{font-family:var(--font-mono);font-size:10px;color:var(--cyan);margin-top:auto;letter-spacing:0.04em}
+    .ch-panel.image{
+      background:linear-gradient(135deg,oklch(0.4 0.1 271 / 0.5),oklch(0.45 0.13 235 / 0.4));
+      border-color:var(--cyan-soft);
+      align-items:center;justify-content:center;
+    }
+    .ch-panel.image span{font-family:var(--font-mono);font-size:11px;color:var(--cyan);letter-spacing:0.04em}
+
+    .two-up{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+    @media(max-width:1100px){.tpl-grid,.channel-preview{grid-template-columns:repeat(2,1fr)}.two-up{grid-template-columns:1fr}}
+  </style>
+</head>
+<body>
+  <div class="view-switcher">
+    <div class="crumbs"><span>HowlCast</span><span>›</span><span>Dashboard</span><span>›</span><b>Panels</b></div>
+    <nav class="view-tabs"><a href="HowlCast.html">Channel</a><a href="Dashboard.html" class="active">Dashboard</a><a href="Account.html">Account</a><a href="Email.html">Email</a></nav>
+    <span class="view-meta">v0.2 · prototype</span>
+  </div>
+
+  <div class="dash" data-screen-label="Dashboard — Panels">
+    <aside class="dash-side">
+      <div class="ds-brand">
+        <div class="avatar md halo">M<span class="live-dot"></span></div>
+        <div class="who"><b>MrDemonWolf<svg class="verified" viewBox="0 0 24 24"><circle class="outer" cx="12" cy="12" r="11"/><path class="check" d="M7.5 12.5l3 3 6-6"/></svg></b><span>BROADCASTER</span></div>
+      </div>
+      <div class="ds-go"><div class="left"><span class="dot"></span>On air · 02:14</div><button class="end">End</button></div>
+      <div>
+        <div class="ds-section" style="padding-bottom:6px">Live</div>
+        <nav class="ds-nav">
+          <a href="Dashboard.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="14" height="12" rx="2"/><path d="m22 8-6 4 6 4z"/></svg>Stream</a>
+          <a href="Stats.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="m7 14 4-4 4 4 5-5"/></svg>Stats</a>
+        </nav>
+      </div>
+      <div>
+        <div class="ds-section" style="padding-bottom:6px">Channel</div>
+        <nav class="ds-nav">
+          <a class="active" href="Panels.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9 12 2l9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>Panels<span class="count">5</span></a>
+          <a href="Emotes.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4"/></svg>Emotes</a>
+          <a href="Branding.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 4 6v6c0 5 3.5 8.5 8 10 4.5-1.5 8-5 8-10V6z"/></svg>Branding</a>
+
+          <a href="Email.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m2 7 10 7 10-7"/></svg>Invite emails</a>
+          <a href="StreamKey.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 4h6v6"/><path d="m20 4-9 9"/><path d="M21 15v3a3 3 0 0 1-3 3H6a3 3 0 0 1-3-3V6a3 3 0 0 1 3-3h3"/></svg>Stream key</a>
+          <a href="Notifications.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>Notifications</a>
+        </nav>
+      </div>
+      <div style="margin-top:auto">
+        <div class="ds-section" style="padding-bottom:6px">Server</div>
+        <nav class="ds-nav">
+          <a href="Account.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>Account</a>
+        </nav>
+      </div>
+    </aside>
+
+    <div class="dash-main">
+
+      <header class="dash-h">
+        <div>
+          <h1>Channel panels</h1>
+          <p class="sub">5 of 12 used · these show under the player on your channel · drag to reorder</p>
+        </div>
+        <div class="right">
+          <a class="btn btn-secondary" href="HowlCast.html">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>
+            View on channel
+          </a>
+          <button class="btn btn-primary">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+            New panel
+          </button>
+        </div>
+      </header>
+
+      <!-- existing panels -->
+      <div class="card">
+        <div class="card-h">
+          <h3>Your panels</h3>
+          <span class="sub">5 of 12</span>
+        </div>
+        <div class="card-body">
+          <div class="panel-list">
+
+            <div class="panel-item">
+              <div class="grip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="6" r="1"/><circle cx="9" cy="12" r="1"/><circle cx="9" cy="18" r="1"/><circle cx="15" cy="6" r="1"/><circle cx="15" cy="12" r="1"/><circle cx="15" cy="18" r="1"/></svg></div>
+              <div class="thumb">M<div class="mini">about</div></div>
+              <div class="det">
+                <b>About the den</b>
+                <span>Hey — I'm Wolf. Late-night coding, slow systems, no algorithm to feed. If you're here, someone trusted you with the link.</span>
+                <small><span class="pill cyan">TEXT</span><span class="pill">128 chars</span><span class="pill">edited 2d ago</span></small>
+              </div>
+              <div class="vis"><span class="dot"></span>Visible</div>
+              <div class="acts">
+                <button title="Edit"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4z"/></svg></button>
+                <button title="Duplicate"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>
+                <button title="Hide"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><path d="M14.12 14.12a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg></button>
+              </div>
+            </div>
+
+            <div class="panel-item">
+              <div class="grip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="6" r="1"/><circle cx="9" cy="12" r="1"/><circle cx="9" cy="18" r="1"/><circle cx="15" cy="6" r="1"/><circle cx="15" cy="12" r="1"/><circle cx="15" cy="18" r="1"/></svg></div>
+              <div class="thumb" style="background:linear-gradient(135deg,oklch(0.4 0.13 280 / 0.6),oklch(0.45 0.16 305 / 0.4));border-color:oklch(0.55 0.18 280 / 0.5);color:oklch(0.85 0.14 280)">DC<div class="mini">discord</div></div>
+              <div class="det">
+                <b>Wolf Den · Discord</b>
+                <span>Slower-paced text channel, 1,847 invitees. The link rotates — request it via DM if yours expires.</span>
+                <small><span class="pill cyan">LINK</span><span class="pill">discord.gg/···</span><span class="pill green">verified</span></small>
+              </div>
+              <div class="vis"><span class="dot"></span>Visible</div>
+              <div class="acts">
+                <button title="Edit"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4z"/></svg></button>
+                <button title="Duplicate"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>
+                <button title="Hide"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><path d="M14.12 14.12a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg></button>
+              </div>
+            </div>
+
+            <div class="panel-item">
+              <div class="grip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="6" r="1"/><circle cx="9" cy="12" r="1"/><circle cx="9" cy="18" r="1"/><circle cx="15" cy="6" r="1"/><circle cx="15" cy="12" r="1"/><circle cx="15" cy="18" r="1"/></svg></div>
+              <div class="thumb" style="background:linear-gradient(135deg,oklch(0.5 0.17 30 / 0.55),oklch(0.55 0.2 50 / 0.4));border-color:oklch(0.55 0.18 50 / 0.5);color:oklch(0.85 0.14 50)">☕<div class="mini">ko-fi</div></div>
+              <div class="det">
+                <b>Ko-fi · keep the lights on</b>
+                <span>One-time tip or monthly. Goes 100% to server costs &amp; coffee. Tier $8+ unlocks tier-2 emotes.</span>
+                <small><span class="pill cyan">EMBED</span><span class="pill warm">$56 this stream</span><span class="pill">14 supporters</span></small>
+              </div>
+              <div class="vis"><span class="dot"></span>Visible</div>
+              <div class="acts">
+                <button title="Edit"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4z"/></svg></button>
+                <button title="Duplicate"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>
+                <button title="Hide"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><path d="M14.12 14.12a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg></button>
+              </div>
+            </div>
+
+            <div class="panel-item">
+              <div class="grip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="6" r="1"/><circle cx="9" cy="12" r="1"/><circle cx="9" cy="18" r="1"/><circle cx="15" cy="6" r="1"/><circle cx="15" cy="12" r="1"/><circle cx="15" cy="18" r="1"/></svg></div>
+              <div class="thumb" style="background:linear-gradient(135deg,oklch(0.4 0.1 162 / 0.55),oklch(0.45 0.13 162 / 0.4));border-color:oklch(0.5 0.13 162 / 0.5);color:oklch(0.85 0.16 162)">⚙<div class="mini">setup</div></div>
+              <div class="det">
+                <b>Stream setup &amp; gear</b>
+                <span>List of what's running this stream — keyboard, mic, IDE theme. Auto-updates from Hardware.json on the server.</span>
+                <small><span class="pill cyan">LIST</span><span class="pill">8 items</span><span class="pill green">auto-synced</span></small>
+              </div>
+              <div class="vis"><span class="dot"></span>Visible</div>
+              <div class="acts">
+                <button title="Edit"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4z"/></svg></button>
+                <button title="Duplicate"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>
+                <button title="Hide"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><path d="M14.12 14.12a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg></button>
+              </div>
+            </div>
+
+            <div class="panel-item">
+              <div class="grip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="6" r="1"/><circle cx="9" cy="12" r="1"/><circle cx="9" cy="18" r="1"/><circle cx="15" cy="6" r="1"/><circle cx="15" cy="12" r="1"/><circle cx="15" cy="18" r="1"/></svg></div>
+              <div class="thumb" style="background:linear-gradient(135deg,oklch(0.45 0.16 305 / 0.55),oklch(0.5 0.18 290 / 0.4));border-color:oklch(0.55 0.18 305 / 0.5);color:oklch(0.85 0.14 305)">▣<div class="mini">project</div></div>
+              <div class="det">
+                <b>Wolf Run · what we're building</b>
+                <span>Self-hosted streaming stack in Rust + WebRTC. Source on Forgejo (link below). Boss fight is the websocket reconnect.</span>
+                <small><span class="pill cyan">LINK</span><span class="pill">git.howlcast.tv/wolf-run</span><span class="pill">v0.4.2</span></small>
+              </div>
+              <div class="vis hidden"><span class="dot"></span>Hidden</div>
+              <div class="acts">
+                <button title="Edit"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4z"/></svg></button>
+                <button title="Duplicate"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>
+                <button title="Show"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg></button>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+      <!-- two up: templates + live preview -->
+      <div class="two-up">
+        <div class="card">
+          <div class="card-h">
+            <h3>Add a panel</h3>
+            <span class="sub">5 templates · click to insert</span>
+          </div>
+          <div class="card-body">
+            <div class="tpl-grid">
+              <div class="tpl">
+                <div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 12h12M4 18h10"/></svg></div>
+                <b>Text</b>
+                <span>Markdown body. Headings, lists, the lot.</span>
+              </div>
+              <div class="tpl">
+                <div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.09-3.09a2 2 0 0 0-2.82 0L6 21"/></svg></div>
+                <b>Image</b>
+                <span>Static or animated. Auto crop &amp; webp.</span>
+              </div>
+              <div class="tpl">
+                <div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 4h6v6"/><path d="m20 4-9 9"/><path d="M21 15v3a3 3 0 0 1-3 3H6a3 3 0 0 1-3-3V6a3 3 0 0 1 3-3h3"/></svg></div>
+                <b>Link</b>
+                <span>Click-out card. Title, blurb, URL.</span>
+              </div>
+              <div class="tpl">
+                <div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg></div>
+                <b>List</b>
+                <span>Bullet list, 1-12 rows, auto-syncable.</span>
+              </div>
+              <div class="tpl">
+                <div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg></div>
+                <b>Embed</b>
+                <span>Ko-fi, Forgejo, RSS, calendar — sandboxed iframe.</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-h">
+            <h3>How it appears on channel</h3>
+            <span class="sub">below the player</span>
+          </div>
+          <div class="card-body">
+            <div class="channel-preview">
+              <div class="ch-panel">
+                <div class="h"><span class="dot"></span><b>About the den</b></div>
+                <p>Late-night coding, slow systems, no algorithm to feed.</p>
+              </div>
+              <div class="ch-panel">
+                <div class="h"><span class="dot"></span><b>Discord</b></div>
+                <p>Slower-paced text channel. 1,847 invitees.</p>
+                <span class="lnk">discord.gg/···</span>
+              </div>
+              <div class="ch-panel">
+                <div class="h"><span class="dot"></span><b>Ko-fi</b></div>
+                <p>Tips fund server costs &amp; coffee.</p>
+                <span class="lnk">ko-fi.com/···</span>
+              </div>
+              <div class="ch-panel">
+                <div class="h"><span class="dot"></span><b>Setup</b></div>
+                <p>HHKB · SM7B · Helix theme · v0.4.2</p>
+              </div>
+              <div class="ch-panel image">
+                <span>+ add</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</body>
+</html>
