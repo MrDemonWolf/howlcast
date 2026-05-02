@@ -46,6 +46,12 @@ export const server = await Worker("server", {
 		// Empty string means "not configured" — procedures throw a clear error.
 		STREAM_API_KEY: alchemy.secret(process.env.STREAM_API_KEY ?? ""),
 		STREAM_API_SECRET: alchemy.secret(process.env.STREAM_API_SECRET ?? ""),
+		// Twitch — used by the emote pipeline to pull Twitch channel emotes
+		// and as the broadcaster id key for 7TV / BTTV / FFZ. Missing values
+		// just mean the corresponding provider returns zero emotes.
+		TWITCH_CLIENT_ID: alchemy.secret(process.env.TWITCH_CLIENT_ID ?? ""),
+		TWITCH_CLIENT_SECRET: alchemy.secret(process.env.TWITCH_CLIENT_SECRET ?? ""),
+		BROADCASTER_TWITCH_ID: process.env.BROADCASTER_TWITCH_ID ?? "",
 	},
 	crons: ["0 */12 * * *"],
 	dev: {

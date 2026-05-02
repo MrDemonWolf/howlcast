@@ -1,6 +1,7 @@
 import { trpcServer } from "@hono/trpc-server";
 import { createContext } from "@howlcast/api/context";
 import { fanOutDiscord } from "@howlcast/api/lib/discord";
+import { refreshEmotes } from "@howlcast/api/lib/emotes";
 import { verifyStreamWebhook } from "@howlcast/api/lib/stream";
 import { appRouter } from "@howlcast/api/routers/index";
 import { createAuth } from "@howlcast/auth";
@@ -100,4 +101,23 @@ app.get("/", (c) => {
 	return c.text("OK");
 });
 
-export default app;
+// Workers don't accept Hono as default export when we also need a `scheduled`
+// handler for crons — wrap both in a module-style export. The cron is bound
+// in alchemy.run.ts as `0 */12 * * *` (twice daily emote refresh).
+export default {
+	fetch: app.fetch,
+	async scheduled(_controller: ScheduledController, _env: Env, ctx: ExecutionContext) {
+		ctx.waitUntil(
+			refreshEmotes(
+				{
+					TWITCH_CLIENT_ID: env.TWITCH_CLIENT_ID,
+					TWITCH_CLIENT_SECRET: env.TWITCH_CLIENT_SECRET,
+					BROADCASTER_TWITCH_ID: env.BROADCASTER_TWITCH_ID,
+				},
+				env.EMOTES_KV,
+			).catch(() => {
+				/* fail-soft — pipeline writes nothing if all providers fail */
+			}),
+		);
+	},
+};

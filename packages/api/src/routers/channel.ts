@@ -9,6 +9,7 @@ import { TRPCError } from "@trpc/server";
 import { asc, eq } from "drizzle-orm";
 
 import { protectedProcedure, publicProcedure, router } from "../index";
+import { readEmoteMap, refreshEmotes } from "../lib/emotes";
 import { createCall } from "../lib/stream";
 
 const SITE_ID = "site";
@@ -98,6 +99,32 @@ export const channelRouter = router({
 			.where(eq(channelConfig.id, SITE_ID));
 
 		return { callId, channelCid };
+	}),
+
+	// Public emote map. Cached in KV; cron refreshes every 12h. Returns null
+	// shape on first boot before the cron has run; client treats it as empty.
+	getEmotes: publicProcedure.query(async () => {
+		const map = await readEmoteMap(env.EMOTES_KV);
+		return map ?? { updatedAt: 0, emotes: [] };
+	}),
+
+	// Manual refresh — for the dashboard's "Refresh emotes" button. Same
+	// pipeline as the cron, just on demand.
+	refreshEmotes: protectedProcedure.mutation(async ({ ctx }) => {
+		const db = createDb();
+		const cfg = await db.select().from(channelConfig).where(eq(channelConfig.id, SITE_ID)).get();
+		if (!cfg || ctx.session.user.id !== cfg.ownerId) {
+			throw new TRPCError({ code: "FORBIDDEN", message: "Broadcaster only." });
+		}
+		const map = await refreshEmotes(
+			{
+				TWITCH_CLIENT_ID: env.TWITCH_CLIENT_ID,
+				TWITCH_CLIENT_SECRET: env.TWITCH_CLIENT_SECRET,
+				BROADCASTER_TWITCH_ID: env.BROADCASTER_TWITCH_ID,
+			},
+			env.EMOTES_KV,
+		);
+		return { count: map.emotes.length, updatedAt: map.updatedAt };
 	}),
 
 	// Panels grid below the player. Sorted by `position`; empty list is fine.
