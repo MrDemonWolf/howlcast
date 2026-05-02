@@ -149,7 +149,6 @@ export const setupRouter = router({
 					.set({
 						ownerId: userId,
 						visibility: input.visibility,
-						allowSignups: false,
 						broadcasterTwitchId: input.twitchId,
 						setupCompletedAt: now,
 						updatedAt: now,
@@ -160,7 +159,6 @@ export const setupRouter = router({
 					id: SITE_ID,
 					ownerId: userId,
 					visibility: input.visibility,
-					allowSignups: false,
 					broadcasterTwitchId: input.twitchId,
 					setupCompletedAt: now,
 					updatedAt: now,

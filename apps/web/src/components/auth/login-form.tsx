@@ -10,7 +10,6 @@ import { DisplayHeading } from "@howlcast/ui/components/display-heading";
 import { Input } from "@howlcast/ui/components/input";
 import { Label } from "@howlcast/ui/components/label";
 import { Fingerprint, Mail } from "lucide-react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { type FormEvent, useState } from "react";
 import { toast } from "sonner";
@@ -165,12 +164,7 @@ export default function LoginForm() {
 				>
 					{idMode === "email" ? "Use username instead" : "Use email instead"}
 				</button>
-				<span>
-					No account?{" "}
-					<Link href="/signup" className="text-cyan hover:opacity-80">
-						Create one
-					</Link>
-				</span>
+				<span>Den is invite-only — the broadcaster sends invites by email.</span>
 			</div>
 		</div>
 	);

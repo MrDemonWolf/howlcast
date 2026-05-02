@@ -28,7 +28,6 @@ export const channelRouter = router({
 				title: null,
 				visibility: "public" as const,
 				matureContent: false,
-				allowSignups: false,
 				broadcaster: null,
 				isLive: false,
 				liveStartedAt: null as number | null,
@@ -50,7 +49,6 @@ export const channelRouter = router({
 			title: cfg.title,
 			visibility: cfg.visibility,
 			matureContent: cfg.matureContent,
-			allowSignups: cfg.allowSignups,
 			broadcaster: broadcaster
 				? {
 						userId: broadcaster.userId,

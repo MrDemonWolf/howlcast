@@ -1,0 +1,1 @@
+ALTER TABLE `channel_config` DROP COLUMN `allow_signups`;

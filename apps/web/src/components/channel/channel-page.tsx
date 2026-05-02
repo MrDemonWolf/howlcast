@@ -285,8 +285,8 @@ function ChatDock({
 						<div className="min-w-0">
 							<p className="font-medium text-foreground text-sm">Chat is invite-only.</p>
 							<p className="mt-0.5 text-muted-foreground text-xs">
-								Watching is open to anyone. Posting is for the den. DM{" "}
-								<span className="font-mono text-cyan">@mrdemonwolf</span> to get in.
+								Watching is open to anyone. Posting is for the den — the broadcaster sends invites
+								by email.
 							</p>
 						</div>
 					</div>

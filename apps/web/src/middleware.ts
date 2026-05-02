@@ -49,8 +49,8 @@ export async function middleware(req: NextRequest) {
 }
 
 export const config = {
-	// Pre-setup: covers the home page, login/signup, and dashboard so a
-	// fresh deploy funnels everyone to /setup. Post-setup: only `/` and
+	// Pre-setup: covers the home page, login, and dashboard so a fresh
+	// deploy funnels everyone to /setup. Post-setup: only `/` and
 	// `/dashboard*` need this — no-ops for anonymous viewers.
-	matcher: ["/", "/login", "/signup", "/dashboard/:path*"],
+	matcher: ["/", "/login", "/dashboard/:path*"],
 };
