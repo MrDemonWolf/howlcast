@@ -1,3 +1,4 @@
+"use client";
 import { Button } from "@howlcast/ui/components/button";
 import {
 	DropdownMenu,

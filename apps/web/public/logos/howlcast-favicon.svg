@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="none" role="img" aria-label="HowlCast">
+  <!-- HowlCast favicon — 2 arcs (drop the inner one) + chunkier wedge for legibility at 16px.
+       Stroke widths are bigger relative to scale so it doesn't dissolve at favicon sizes.
+  -->
+  <path d="M 6 21 A 10 10 0 0 1 26 21" stroke="#0FACED" stroke-width="3" stroke-linecap="round" fill="none"/>
+  <path d="M 10 21 A 6 6 0 0 1 22 21" stroke="#0FACED" stroke-width="3" stroke-linecap="round" fill="none"/>
+  <path d="M 13 21 L 16 27 L 19 21 Z" fill="#0FACED"/>
+</svg>

@@ -1,47 +1,46 @@
-"use client";
-import { useQuery } from "@tanstack/react-query";
-
-import { trpc } from "@/utils/trpc";
-
-const TITLE_TEXT = `
- ██████╗ ███████╗████████╗████████╗███████╗██████╗
- ██╔══██╗██╔════╝╚══██╔══╝╚══██╔══╝██╔════╝██╔══██╗
- ██████╔╝█████╗     ██║      ██║   █████╗  ██████╔╝
- ██╔══██╗██╔══╝     ██║      ██║   ██╔══╝  ██╔══██╗
- ██████╔╝███████╗   ██║      ██║   ███████╗██║  ██║
- ╚═════╝ ╚══════╝   ╚═╝      ╚═╝   ╚══════╝╚═╝  ╚═╝
-
- ████████╗    ███████╗████████╗ █████╗  ██████╗██╗  ██╗
- ╚══██╔══╝    ██╔════╝╚══██╔══╝██╔══██╗██╔════╝██║ ██╔╝
-    ██║       ███████╗   ██║   ███████║██║     █████╔╝
-    ██║       ╚════██║   ██║   ██╔══██║██║     ██╔═██╗
-    ██║       ███████║   ██║   ██║  ██║╚██████╗██║  ██╗
-    ╚═╝       ╚══════╝   ╚═╝   ╚═╝  ╚═╝ ╚═════╝╚═╝  ╚═╝
- `;
+import Image from "next/image";
+import Link from "next/link";
 
 export default function Home() {
-	const healthCheck = useQuery(trpc.healthCheck.queryOptions());
-
 	return (
-		<div className="container mx-auto max-w-3xl px-4 py-2">
-			<pre className="overflow-x-auto font-mono text-sm">{TITLE_TEXT}</pre>
-			<div className="grid gap-6">
-				<section className="rounded-lg border p-4">
-					<h2 className="mb-2 font-medium">API Status</h2>
-					<div className="flex items-center gap-2">
-						<div
-							className={`h-2 w-2 rounded-full ${healthCheck.data ? "bg-green-500" : "bg-red-500"}`}
-						/>
-						<span className="text-muted-foreground text-sm">
-							{healthCheck.isLoading
-								? "Checking..."
-								: healthCheck.data
-									? "Connected"
-									: "Disconnected"}
-						</span>
+		<main className="flex flex-col">
+			<section className="flex flex-1 items-center justify-center px-6 py-24">
+				<div className="flex max-w-xl flex-col items-center text-center">
+					<Image
+						src="/logos/howlcast-mark.svg"
+						alt="HowlCast"
+						width={72}
+						height={72}
+						priority
+					/>
+					<h1
+						className="mt-6 font-display font-semibold text-4xl text-foreground tracking-tight sm:text-5xl"
+						style={{ fontFamily: "var(--font-display)" }}
+					>
+						HowlCast
+					</h1>
+					<p className="mt-4 text-base text-muted-foreground sm:text-lg">
+						Invite-only streams from MrDemonWolf.
+					</p>
+					<div className="mt-10 flex items-center gap-3">
+						<Link
+							href="/login"
+							className="inline-flex items-center justify-center rounded-md bg-primary px-5 py-2.5 font-medium text-primary-foreground text-sm transition hover:opacity-90"
+						>
+							Sign in
+						</Link>
+						<Link
+							href="/dashboard"
+							className="inline-flex items-center justify-center rounded-md border border-border px-5 py-2.5 font-medium text-foreground text-sm transition hover:bg-accent"
+						>
+							Dashboard
+						</Link>
 					</div>
-				</section>
-			</div>
-		</div>
+				</div>
+			</section>
+			<footer className="border-border border-t py-6 text-center text-muted-foreground text-xs">
+				Powered by HowlCast by MrDemonWolf, Inc.
+			</footer>
+		</main>
 	);
 }

@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Bricolage_Grotesque, Geist, Geist_Mono } from "next/font/google";
 
 import "../index.css";
 import Header from "@/components/header";
@@ -15,9 +15,15 @@ const geistMono = Geist_Mono({
 	subsets: ["latin"],
 });
 
+const bricolage = Bricolage_Grotesque({
+	variable: "--font-bricolage",
+	subsets: ["latin"],
+});
+
 export const metadata: Metadata = {
-	title: "howlcast",
-	description: "howlcast",
+	title: "HowlCast",
+	description: "Invite-only streams from MrDemonWolf.",
+	icons: { icon: "/logos/howlcast-favicon.svg" },
 };
 
 export default function RootLayout({
@@ -26,9 +32,9 @@ export default function RootLayout({
 	children: React.ReactNode;
 }>) {
 	return (
-		<html lang="en" suppressHydrationWarning>
+		<html lang="en" className="dark" suppressHydrationWarning>
 			<body
-				className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+				className={`${geistSans.variable} ${geistMono.variable} ${bricolage.variable} bg-background text-foreground antialiased`}
 			>
 				<Providers>
 					<div className="grid h-svh grid-rows-[auto_1fr]">
