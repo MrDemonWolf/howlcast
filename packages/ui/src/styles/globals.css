@@ -162,4 +162,13 @@
 		background: var(--cyan-glow);
 		color: var(--fg);
 	}
+
+	/* Inline chat emotes — rendered by emote-renderer.tsx */
+	.howlcast-emote {
+		display: inline-block;
+		height: 1.6em;
+		width: auto;
+		vertical-align: middle;
+		margin: 0 1px;
+	}
 }
