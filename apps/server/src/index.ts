@@ -1,8 +1,12 @@
 import { trpcServer } from "@hono/trpc-server";
 import { createContext } from "@howlcast/api/context";
+import { verifyStreamWebhook } from "@howlcast/api/lib/stream";
 import { appRouter } from "@howlcast/api/routers/index";
 import { createAuth } from "@howlcast/auth";
+import { createDb } from "@howlcast/db";
+import { channelConfig } from "@howlcast/db/schema";
 import { env } from "@howlcast/env/server";
+import { eq } from "drizzle-orm";
 import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { logger } from "hono/logger";
@@ -34,6 +38,46 @@ app.use(
 );
 
 app.get("/api/health", (c) => c.json({ ok: true }));
+
+// GetStream webhook receiver. HMAC-verified against STREAM_WEBHOOK_SECRET.
+// Updates channelConfig.liveStartedAt/liveEndedAt on call.live_started /
+// call.session_ended / call.ended. Discord fanout is Stage 3D.
+app.post("/api/webhooks/getstream", async (c) => {
+	const sig = c.req.header("x-signature") ?? "";
+	const raw = await c.req.text();
+
+	const ok = await verifyStreamWebhook(raw, sig, env.STREAM_WEBHOOK_SECRET);
+	if (!ok) return c.json({ error: "invalid signature" }, 401);
+
+	let event: { type?: string; call_cid?: string };
+	try {
+		event = JSON.parse(raw);
+	} catch {
+		return c.json({ error: "bad json" }, 400);
+	}
+
+	const db = createDb();
+	const now = new Date();
+
+	if (event.type === "call.live_started") {
+		await db
+			.update(channelConfig)
+			.set({ liveStartedAt: now, liveEndedAt: null })
+			.where(eq(channelConfig.id, "site"));
+		// TODO 3D: fan out Discord webhook (public + private) on go-live
+	} else if (
+		event.type === "call.session_ended" ||
+		event.type === "call.ended"
+	) {
+		await db
+			.update(channelConfig)
+			.set({ liveEndedAt: now })
+			.where(eq(channelConfig.id, "site"));
+		// TODO 3D: fan out Discord webhook on stream end
+	}
+
+	return c.json({ ok: true });
+});
 
 app.get("/", (c) => {
 	return c.text("OK");
