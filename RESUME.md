@@ -6,7 +6,7 @@
 
 ## Where we are
 
-**Phase 3 — Channel & Streaming.** All four sub-stages shipped: 3A (schema), 3B (GetStream signer + tRPC + webhook), 3C (channel page replaces `/`), 3D (Discord fanout). Phase 4 (chat + emotes, real GetStream SDKs in the player/chat slots) is next.
+**Phase 4 — Chat & Emotes.** Fully shipped: real GetStream Video player + Chat dock are wired (lazy-loaded), `channel.createCall` mutation provisions the call+channel, 12h cron pulls emotes from Twitch/7TV/BTTV/FFZ → KV, custom emote rendering hooks into stream-chat-react. Phase 5 (broadcaster dashboard) is next. Lint stack swapped: biome → eslint+prettier (matches fangdash).
 
 **Live URLs:**
 
@@ -47,6 +47,12 @@
 ## Recent commit history
 
 ```
+e3ead0a phase 4: custom emote rendering in chat
+eda0a19 phase 4: emote pipeline (twitch/7tv/bttv/ffz -> kv, 12h cron)
+7aa26bc phase 4: channel.createCall mutation seeds streamCallId + chatChannelCid
+c151db0 chore: swap biome for eslint + prettier (matches fangdash setup)
+6ab6911 phase 4: wire real getstream video player + chat dock (lazy-loaded)
+485f40b docs: mark phase 3 (a-d) complete in progress + resume
 7871c6c phase 3d: discord webhook fanout on go-live/end
 580a995 phase 3c: channel page replaces / (single tenant)
 909b27d phase 3b: getstream jwt signer + trpc procedures + webhook receiver

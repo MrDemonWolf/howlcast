@@ -5,34 +5,19 @@
 
 ---
 
-## RIGHT NOW (unblocks everything)
+## RIGHT NOW (unblocks live deploy)
 
 ### 1. Push to GitHub
-
-Per your standing instruction, Claude won't push until you say so. When ready:
 
 ```bash
 git push origin main
 ```
 
-Triggers CI immediately. Deploy will run too but fail at "Deploy via Alchemy" without the secrets in step 2 — that's fine, CI itself will go green.
+All 6 GH Actions secrets are in place. Push triggers CI → Deploy via Alchemy. The live URLs (<https://howlcast.mrdemonwolf.workers.dev>, <https://howlcast-api.mrdemonwolf.workers.dev>) get the new code + STREAM\_\* env vars and the `/api/webhooks/getstream` route comes online.
 
----
+### 2. ✅ GitHub Actions secrets — DONE
 
-### 2. Set GitHub Actions secrets (unlocks CI/CD)
-
-Repo: <https://github.com/MrDemonWolf/howlcast/settings/secrets/actions>
-
-Click **New repository secret** for each:
-
-| #   | Name                    | Value                              | Where to get it                                                                                                                                                                                                                                                                                                |
-| --- | ----------------------- | ---------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 2.1 | `CLOUDFLARE_API_TOKEN`  | (paste)                            | <https://dash.cloudflare.com/profile/api-tokens> → Create Token → **Custom token**. Permissions: **Account → Workers Scripts: Edit**, **Account → D1: Edit**, **Account → R2: Edit**, **Account → Workers KV Storage: Edit**, **User → User Details: Read**. Account resources: **Include → MrDemonWolf Inc.** |
-| 2.2 | `CLOUDFLARE_ACCOUNT_ID` | `b44e8f4116067556c6a165c1dcc74f42` | already known                                                                                                                                                                                                                                                                                                  |
-| 2.3 | `ALCHEMY_PASSWORD`      | (paste from `packages/infra/.env`) | run `cat packages/infra/.env` and copy the value                                                                                                                                                                                                                                                               |
-| 2.4 | `BETTER_AUTH_SECRET`    | (paste from `apps/server/.env`)    | run `cat apps/server/.env` and copy the value                                                                                                                                                                                                                                                                  |
-
-After 2.1–2.4 land, push another commit (or rerun the failed Deploy from the Actions tab) and watch CI → Deploy go green end-to-end.
+`ALCHEMY_PASSWORD`, `BETTER_AUTH_SECRET`, `CLOUDFLARE_ACCOUNT_ID`, `CLOUDFLARE_API_TOKEN`, `STREAM_API_KEY`, `STREAM_API_SECRET` all set. (No `STREAM_WEBHOOK_SECRET` — GetStream signs Video webhooks with the API Secret directly.)
 
 ---
 
@@ -49,36 +34,48 @@ Skip this until you actually want approval gates.
 
 ---
 
-## DURING PHASE 3 (streaming)
+## STREAMING / EMOTES (Phase 3 + 4 wiring)
 
-You'll need these the moment we wire GetStream + Discord webhooks. Do them when you see Claude start Phase 3:
+### 3. ✅ GetStream account + API keys — DONE
 
-### 4. GetStream account + API keys
+`STREAM_API_KEY` + `STREAM_API_SECRET` pasted into `apps/server/.env` and GH Actions secrets. App created (US East, Development environment).
 
-Follow PRE-FLIGHT.md step 3. Save in 1Password:
+### 4. GetStream Video webhook
 
-- `STREAM_API_KEY`
-- `STREAM_API_SECRET`
+GetStream Dashboard → HowlCast app → **Video & Audio → Overview → Webhook & Event Configuration**:
 
-Then drop them into `apps/server/.env` and add them as GH Actions secrets too (`STREAM_API_KEY`, `STREAM_API_SECRET`).
+- URL: `https://howlcast-api.mrdemonwolf.workers.dev/api/webhooks/getstream`
+- Check "Subscribe to all current and future events" (handler filters server-side)
+- Submit
 
-### 5. Discord webhooks
+No separate webhook secret — GetStream signs Video webhooks with the app's API Secret (already configured).
 
-PRE-FLIGHT.md step 7. Make two channels in your Discord server, create a webhook for each. **Don't put these in env vars** — they go in the broadcaster dashboard later (Phase 5 Notifications page) and persist in the `webhooks` D1 table. For Phase 3 testing, paste them temporarily in DB via the dashboard once it ships.
+### 5. Discord webhooks (deferred to Phase 5 dashboard)
+
+Create two webhooks in your Discord server (one for the public alerts channel, one for the private den channel). Save the URLs in 1Password. **Don't put them in env vars** — Phase 5's Dashboard → Channel → Notifications page writes them into the `webhooks` D1 table. Skip until that page ships.
 
 ### 6. Twitch developer app
 
-PRE-FLIGHT.md step 5. Save:
+For the emote pipeline (Phase 4) — pulls Twitch channel emotes + acts as the broadcaster id key for 7TV / BTTV / FFZ:
 
-- `TWITCH_CLIENT_ID`
-- `TWITCH_CLIENT_SECRET`
-- `BROADCASTER_TWITCH_ID` (your numeric Twitch user ID)
+1. <https://dev.twitch.tv/console/apps> → Register Your Application
+2. OAuth Redirect URLs: `http://localhost` (we don't use the user-OAuth flow)
+3. Category: Application Integration
+4. Save `Client ID` + new `Client Secret`
+5. Get your numeric Twitch user ID: <https://www.streamweasels.com/tools/convert-twitch-username-to-user-id/>
+6. Drop into `apps/server/.env`:
+   ```
+   TWITCH_CLIENT_ID=...
+   TWITCH_CLIENT_SECRET=...
+   BROADCASTER_TWITCH_ID=...
+   ```
+7. Add the same three to GitHub Actions secrets
 
-Drop into `apps/server/.env` + GH Actions secrets. Phase 4 (emote pipeline) needs these.
+Until you do this, the emote pipeline returns an empty list — chat works, just no custom emotes.
 
-### 7. 7TV / BTTV / FFZ verification
+### 7. 7TV / BTTV / FFZ verification (no signup)
 
-PRE-FLIGHT.md step 6. No signups — just curl-test that your Twitch ID returns emotes from each provider. If empty, you don't have channel emotes there yet (fine).
+Once `BROADCASTER_TWITCH_ID` is set, curl-test each provider. Empty responses are fine (you just don't have emotes there).
 
 ---
 

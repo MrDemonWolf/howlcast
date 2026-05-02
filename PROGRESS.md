@@ -86,17 +86,17 @@
 
 ## Phase 4 — Chat & Emotes
 
-- [ ] `livestream` Chat channel created programmatically
-- [ ] Chat sidebar (desktop) + drawer (mobile) wired
-- [ ] Theme overrides applied to `stream-chat-react`
-- [ ] Emote cron handler in `scheduled.ts`
-- [ ] Twitch app token caching in KV
-- [ ] 7TV / BTTV / FFZ / Twitch fetchers all working
-- [ ] Merged emote map written to KV
-- [ ] R2 emote image proxy at `/api/emote-proxy/:provider/:id/:size`
-- [ ] `renderText` override with rehype emote plugin
-- [ ] Emote hover preview (HoverCard)
-- [ ] Chat scrolls smoothly with 50+ emotes per scroll
+- [x] `livestream` Chat channel provisioned via `channel.createCall` mutation
+- [x] Chat sidebar (desktop) wired into channel page (mobile drawer follow-up)
+- [x] Dark theme applied to `stream-chat-react` (str-chat\_\_theme-dark)
+- [x] Emote cron handler in `apps/server/src/index.ts` (scheduled export)
+- [x] Twitch app token caching in KV (key `twitch:apptoken`)
+- [x] 7TV / BTTV / FFZ / Twitch fetchers all wired (fail-soft)
+- [x] Merged emote map written to KV (`emotes:current`)
+- [x] (skipped per design) ~R2 emote image proxy~ — direct CDN per DESIGN-DECISIONS.md
+- [x] `renderText` override with rehype emote plugin
+- [ ] Emote hover preview (HoverCard) — Phase 5 polish
+- [ ] Chat scrolls smoothly with 50+ emotes per scroll — needs OBS test
 
 ## Phase 5 — Broadcaster Dashboard
 
