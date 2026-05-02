@@ -168,4 +168,81 @@ export const channelRouter = router({
 			linkUrl: p.linkUrl,
 		}));
 	}),
+
+	// Broadcaster-only. Create or update a panel. id is generated client-side
+	// (crypto.randomUUID) for new panels so the optimistic insert works.
+	upsertPanel: protectedProcedure
+		.input(
+			z.object({
+				id: z.string().min(1),
+				title: z.string().max(80).nullable(),
+				body: z.string().max(2000).nullable(),
+				imageKey: z.string().max(500).nullable(),
+				linkUrl: z.string().url().max(500).nullable(),
+			}),
+		)
+		.mutation(async ({ ctx, input }) => {
+			await assertBroadcaster(ctx.session.user.id);
+			const db = createDb();
+			const existing = await db.select().from(panels).where(eq(panels.id, input.id)).get();
+			if (existing) {
+				await db
+					.update(panels)
+					.set({
+						title: input.title,
+						body: input.body,
+						imageKey: input.imageKey,
+						linkUrl: input.linkUrl,
+					})
+					.where(eq(panels.id, input.id));
+				return { ok: true, created: false };
+			}
+			const max = await db
+				.select()
+				.from(panels)
+				.orderBy(asc(panels.position))
+				.all()
+				.then((rs) => (rs[rs.length - 1]?.position ?? -1) + 1);
+			await db.insert(panels).values({
+				id: input.id,
+				position: max,
+				title: input.title,
+				body: input.body,
+				imageKey: input.imageKey,
+				linkUrl: input.linkUrl,
+			});
+			return { ok: true, created: true };
+		}),
+
+	deletePanel: protectedProcedure
+		.input(z.object({ id: z.string().min(1) }))
+		.mutation(async ({ ctx, input }) => {
+			await assertBroadcaster(ctx.session.user.id);
+			const db = createDb();
+			await db.delete(panels).where(eq(panels.id, input.id));
+			return { ok: true };
+		}),
+
+	// Re-orders all panels at once. Client sends the full id list in the
+	// new order; server rewrites positions 0..n-1 in a single transaction.
+	reorderPanels: protectedProcedure
+		.input(z.object({ ids: z.array(z.string().min(1)) }))
+		.mutation(async ({ ctx, input }) => {
+			await assertBroadcaster(ctx.session.user.id);
+			const db = createDb();
+			for (let i = 0; i < input.ids.length; i++) {
+				const id = input.ids[i];
+				if (!id) continue;
+				await db.update(panels).set({ position: i }).where(eq(panels.id, id));
+			}
+			return { ok: true };
+		}),
 });
+
+async function assertBroadcaster(userId: string) {
+	const db = createDb();
+	const cfg = await db.select().from(channelConfig).where(eq(channelConfig.id, SITE_ID)).get();
+	if (!cfg || cfg.ownerId !== userId) {
+		throw new TRPCError({ code: "FORBIDDEN", message: "Broadcaster only." });
+	}
+}
