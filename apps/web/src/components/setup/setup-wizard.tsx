@@ -1,20 +1,20 @@
 "use client";
 
-// First-run setup wizard. Two-step flow:
-//   1. Username input -> tRPC `setup.lookup` resolves Twitch user + probes
-//      7TV / BTTV / FFZ. Result rendered as a recap card.
-//   2. Confirm display name + visibility -> tRPC `setup.commit` writes the
-//      broadcaster profile + channelConfig and redirects to /dashboard.
+// First-run setup wizard. Three steps in a single page:
+//   1. Twitch lookup — username -> Helix profile + emote-provider probe
+//   2. Account     — email + password (creates the broadcaster login)
+//   3. Mode        — public / invite-only
 //
-// Phase 6 will improve this (avatar download to R2, edit-after-completion,
-// etc.); for now it's a focused single-page component.
+// On commit, server creates the user (signUpEmail), writes the
+// broadcaster profile + channelConfig, and sets the session cookie.
+// Client redirects straight to /dashboard signed in.
 
 import { Button } from "@howlcast/ui/components/button";
 import { DisplayHeading } from "@howlcast/ui/components/display-heading";
 import { Input } from "@howlcast/ui/components/input";
 import { Label } from "@howlcast/ui/components/label";
 import { useMutation } from "@tanstack/react-query";
-import { BadgeCheck, Lock, PawPrint, Tv, Users } from "lucide-react";
+import { ArrowLeft, BadgeCheck, Lock, PawPrint, Tv, Users } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { type FormEvent, useState } from "react";
 import { toast } from "sonner";
@@ -36,10 +36,16 @@ type LookupResult = {
 	};
 };
 
+type Step = "twitch" | "account" | "mode";
+
 export default function SetupWizard() {
 	const router = useRouter();
+
+	const [step, setStep] = useState<Step>("twitch");
 	const [resolved, setResolved] = useState<LookupResult | null>(null);
 	const [displayName, setDisplayName] = useState("");
+	const [email, setEmail] = useState("");
+	const [password, setPassword] = useState("");
 	const [visibility, setVisibility] = useState<"public" | "invite_only">("invite_only");
 
 	const lookup = useMutation(
@@ -47,6 +53,7 @@ export default function SetupWizard() {
 			onSuccess: (data) => {
 				setResolved(data);
 				setDisplayName(data.user.displayName);
+				setStep("account");
 				toast.success("Found your channel.");
 			},
 			onError: (e) => toast.error(e.message),
@@ -56,7 +63,7 @@ export default function SetupWizard() {
 	const commit = useMutation(
 		trpc.setup.commit.mutationOptions({
 			onSuccess: () => {
-				toast.success("Setup complete. Welcome to the den.");
+				toast.success("Welcome to the den.");
 				router.push("/dashboard");
 				router.refresh();
 			},
@@ -64,17 +71,18 @@ export default function SetupWizard() {
 		}),
 	);
 
-	function submitLookup(e: FormEvent<HTMLFormElement>) {
+	function submitTwitch(e: FormEvent<HTMLFormElement>) {
 		e.preventDefault();
 		const username = String(new FormData(e.currentTarget).get("username") ?? "").trim();
 		if (!username) return;
 		lookup.mutate({ username });
 	}
 
-	function submitCommit(e: FormEvent<HTMLFormElement>) {
-		e.preventDefault();
+	function submitFinal() {
 		if (!resolved) return;
 		commit.mutate({
+			email,
+			password,
 			twitchId: resolved.user.id,
 			login: resolved.user.login,
 			displayName: displayName.trim(),
@@ -85,16 +93,18 @@ export default function SetupWizard() {
 	}
 
 	return (
-		<div className="mx-auto w-full max-w-xl">
-			<DisplayHeading size="lg" className="mb-2 text-center">
+		<div className="mx-auto w-full max-w-md">
+			<DisplayHeading size="lg" className="mb-1.5 text-center">
 				Set up your den
 			</DisplayHeading>
-			<p className="mb-8 text-center text-muted-foreground text-sm">
-				One field. We pull everything else from Twitch.
+			<p className="mb-6 text-center text-muted-foreground text-sm">
+				One time. We pull everything from Twitch.
 			</p>
 
-			{!resolved ? (
-				<form onSubmit={submitLookup} className="flex flex-col gap-4">
+			<StepDots step={step} />
+
+			{step === "twitch" ? (
+				<form onSubmit={submitTwitch} className="mt-6 flex flex-col gap-4">
 					<div className="flex flex-col gap-1.5">
 						<Label htmlFor="su-username">Twitch username</Label>
 						<Input
@@ -105,20 +115,26 @@ export default function SetupWizard() {
 							required
 							disabled={lookup.isPending}
 						/>
-						<p className="text-muted-foreground text-xs">
-							We'll look up your display name, avatar, and emote channels.
-						</p>
 					</div>
 					<Button type="submit" disabled={lookup.isPending}>
 						<Tv className="mr-1.5 h-4 w-4" aria-hidden />
 						{lookup.isPending ? "Looking up…" : "Look up channel"}
 					</Button>
 				</form>
-			) : (
-				<div className="flex flex-col gap-6">
-					<RecapCard resolved={resolved} />
+			) : null}
 
-					<form onSubmit={submitCommit} className="flex flex-col gap-4">
+			{step === "account" && resolved ? (
+				<>
+					<div className="mt-6">
+						<RecapCard resolved={resolved} />
+					</div>
+					<form
+						onSubmit={(e) => {
+							e.preventDefault();
+							setStep("mode");
+						}}
+						className="mt-6 flex flex-col gap-4"
+					>
 						<div className="flex flex-col gap-1.5">
 							<Label htmlFor="su-display">Display name</Label>
 							<Input
@@ -128,48 +144,116 @@ export default function SetupWizard() {
 								required
 								maxLength={40}
 							/>
-							<p className="text-muted-foreground text-xs">
-								Shown above the player. Pulled from Twitch — change if you'd like.
-							</p>
 						</div>
-
-						<fieldset className="flex flex-col gap-1.5">
-							<Label>Visibility</Label>
-							<div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-								<VisibilityCard
-									checked={visibility === "invite_only"}
-									onSelect={() => setVisibility("invite_only")}
-									icon={<Lock className="h-4 w-4" aria-hidden />}
-									title="Invite-only"
-									description="Watching public, posting den-only."
-								/>
-								<VisibilityCard
-									checked={visibility === "public"}
-									onSelect={() => setVisibility("public")}
-									icon={<Users className="h-4 w-4" aria-hidden />}
-									title="Public"
-									description="Anyone can watch and post."
-								/>
-							</div>
-						</fieldset>
-
-						<div className="mt-2 flex gap-2">
+						<div className="flex flex-col gap-1.5">
+							<Label htmlFor="su-email">Email</Label>
+							<Input
+								id="su-email"
+								type="email"
+								autoComplete="email"
+								value={email}
+								onChange={(e) => setEmail(e.target.value)}
+								required
+							/>
+						</div>
+						<div className="flex flex-col gap-1.5">
+							<Label htmlFor="su-pwd">Password</Label>
+							<Input
+								id="su-pwd"
+								type="password"
+								autoComplete="new-password"
+								minLength={8}
+								value={password}
+								onChange={(e) => setPassword(e.target.value)}
+								required
+							/>
+							<p className="text-muted-foreground text-xs">At least 8 characters.</p>
+						</div>
+						<div className="mt-1 flex gap-2">
 							<Button
 								type="button"
 								variant="outline"
-								onClick={() => setResolved(null)}
-								disabled={commit.isPending}
+								onClick={() => setStep("twitch")}
+								className="flex-none"
 							>
-								Back
+								<ArrowLeft className="h-4 w-4" aria-hidden />
 							</Button>
-							<Button type="submit" className="flex-1" disabled={commit.isPending}>
-								<PawPrint className="mr-1.5 h-4 w-4" aria-hidden />
-								{commit.isPending ? "Setting up…" : "Open the den"}
+							<Button type="submit" className="flex-1">
+								Continue
 							</Button>
 						</div>
 					</form>
-				</div>
-			)}
+				</>
+			) : null}
+
+			{step === "mode" ? (
+				<form
+					onSubmit={(e) => {
+						e.preventDefault();
+						submitFinal();
+					}}
+					className="mt-6 flex flex-col gap-4"
+				>
+					<fieldset className="flex flex-col gap-1.5">
+						<Label>Channel visibility</Label>
+						<div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+							<VisibilityCard
+								checked={visibility === "invite_only"}
+								onSelect={() => setVisibility("invite_only")}
+								icon={<Lock className="h-4 w-4" aria-hidden />}
+								title="Invite-only"
+								description="Watching public, posting den-only."
+							/>
+							<VisibilityCard
+								checked={visibility === "public"}
+								onSelect={() => setVisibility("public")}
+								icon={<Users className="h-4 w-4" aria-hidden />}
+								title="Public"
+								description="Anyone can watch and post."
+							/>
+						</div>
+						<p className="mt-1 text-muted-foreground text-xs">
+							You can change this anytime in the dashboard.
+						</p>
+					</fieldset>
+					<div className="mt-1 flex gap-2">
+						<Button
+							type="button"
+							variant="outline"
+							onClick={() => setStep("account")}
+							disabled={commit.isPending}
+							className="flex-none"
+						>
+							<ArrowLeft className="h-4 w-4" aria-hidden />
+						</Button>
+						<Button type="submit" className="flex-1" disabled={commit.isPending}>
+							<PawPrint className="mr-1.5 h-4 w-4" aria-hidden />
+							{commit.isPending ? "Setting up…" : "Open the den"}
+						</Button>
+					</div>
+				</form>
+			) : null}
+		</div>
+	);
+}
+
+function StepDots({ step }: { step: Step }) {
+	const order: Step[] = ["twitch", "account", "mode"];
+	return (
+		<div className="flex items-center justify-center gap-1.5">
+			{order.map((s) => (
+				<span
+					key={s}
+					aria-current={s === step ? "step" : undefined}
+					className={`h-1 w-6 rounded-full transition ${
+						s === step
+							? "bg-cyan"
+							: order.indexOf(s) < order.indexOf(step)
+								? "bg-cyan/40"
+								: "bg-bg-3"
+					}`}
+				/>
+			))}
 		</div>
 	);
 }
@@ -180,7 +264,7 @@ function RecapCard({ resolved }: { resolved: LookupResult }) {
 		<div className="rounded-lg border border-border bg-card p-4">
 			<div className="flex items-start gap-3">
 				{user.profileImageUrl ? (
-					// biome-ignore lint/performance/noImgElement: external Twitch CDN, cached on render
+					// biome-ignore lint/performance/noImgElement: external Twitch CDN
 					<img
 						src={user.profileImageUrl}
 						alt=""
@@ -196,38 +280,16 @@ function RecapCard({ resolved }: { resolved: LookupResult }) {
 						<h2 className="truncate font-display font-semibold text-foreground">
 							{user.displayName}
 						</h2>
-						<BadgeCheck className="h-4 w-4 flex-none text-cyan" aria-label="Twitch verified" />
+						<BadgeCheck className="h-4 w-4 flex-none text-cyan" aria-label="verified" />
 					</div>
-					<p className="truncate font-mono text-muted-foreground text-xs">
-						twitch.tv/{user.login} · id {user.id}
-					</p>
+					<p className="truncate font-mono text-muted-foreground text-xs">twitch.tv/{user.login}</p>
 				</div>
 			</div>
-
-			{user.description ? (
-				<p className="mt-3 line-clamp-3 text-muted-foreground text-sm">{user.description}</p>
-			) : null}
-
-			<div className="mt-4 grid grid-cols-3 gap-2">
+			<div className="mt-3 grid grid-cols-3 gap-2">
 				<ProviderBadge name="7TV" count={providers.sevenTv.count} ok={providers.sevenTv.claimed} />
 				<ProviderBadge name="BTTV" count={providers.bttv.count} ok={providers.bttv.count > 0} />
 				<ProviderBadge name="FFZ" count={providers.ffz.count} ok={providers.ffz.count > 0} />
 			</div>
-
-			{!providers.sevenTv.claimed ? (
-				<p className="mt-3 text-muted-foreground text-xs">
-					No 7TV account yet — sign in at{" "}
-					<a
-						href="https://7tv.app"
-						target="_blank"
-						rel="noopener noreferrer"
-						className="text-cyan hover:opacity-80"
-					>
-						7tv.app
-					</a>{" "}
-					with Twitch to enable. The pipeline picks up emotes on the next refresh.
-				</p>
-			) : null}
 		</div>
 	);
 }

@@ -1,12 +1,16 @@
-// Setup-gate middleware. Wraps the home page (/) and /dashboard:
+// Routing gate. Two modes:
 //
-//  • Anonymous viewers always pass through — they can still watch the
-//    public stream from the channel page even before setup.
-//  • Signed-in users hit `setup.getStatus`; if setup hasn't completed
-//    they're redirected to /setup. The wizard itself is excluded so the
-//    redirect doesn't loop.
+//   • Pre-setup (channelConfig.setupCompletedAt IS NULL):
+//       Everyone — auth'd or not — gets routed to /setup.
+//       The wizard is the only useful surface.
+//   • Post-setup:
+//       Anonymous viewers pass through (so they can watch the public
+//       stream from the channel page).
+//       Signed-in users only get redirected to /setup if somehow the
+//       state stayed null (shouldn't happen post-completion).
 //
-// Phase 5.1 will extend this with a broadcaster-role check on /dashboard.
+// Setup status is fetched from the API and cached in module memory for
+// 60s so middleware stays fast.
 
 import { type NextRequest, NextResponse } from "next/server";
 
@@ -21,7 +25,7 @@ async function getSetupStatus(req: NextRequest): Promise<boolean> {
 	try {
 		const url = new URL("/api/trpc/setup.getStatus", req.nextUrl.origin);
 		const res = await fetch(url, { headers: { accept: "application/json" } });
-		if (!res.ok) return true; // fail-open — don't lock people out on transient failures
+		if (!res.ok) return true; // fail-open — never lock the user out
 		const json = (await res.json()) as { result?: { data?: { setupCompleted?: boolean } } };
 		const setupCompleted = !!json.result?.data?.setupCompleted;
 		cachedStatus = { setupCompleted, cachedAt: now };
@@ -32,14 +36,9 @@ async function getSetupStatus(req: NextRequest): Promise<boolean> {
 }
 
 export async function middleware(req: NextRequest) {
-	// Cheap session-presence sniff: better-auth drops a cookie prefixed
-	// `__Secure-better-auth.session_token` (or `better-auth.session_token`
-	// on insecure dev). Skip the redirect for guests.
-	const cookieHeader = req.headers.get("cookie") ?? "";
-	const hasSession = /better-auth\.session_token/.test(cookieHeader);
-	if (!hasSession) return NextResponse.next();
-
 	const setupCompleted = await getSetupStatus(req);
+
+	// Pre-setup: send everyone to /setup. Login/signup are inert.
 	if (!setupCompleted) {
 		const url = req.nextUrl.clone();
 		url.pathname = "/setup";
@@ -50,5 +49,8 @@ export async function middleware(req: NextRequest) {
 }
 
 export const config = {
-	matcher: ["/", "/dashboard/:path*"],
+	// Pre-setup: covers the home page, login/signup, and dashboard so a
+	// fresh deploy funnels everyone to /setup. Post-setup: only `/` and
+	// `/dashboard*` need this — no-ops for anonymous viewers.
+	matcher: ["/", "/login", "/signup", "/dashboard/:path*"],
 };

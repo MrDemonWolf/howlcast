@@ -12,6 +12,11 @@ export async function createContext({ context }: CreateContextOptions) {
 	return {
 		auth: null,
 		session,
+		// Pass through request headers + response writer so procedures that
+		// drive better-auth (signUpEmail / signIn) can forward the
+		// resulting set-cookie to the client.
+		headers: context.req.raw.headers,
+		hono: context,
 	};
 }
 

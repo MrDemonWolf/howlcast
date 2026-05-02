@@ -49,6 +49,9 @@ export const channelConfig = sqliteTable("channel_config", {
 	visibility: text("visibility", { enum: ["public", "invite_only"] })
 		.notNull()
 		.default("public"),
+	// Closed by default after first-run setup. Broadcaster flips this from
+	// the dashboard (Phase 5.8) to let new viewers self-register.
+	allowSignups: integer("allow_signups", { mode: "boolean" }).default(false).notNull(),
 	matureContent: integer("mature", { mode: "boolean" }).default(false).notNull(),
 	liveStartedAt: integer("live_started_at", { mode: "timestamp_ms" }),
 	liveEndedAt: integer("live_ended_at", { mode: "timestamp_ms" }),

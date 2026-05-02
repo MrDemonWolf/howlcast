@@ -1,0 +1,1 @@
+ALTER TABLE `channel_config` ADD `allow_signups` integer DEFAULT false NOT NULL;

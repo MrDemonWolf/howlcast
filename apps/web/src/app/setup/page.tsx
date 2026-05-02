@@ -1,7 +1,4 @@
-import { headers } from "next/headers";
 import { redirect } from "next/navigation";
-
-import { authClient } from "@/lib/auth-client";
 
 import SetupWizard from "@/components/setup/setup-wizard";
 
@@ -9,16 +6,19 @@ export const metadata = {
 	title: "Set up your den · HowlCast",
 };
 
-// First-run setup. Wraps the client wizard with a session gate. Setup-status
-// gate runs on the client (the wizard's `commit` mutation will refuse if it's
-// already done) — keeping this page server-side simple for the cold path.
-export default async function SetupPage() {
-	const session = await authClient.getSession({
-		fetchOptions: { headers: await headers() },
-	});
+const SERVER_URL = process.env.NEXT_PUBLIC_SERVER_URL ?? "http://localhost:3000";
 
-	if (!session?.data?.user) {
-		redirect("/login");
+// First-run installer. Public — no session needed; the wizard creates the
+// initial broadcaster account itself. Once setup has completed, the page
+// redirects home so a re-visit can't trigger any commit attempt (the API
+// already refuses, but stopping here is cleaner UX).
+export default async function SetupPage() {
+	const res = await fetch(`${SERVER_URL}/api/trpc/setup.getStatus`, { cache: "no-store" });
+	if (res.ok) {
+		const json = (await res.json()) as { result?: { data?: { setupCompleted?: boolean } } };
+		if (json.result?.data?.setupCompleted) {
+			redirect("/");
+		}
 	}
 
 	return (

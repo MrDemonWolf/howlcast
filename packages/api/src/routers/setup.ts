@@ -1,9 +1,16 @@
-// First-run setup wizard. Two procedures: lookup (read-only Twitch +
-// emote provider probe) and commit (writes profiles + channelConfig
-// rows + flips setupCompletedAt). Single tenant — once completed, the
-// wizard is locked. Phase 6 will add an "edit channel info" path for
-// changes after setup.
+// First-run setup wizard. Three procedures:
+//   - getStatus (public): tells the middleware/page whether setup ran
+//   - lookup (public, idempotent): resolves Twitch username + probes 7TV /
+//     BTTV / FFZ. No DB writes; safe to retry.
+//   - commit (public, locked): creates the broadcaster account, profile,
+//     and channelConfig in one transaction. Refuses if setupCompletedAt
+//     is already set so a stale tab can't double-run.
+//
+// Public on purpose — first-run users don't have a session yet. The
+// commit step issues the auth cookie via better-auth's signUpEmail so
+// the wizard can land on /dashboard signed in.
 
+import { createAuth } from "@howlcast/auth";
 import { createDb } from "@howlcast/db";
 import { channelConfig, profiles } from "@howlcast/db/schema";
 import { env } from "@howlcast/env/server";
@@ -11,7 +18,7 @@ import { TRPCError } from "@trpc/server";
 import { eq } from "drizzle-orm";
 import { z } from "zod";
 
-import { protectedProcedure, publicProcedure, router } from "../index";
+import { publicProcedure, router } from "../index";
 import {
 	lookupTwitchUser,
 	probeEmoteProviders,
@@ -21,24 +28,33 @@ import {
 
 const SITE_ID = "site";
 
+async function siteRow() {
+	const db = createDb();
+	return db.select().from(channelConfig).where(eq(channelConfig.id, SITE_ID)).get();
+}
+
+async function assertNotCompleted() {
+	const cfg = await siteRow();
+	if (cfg?.setupCompletedAt) {
+		throw new TRPCError({
+			code: "CONFLICT",
+			message: "Setup already completed.",
+		});
+	}
+	return cfg;
+}
+
 export const setupRouter = router({
-	// Returns whether setup has run. Public so the middleware can hit it
-	// without auth and decide whether to redirect to /setup.
 	getStatus: publicProcedure.query(async () => {
-		const db = createDb();
-		const cfg = await db
-			.select({ setupCompletedAt: channelConfig.setupCompletedAt })
-			.from(channelConfig)
-			.where(eq(channelConfig.id, SITE_ID))
-			.get();
+		const cfg = await siteRow();
 		return { setupCompleted: !!cfg?.setupCompletedAt };
 	}),
 
-	// Step 1: resolve a Twitch username to {id, displayName, avatar, bio}
-	// + probe 7TV / BTTV / FFZ for emote counts. Read-only — no DB writes.
-	lookup: protectedProcedure
+	// Step 1: resolve Twitch username + probe emote providers. No writes.
+	lookup: publicProcedure
 		.input(z.object({ username: z.string().min(1).max(25) }))
 		.mutation(async ({ input }) => {
+			await assertNotCompleted();
 			try {
 				const user = await lookupTwitchUser(input.username, env.EMOTES_KV, {
 					clientId: env.TWITCH_CLIENT_ID,
@@ -54,21 +70,20 @@ export const setupRouter = router({
 				return { user, providers };
 			} catch (e) {
 				if (e instanceof TwitchNotConfiguredError) {
-					throw new TRPCError({
-						code: "PRECONDITION_FAILED",
-						message: e.message,
-					});
+					throw new TRPCError({ code: "PRECONDITION_FAILED", message: e.message });
 				}
 				throw e;
 			}
 		}),
 
-	// Step 2: persist the resolved data. Idempotent guard — if setup has
-	// already completed, refuses (Phase 6 will add an edit path). Writes
-	// the broadcaster profile + the single-row channelConfig.
-	commit: protectedProcedure
+	// Step 2/3 — atomic first-run commit. Creates the broadcaster account
+	// (better-auth signUpEmail returns the session cookie via ctx headers),
+	// then writes profiles + channelConfig. Refuses on second run.
+	commit: publicProcedure
 		.input(
 			z.object({
+				email: z.string().email(),
+				password: z.string().min(8).max(128),
 				twitchId: z.string().min(1),
 				login: z.string().min(1),
 				displayName: z.string().min(1).max(40),
@@ -78,29 +93,31 @@ export const setupRouter = router({
 			}),
 		)
 		.mutation(async ({ ctx, input }) => {
-			const db = createDb();
+			const cfg = await assertNotCompleted();
 
-			const existing = await db
-				.select()
-				.from(channelConfig)
-				.where(eq(channelConfig.id, SITE_ID))
-				.get();
-			if (existing?.setupCompletedAt) {
+			const auth = createAuth();
+			const result = await auth.api.signUpEmail({
+				body: {
+					name: input.displayName,
+					email: input.email,
+					password: input.password,
+					image: input.avatarUrl ?? undefined,
+				},
+				headers: ctx.headers,
+				returnHeaders: true,
+			});
+
+			const userId = result.response?.user?.id;
+			if (!userId) {
 				throw new TRPCError({
-					code: "CONFLICT",
-					message: "Setup already completed.",
+					code: "INTERNAL_SERVER_ERROR",
+					message: "Auth signup did not return a user id.",
 				});
 			}
 
-			const userId = ctx.session.user.id;
+			const db = createDb();
 			const now = new Date();
 
-			// profiles row — broadcaster identity. avatarUrl is intentionally
-			// not persisted as R2 yet; Phase 6 wizard improvement downloads it
-			// to R2 howlcast-public. For now we store the Twitch CDN URL in a
-			// "profile_image_url"-shaped field via the bio (lossless compromise:
-			// users see their Twitch avatar via existing avatar handling once
-			// we wire it). For now bio carries it as a fallback only if no bio.
 			await db
 				.insert(profiles)
 				.values({
@@ -126,15 +143,13 @@ export const setupRouter = router({
 					},
 				});
 
-			// channelConfig — single row, id="site". Inserted on first run,
-			// updated on retry (idempotent guard above blocks post-completion).
-			if (existing) {
+			if (cfg) {
 				await db
 					.update(channelConfig)
 					.set({
 						ownerId: userId,
-						title: null,
 						visibility: input.visibility,
+						allowSignups: false,
 						broadcasterTwitchId: input.twitchId,
 						setupCompletedAt: now,
 						updatedAt: now,
@@ -145,10 +160,18 @@ export const setupRouter = router({
 					id: SITE_ID,
 					ownerId: userId,
 					visibility: input.visibility,
+					allowSignups: false,
 					broadcasterTwitchId: input.twitchId,
 					setupCompletedAt: now,
 					updatedAt: now,
 				});
+			}
+
+			// Forward better-auth's set-cookie headers to the client so the
+			// wizard's redirect to /dashboard arrives signed-in.
+			const setCookies = result.headers?.getSetCookie?.() ?? [];
+			for (const cookie of setCookies) {
+				ctx.hono.header("set-cookie", cookie, { append: true });
 			}
 
 			return { ok: true };
