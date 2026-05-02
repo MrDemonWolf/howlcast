@@ -8,6 +8,7 @@
 		"dev:bare": "next dev --port 3001"
 	},
 	"dependencies": {
+		"@better-auth/passkey": "^1.6.9",
 		"@howlcast/api": "workspace:*",
 		"@howlcast/auth": "workspace:*",
 		"@howlcast/env": "workspace:*",

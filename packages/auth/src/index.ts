@@ -1,3 +1,4 @@
+import { passkey } from "@better-auth/passkey";
 import { createDb } from "@howlcast/db";
 import * as schema from "@howlcast/db/schema/auth";
 import { env } from "@howlcast/env/server";
@@ -8,6 +9,14 @@ import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { magicLink } from "better-auth/plugins/magic-link";
 import { twoFactor } from "better-auth/plugins/two-factor";
 import { username } from "better-auth/plugins/username";
+
+function getRpID(url: string): string | undefined {
+	try {
+		return new URL(url).hostname;
+	} catch {
+		return undefined;
+	}
+}
 
 export function createAuth() {
 	const db = createDb();
@@ -42,6 +51,10 @@ export function createAuth() {
 			}),
 			twoFactor({
 				issuer: "HowlCast",
+			}),
+			passkey({
+				rpName: "HowlCast",
+				rpID: getRpID(env.BETTER_AUTH_URL),
 			}),
 			magicLink({
 				expiresIn: 15 * 60,

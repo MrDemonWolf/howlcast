@@ -1,3 +1,4 @@
+import { passkeyClient } from "@better-auth/passkey/client";
 import { env } from "@howlcast/env/web";
 import {
 	magicLinkClient,
@@ -11,5 +12,10 @@ export const authClient = createAuthClient({
 		typeof window !== "undefined"
 			? window.location.origin
 			: env.NEXT_PUBLIC_SERVER_URL,
-	plugins: [usernameClient(), twoFactorClient(), magicLinkClient()],
+	plugins: [
+		usernameClient(),
+		twoFactorClient(),
+		passkeyClient(),
+		magicLinkClient(),
+	],
 });

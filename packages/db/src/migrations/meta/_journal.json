@@ -8,6 +8,13 @@
 			"when": 1777685810826,
 			"tag": "0000_yielding_major_mapleleaf",
 			"breakpoints": true
+		},
+		{
+			"idx": 1,
+			"version": "6",
+			"when": 1777694331327,
+			"tag": "0001_bumpy_bushwacker",
+			"breakpoints": true
 		}
 	]
 }
