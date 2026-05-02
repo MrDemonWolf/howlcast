@@ -23,14 +23,17 @@ app.use(
 app.on(["POST", "GET"], "/api/auth/*", (c) => createAuth().handler(c.req.raw));
 
 app.use(
-	"/trpc/*",
+	"/api/trpc/*",
 	trpcServer({
 		router: appRouter,
+		endpoint: "/api/trpc",
 		createContext: (_opts, context) => {
 			return createContext({ context });
 		},
 	}),
 );
+
+app.get("/api/health", (c) => c.json({ ok: true }));
 
 app.get("/", (c) => {
 	return c.text("OK");

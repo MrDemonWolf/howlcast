@@ -39,6 +39,8 @@ lerna-debug.log*
 
 # Better-T-Stack
 .alchemy
+# Alchemy regenerates wrangler.jsonc from .env at dev/deploy — treat as artifact
+**/wrangler.jsonc
 
 # Testing
 coverage
