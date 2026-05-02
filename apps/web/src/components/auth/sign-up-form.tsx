@@ -1,6 +1,7 @@
 "use client";
 
 import { Button } from "@howlcast/ui/components/button";
+import { DisplayHeading } from "@howlcast/ui/components/display-heading";
 import { Input } from "@howlcast/ui/components/input";
 import { Label } from "@howlcast/ui/components/label";
 import Link from "next/link";
@@ -9,6 +10,7 @@ import { type FormEvent, useState } from "react";
 import { toast } from "sonner";
 
 import { authClient } from "@/lib/auth-client";
+import { formatAuthError } from "@/lib/auth-toast";
 
 export default function SignUpForm() {
 	const router = useRouter();
@@ -31,11 +33,7 @@ export default function SignUpForm() {
 						router.push("/dashboard");
 					},
 					onError: (error) => {
-						toast.error(
-							error.error.message ||
-								error.error.statusText ||
-								"Could not create account.",
-						);
+						toast.error(formatAuthError(error, "Could not create account."));
 					},
 				},
 			);
@@ -46,9 +44,9 @@ export default function SignUpForm() {
 
 	return (
 		<div className="mx-auto w-full max-w-md">
-			<h1 className="mb-2 text-center font-display font-semibold text-3xl text-foreground tracking-tight">
+			<DisplayHeading size="lg" className="mb-2 text-center">
 				Create account
-			</h1>
+			</DisplayHeading>
 			<p className="mb-8 text-center text-muted-foreground text-sm">
 				The den is invite-only — you can sign up, but chat is gated.
 			</p>

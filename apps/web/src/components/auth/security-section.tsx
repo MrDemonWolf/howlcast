@@ -8,6 +8,7 @@ import { type FormEvent, useEffect, useState } from "react";
 import { toast } from "sonner";
 
 import { authClient } from "@/lib/auth-client";
+import { toastAuthError } from "@/lib/auth-toast";
 
 type Passkey = { id: string; name?: string | null; createdAt?: Date };
 type Session = {
@@ -73,10 +74,7 @@ export default function SecuritySection() {
 			new FormData(e.currentTarget).get("password") ?? "",
 		);
 		const res = await authClient.twoFactor.enable({ password });
-		if (res.error) {
-			toast.error(res.error.message ?? "Could not enable 2FA.");
-			return;
-		}
+		if (toastAuthError(res, "Could not enable 2FA.")) return;
 		const data = res.data as
 			| { totpURI?: string; backupCodes?: string[] }
 			| undefined;
@@ -91,10 +89,7 @@ export default function SecuritySection() {
 		e.preventDefault();
 		const code = String(new FormData(e.currentTarget).get("code") ?? "");
 		const res = await authClient.twoFactor.verifyTotp({ code });
-		if (res.error) {
-			toast.error(res.error.message ?? "Invalid code.");
-			return;
-		}
+		if (toastAuthError(res, "Invalid code.")) return;
 		toast.success("2FA verified.");
 		setTotpSecret(null);
 		setTotpUri(null);
@@ -107,10 +102,7 @@ export default function SecuritySection() {
 			new FormData(e.currentTarget).get("password") ?? "",
 		);
 		const res = await authClient.twoFactor.disable({ password });
-		if (res.error) {
-			toast.error(res.error.message ?? "Could not disable 2FA.");
-			return;
-		}
+		if (toastAuthError(res, "Could not disable 2FA.")) return;
 		toast.success("2FA disabled.");
 	}
 
@@ -118,40 +110,28 @@ export default function SecuritySection() {
 		e.preventDefault();
 		const name = String(new FormData(e.currentTarget).get("name") ?? "Passkey");
 		const res = await authClient.passkey.addPasskey({ name });
-		if (res?.error) {
-			toast.error(res.error.message ?? "Could not register passkey.");
-			return;
-		}
+		if (toastAuthError(res, "Could not register passkey.")) return;
 		toast.success("Passkey added.");
 		await refreshPasskeys();
 	}
 
 	async function removePasskey(id: string) {
 		const res = await authClient.passkey.deletePasskey({ id });
-		if (res.error) {
-			toast.error(res.error.message ?? "Could not remove passkey.");
-			return;
-		}
+		if (toastAuthError(res, "Could not remove passkey.")) return;
 		toast.success("Passkey removed.");
 		await refreshPasskeys();
 	}
 
 	async function revokeSession(token: string) {
 		const res = await authClient.revokeSession({ token });
-		if (res.error) {
-			toast.error(res.error.message ?? "Could not revoke session.");
-			return;
-		}
+		if (toastAuthError(res, "Could not revoke session.")) return;
 		toast.success("Session revoked.");
 		await refreshSessions();
 	}
 
 	async function revokeAllOthers() {
 		const res = await authClient.revokeOtherSessions();
-		if (res.error) {
-			toast.error(res.error.message ?? "Could not revoke sessions.");
-			return;
-		}
+		if (toastAuthError(res, "Could not revoke sessions.")) return;
 		toast.success("Other sessions revoked.");
 		await refreshSessions();
 	}

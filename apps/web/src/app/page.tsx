@@ -1,3 +1,4 @@
+import { DisplayHeading } from "@howlcast/ui/components/display-heading";
 import { PawPrint } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
@@ -14,12 +15,9 @@ export default function Home() {
 						height={72}
 						priority
 					/>
-					<h1
-						className="mt-6 font-display font-semibold text-4xl text-foreground tracking-tight sm:text-5xl"
-						style={{ fontFamily: "var(--font-display)" }}
-					>
+					<DisplayHeading size="xl" className="mt-6">
 						HowlCast
-					</h1>
+					</DisplayHeading>
 					<p className="mt-4 inline-flex items-center gap-2 text-base text-muted-foreground sm:text-lg">
 						<PawPrint className="h-4 w-4 text-cyan" aria-hidden="true" />
 						For the inner circle.

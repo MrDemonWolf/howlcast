@@ -1,12 +1,12 @@
+import { DisplayHeading } from "@howlcast/ui/components/display-heading";
+
 import SecuritySection from "@/components/auth/security-section";
 
 export default function SecurityPage() {
 	return (
 		<main className="mx-auto w-full max-w-3xl px-6 py-12">
 			<header className="mb-8">
-				<h1 className="font-display font-semibold text-3xl text-foreground tracking-tight">
-					Security
-				</h1>
+				<DisplayHeading size="lg">Security</DisplayHeading>
 				<p className="mt-1 text-muted-foreground text-sm">
 					Two-factor, passkeys, and active sessions.
 				</p>

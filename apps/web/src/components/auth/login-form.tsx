@@ -1,6 +1,7 @@
 "use client";
 
 import { Button } from "@howlcast/ui/components/button";
+import { DisplayHeading } from "@howlcast/ui/components/display-heading";
 import { Input } from "@howlcast/ui/components/input";
 import { Label } from "@howlcast/ui/components/label";
 import {
@@ -16,6 +17,7 @@ import { type FormEvent, useState } from "react";
 import { toast } from "sonner";
 
 import { authClient } from "@/lib/auth-client";
+import { formatAuthError } from "@/lib/auth-toast";
 
 type Mode = "email" | "username" | "magic" | "passkey";
 
@@ -30,11 +32,7 @@ export default function LoginForm() {
 	}
 
 	function onErr(error: unknown) {
-		const message =
-			(error as { error?: { message?: string } })?.error?.message ??
-			(error as Error)?.message ??
-			"Sign-in failed.";
-		toast.error(message);
+		toast.error(formatAuthError(error, "Sign-in failed."));
 	}
 
 	async function submitEmail(e: FormEvent<HTMLFormElement>) {
@@ -104,9 +102,9 @@ export default function LoginForm() {
 
 	return (
 		<div className="mx-auto w-full max-w-md">
-			<h1 className="mb-2 text-center font-display font-semibold text-3xl text-foreground tracking-tight">
+			<DisplayHeading size="lg" className="mb-2 text-center">
 				Sign in
-			</h1>
+			</DisplayHeading>
 			<p className="mb-8 text-center text-muted-foreground text-sm">
 				For the inner circle.
 			</p>

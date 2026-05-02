@@ -1,3 +1,4 @@
+import { DisplayHeading } from "@howlcast/ui/components/display-heading";
 import Image from "next/image";
 import Link from "next/link";
 
@@ -15,12 +16,9 @@ export default function Header() {
 						height={28}
 						priority
 					/>
-					<span
-						className="font-display font-semibold text-foreground text-lg tracking-tight"
-						style={{ fontFamily: "var(--font-display)" }}
-					>
+					<DisplayHeading as="span" size="sm">
 						HowlCast
-					</span>
+					</DisplayHeading>
 				</Link>
 				<nav className="flex items-center gap-6 text-sm">
 					<Link
