@@ -25,10 +25,12 @@ export type EmoteMap = {
 const KV_KEY = "emotes:current";
 const TWITCH_TOKEN_KEY = "twitch:apptoken";
 
-type TwitchEnv = {
+// Twitch app credentials live in env (server config); the broadcaster's
+// Twitch user id lives in the DB (channelConfig.broadcasterTwitchId) so the
+// setup wizard can write it without an env redeploy.
+type TwitchAppEnv = {
 	TWITCH_CLIENT_ID: string;
 	TWITCH_CLIENT_SECRET: string;
-	BROADCASTER_TWITCH_ID: string;
 };
 
 // ─── Twitch ───────────────────────────────────────────────────────────────
@@ -62,20 +64,17 @@ async function getTwitchAppToken(
 	return data.access_token;
 }
 
-async function fetchTwitch(env: TwitchEnv, kv: KVNamespace): Promise<Emote[]> {
-	if (!env.BROADCASTER_TWITCH_ID) return [];
+async function fetchTwitch(env: TwitchAppEnv, twitchId: string, kv: KVNamespace): Promise<Emote[]> {
+	if (!twitchId) return [];
 	const token = await getTwitchAppToken(kv, env.TWITCH_CLIENT_ID, env.TWITCH_CLIENT_SECRET);
 	if (!token) return [];
 
-	const res = await fetch(
-		`https://api.twitch.tv/helix/chat/emotes?broadcaster_id=${env.BROADCASTER_TWITCH_ID}`,
-		{
-			headers: {
-				"Client-Id": env.TWITCH_CLIENT_ID,
-				Authorization: `Bearer ${token}`,
-			},
+	const res = await fetch(`https://api.twitch.tv/helix/chat/emotes?broadcaster_id=${twitchId}`, {
+		headers: {
+			"Client-Id": env.TWITCH_CLIENT_ID,
+			Authorization: `Bearer ${token}`,
 		},
-	);
+	});
 	if (!res.ok) return [];
 
 	type TwitchEmote = {
@@ -166,11 +165,15 @@ async function fetchFFZ(twitchId: string): Promise<Emote[]> {
 // Merge order matters: later providers win on name collisions. We prefer
 // 7TV → BTTV → FFZ → Twitch (Twitch global emotes have lowest priority since
 // they're already rendered natively by chat clients).
-export async function refreshEmotes(env: TwitchEnv, kv: KVNamespace): Promise<EmoteMap> {
-	const id = env.BROADCASTER_TWITCH_ID;
+export async function refreshEmotes(
+	twitchId: string | null,
+	env: TwitchAppEnv,
+	kv: KVNamespace,
+): Promise<EmoteMap> {
+	const id = twitchId ?? "";
 
 	const [twitch, sevenTv, bttv, ffz] = await Promise.all([
-		fetchTwitch(env, kv).catch(() => [] as Emote[]),
+		fetchTwitch(env, id, kv).catch(() => [] as Emote[]),
 		fetch7TV(id).catch(() => [] as Emote[]),
 		fetchBTTV(id).catch(() => [] as Emote[]),
 		fetchFFZ(id).catch(() => [] as Emote[]),

@@ -108,16 +108,25 @@ export default {
 	fetch: app.fetch,
 	async scheduled(_controller: ScheduledController, _env: Env, ctx: ExecutionContext) {
 		ctx.waitUntil(
-			refreshEmotes(
-				{
-					TWITCH_CLIENT_ID: env.TWITCH_CLIENT_ID,
-					TWITCH_CLIENT_SECRET: env.TWITCH_CLIENT_SECRET,
-					BROADCASTER_TWITCH_ID: env.BROADCASTER_TWITCH_ID,
-				},
-				env.EMOTES_KV,
-			).catch(() => {
-				/* fail-soft — pipeline writes nothing if all providers fail */
-			}),
+			(async () => {
+				// Read the broadcaster's Twitch id from the DB so the setup wizard
+				// can change it without an env redeploy. Fail-soft on every step.
+				const cfg = await createDb()
+					.select()
+					.from(channelConfig)
+					.where(eq(channelConfig.id, "site"))
+					.get();
+				await refreshEmotes(
+					cfg?.broadcasterTwitchId ?? null,
+					{
+						TWITCH_CLIENT_ID: env.TWITCH_CLIENT_ID,
+						TWITCH_CLIENT_SECRET: env.TWITCH_CLIENT_SECRET,
+					},
+					env.EMOTES_KV,
+				).catch(() => {
+					/* providers all failed — pipeline writes nothing this tick */
+				});
+			})(),
 		);
 	},
 };

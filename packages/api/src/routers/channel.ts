@@ -117,10 +117,10 @@ export const channelRouter = router({
 			throw new TRPCError({ code: "FORBIDDEN", message: "Broadcaster only." });
 		}
 		const map = await refreshEmotes(
+			cfg.broadcasterTwitchId ?? null,
 			{
 				TWITCH_CLIENT_ID: env.TWITCH_CLIENT_ID,
 				TWITCH_CLIENT_SECRET: env.TWITCH_CLIENT_SECRET,
-				BROADCASTER_TWITCH_ID: env.BROADCASTER_TWITCH_ID,
 			},
 			env.EMOTES_KV,
 		);
