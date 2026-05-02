@@ -168,8 +168,16 @@ export const setupRouter = router({
 			}
 
 			// Forward better-auth's set-cookie headers to the client so the
-			// wizard's redirect to /dashboard arrives signed-in.
-			const setCookies = result.headers?.getSetCookie?.() ?? [];
+			// wizard's redirect to /dashboard arrives signed-in. Workers'
+			// Headers exposes getSetCookie at runtime but the lib types
+			// vary, so call it dynamically with a fallback.
+			const headers = result.headers as Headers & { getSetCookie?: () => string[] };
+			const setCookies =
+				typeof headers?.getSetCookie === "function"
+					? headers.getSetCookie()
+					: headers
+						? [headers.get("set-cookie") ?? ""].filter(Boolean)
+						: [];
 			for (const cookie of setCookies) {
 				ctx.hono.header("set-cookie", cookie, { append: true });
 			}

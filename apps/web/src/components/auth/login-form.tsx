@@ -1,11 +1,15 @@
 "use client";
 
+// Single-form login. Email + password is the primary path; magic-link
+// and passkey are secondary buttons under the form (progressive
+// disclosure). Username login is a small "use username instead" toggle
+// that swaps the email field — most folks won't see it.
+
 import { Button } from "@howlcast/ui/components/button";
 import { DisplayHeading } from "@howlcast/ui/components/display-heading";
 import { Input } from "@howlcast/ui/components/input";
 import { Label } from "@howlcast/ui/components/label";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@howlcast/ui/components/tabs";
-import { Fingerprint, KeyRound, Mail, User } from "lucide-react";
+import { Fingerprint, Mail } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { type FormEvent, useState } from "react";
@@ -14,12 +18,14 @@ import { toast } from "sonner";
 import { authClient } from "@/lib/auth-client";
 import { formatAuthError } from "@/lib/auth-toast";
 
-type Mode = "email" | "username" | "magic" | "passkey";
+type IdMode = "email" | "username";
 
 export default function LoginForm() {
 	const router = useRouter();
-	const [mode, setMode] = useState<Mode>("email");
+	const [idMode, setIdMode] = useState<IdMode>("email");
 	const [submitting, setSubmitting] = useState(false);
+	const [magicSent, setMagicSent] = useState(false);
+	const [magicEmail, setMagicEmail] = useState("");
 
 	function onSuccess() {
 		toast.success("Welcome back.");
@@ -30,54 +36,40 @@ export default function LoginForm() {
 		toast.error(formatAuthError(error, "Sign-in failed."));
 	}
 
-	async function submitEmail(e: FormEvent<HTMLFormElement>) {
+	async function submit(e: FormEvent<HTMLFormElement>) {
 		e.preventDefault();
 		const data = new FormData(e.currentTarget);
+		const password = String(data.get("password") ?? "");
 		setSubmitting(true);
 		try {
-			await authClient.signIn.email(
-				{
-					email: String(data.get("email") ?? ""),
-					password: String(data.get("password") ?? ""),
-				},
-				{ onSuccess, onError: onErr },
-			);
+			if (idMode === "email") {
+				await authClient.signIn.email(
+					{ email: String(data.get("email") ?? ""), password },
+					{ onSuccess, onError: onErr },
+				);
+			} else {
+				await authClient.signIn.username(
+					{ username: String(data.get("username") ?? ""), password },
+					{ onSuccess, onError: onErr },
+				);
+			}
 		} finally {
 			setSubmitting(false);
 		}
 	}
 
-	async function submitUsername(e: FormEvent<HTMLFormElement>) {
-		e.preventDefault();
-		const data = new FormData(e.currentTarget);
-		setSubmitting(true);
-		try {
-			await authClient.signIn.username(
-				{
-					username: String(data.get("username") ?? ""),
-					password: String(data.get("password") ?? ""),
-				},
-				{ onSuccess, onError: onErr },
-			);
-		} finally {
-			setSubmitting(false);
+	async function sendMagicLink() {
+		const email = magicEmail.trim();
+		if (!email) {
+			toast.error("Enter your email first.");
+			return;
 		}
-	}
-
-	async function submitMagic(e: FormEvent<HTMLFormElement>) {
-		e.preventDefault();
-		const data = new FormData(e.currentTarget);
 		setSubmitting(true);
 		try {
 			await authClient.signIn.magicLink(
+				{ email, callbackURL: "/dashboard" },
 				{
-					email: String(data.get("email") ?? ""),
-					callbackURL: "/dashboard",
-				},
-				{
-					onSuccess: () => {
-						toast.success("Check your inbox for the link.");
-					},
+					onSuccess: () => setMagicSent(true),
 					onError: onErr,
 				},
 			);
@@ -86,7 +78,7 @@ export default function LoginForm() {
 		}
 	}
 
-	async function submitPasskey() {
+	async function signInWithPasskey() {
 		setSubmitting(true);
 		try {
 			await authClient.signIn.passkey({}, { onSuccess, onError: onErr });
@@ -96,114 +88,89 @@ export default function LoginForm() {
 	}
 
 	return (
-		<div className="mx-auto w-full max-w-md">
-			<DisplayHeading size="lg" className="mb-2 text-center">
+		<div className="mx-auto w-full max-w-sm">
+			<DisplayHeading size="lg" className="mb-1.5 text-center">
 				Sign in
 			</DisplayHeading>
 			<p className="mb-8 text-center text-muted-foreground text-sm">For the inner circle.</p>
 
-			<Tabs
-				value={mode}
-				onValueChange={(v) => setMode(v as Mode)}
-				className="flex flex-col items-center"
-			>
-				<TabsList className="mb-2">
-					<TabsTrigger value="email">
-						<Mail className="h-3.5 w-3.5" />
-						Email
-					</TabsTrigger>
-					<TabsTrigger value="username">
-						<User className="h-3.5 w-3.5" />
-						Username
-					</TabsTrigger>
-					<TabsTrigger value="magic">
-						<KeyRound className="h-3.5 w-3.5" />
-						Magic
-					</TabsTrigger>
-					<TabsTrigger value="passkey">
-						<Fingerprint className="h-3.5 w-3.5" />
-						Passkey
-					</TabsTrigger>
-				</TabsList>
-
-				<TabsContent value="email" className="w-full">
-					<form onSubmit={submitEmail} className="flex flex-col gap-3">
-						<div className="flex flex-col gap-1.5">
-							<Label htmlFor="email-email">Email</Label>
-							<Input id="email-email" name="email" type="email" autoComplete="email" required />
-						</div>
-						<div className="flex flex-col gap-1.5">
-							<Label htmlFor="email-password">Password</Label>
+			<form onSubmit={submit} className="flex flex-col gap-3">
+				<div className="flex flex-col gap-1.5">
+					{idMode === "email" ? (
+						<>
+							<Label htmlFor="li-email">Email</Label>
 							<Input
-								id="email-password"
-								name="password"
-								type="password"
-								autoComplete="current-password"
-								minLength={8}
+								id="li-email"
+								name="email"
+								type="email"
+								autoComplete="email"
 								required
+								onChange={(e) => setMagicEmail(e.target.value)}
 							/>
-						</div>
-						<Button type="submit" disabled={submitting} className="mt-2">
-							{submitting ? "Signing in…" : "Sign in"}
-						</Button>
-					</form>
-				</TabsContent>
+						</>
+					) : (
+						<>
+							<Label htmlFor="li-username">Username</Label>
+							<Input id="li-username" name="username" autoComplete="username" required />
+						</>
+					)}
+				</div>
+				<div className="flex flex-col gap-1.5">
+					<Label htmlFor="li-password">Password</Label>
+					<Input
+						id="li-password"
+						name="password"
+						type="password"
+						autoComplete="current-password"
+						minLength={8}
+						required
+					/>
+				</div>
+				<Button type="submit" disabled={submitting} className="mt-2">
+					{submitting ? "Signing in…" : "Sign in"}
+				</Button>
+			</form>
 
-				<TabsContent value="username" className="w-full">
-					<form onSubmit={submitUsername} className="flex flex-col gap-3">
-						<div className="flex flex-col gap-1.5">
-							<Label htmlFor="u-username">Username</Label>
-							<Input id="u-username" name="username" autoComplete="username" required />
-						</div>
-						<div className="flex flex-col gap-1.5">
-							<Label htmlFor="u-password">Password</Label>
-							<Input
-								id="u-password"
-								name="password"
-								type="password"
-								autoComplete="current-password"
-								minLength={8}
-								required
-							/>
-						</div>
-						<Button type="submit" disabled={submitting} className="mt-2">
-							{submitting ? "Signing in…" : "Sign in"}
-						</Button>
-					</form>
-				</TabsContent>
+			<div className="mt-3 flex gap-2">
+				<Button
+					type="button"
+					variant="outline"
+					className="flex-1"
+					onClick={sendMagicLink}
+					disabled={submitting || magicSent || idMode !== "email"}
+				>
+					<Mail className="mr-1.5 h-3.5 w-3.5" aria-hidden />
+					{magicSent ? "Check your inbox" : "Email a link"}
+				</Button>
+				<Button
+					type="button"
+					variant="outline"
+					className="flex-1"
+					onClick={signInWithPasskey}
+					disabled={submitting}
+				>
+					<Fingerprint className="mr-1.5 h-3.5 w-3.5" aria-hidden />
+					Passkey
+				</Button>
+			</div>
 
-				<TabsContent value="magic" className="w-full">
-					<form onSubmit={submitMagic} className="flex flex-col gap-3">
-						<div className="flex flex-col gap-1.5">
-							<Label htmlFor="magic-email">Email</Label>
-							<Input id="magic-email" name="email" type="email" autoComplete="email" required />
-							<p className="text-muted-foreground text-xs">
-								We'll email you a one-time link. Expires in 15 minutes.
-							</p>
-						</div>
-						<Button type="submit" disabled={submitting} className="mt-2">
-							{submitting ? "Sending…" : "Send magic link"}
-						</Button>
-					</form>
-				</TabsContent>
-
-				<TabsContent value="passkey" className="w-full">
-					<div className="flex flex-col gap-3">
-						<p className="text-muted-foreground text-sm">
-							Use a registered passkey to sign in. The browser will prompt for your authenticator.
-						</p>
-						<Button type="button" onClick={submitPasskey} disabled={submitting}>
-							{submitting ? "Authenticating…" : "Sign in with passkey"}
-						</Button>
-					</div>
-				</TabsContent>
-			</Tabs>
-
-			<div className="mt-8 text-center text-muted-foreground text-sm">
-				No account?{" "}
-				<Link href="/signup" className="text-cyan hover:opacity-80">
-					Create one
-				</Link>
+			<div className="mt-6 flex flex-col items-center gap-2 text-muted-foreground text-xs">
+				<button
+					type="button"
+					onClick={() => {
+						setIdMode((m) => (m === "email" ? "username" : "email"));
+						setMagicSent(false);
+					}}
+					className="text-fg-3 hover:text-foreground"
+				>
+					{idMode === "email" ? "Use username instead" : "Use email instead"}
+				</button>
+				<span>
+					No account?{" "}
+					<Link href="/signup" className="text-cyan hover:opacity-80">
+						Create one
+					</Link>
+				</span>
 			</div>
 		</div>
 	);
