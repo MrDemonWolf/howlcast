@@ -1,6 +1,12 @@
 # Emote Pipeline
 
-> **TL;DR:** Cron fetches from 7TV/BTTV/FFZ/Twitch every 15min, merges with priority order, stores in KV. Image proxy through R2. Word-level matching in chat via rehype plugin.
+> **TL;DR:** Cron fetches metadata (name → CDN URL) from 7TV/BTTV/FFZ/Twitch every 12 hours, merges with priority order, stores in KV. Images load directly from provider CDNs (no R2 proxy — browsers cache them). Broadcaster has a "Refresh now" button on the dashboard. Word-level matching in chat via rehype plugin.
+
+## Single-input setup
+
+The broadcaster's **Twitch user ID** is the only input HowlCast needs. All four providers (Twitch, 7TV, BTTV, FFZ) key off Twitch user ID. As long as the broadcaster has signed up at each provider's site once and linked their Twitch account, our API queries return their emotes automatically.
+
+The same Twitch ID also seeds broadcaster profile defaults (display name, bio, avatar) on first-run setup — see `docs/architecture.md`.
 
 ## What you'll find here
 
@@ -33,12 +39,17 @@
 
 | What | Where | TTL | Why |
 |---|---|---|---|
-| Emote metadata (merged map) | KV `emotes:channel:{twitchId}` | 24h | Read on every chat connect |
+| Emote metadata (merged map) | KV `emotes:channel:{twitchId}` | 12h | Read on every chat connect |
 | Twitch app token | KV `twitch:app_token` | `expires_in - 300` | Refresh before expiration |
-| Emote images | R2 `howlcast-emotes` | 30d immutable | IDs are content-addressed |
-| Image edge cache | Cloudflare Cache API | 30d immutable | In front of R2 |
+| Emote images | **Browser HTTP cache (provider CDNs)** | provider-controlled | All four CDNs are global + immutable per emote ID |
 
-**Why proxy images at all?** CSP control, consistent CORS, insulation from 4 origin CDNs. It's optional — hotlinking works too. But R2 proxying is cheap (zero egress) and gives you one canonical URL pattern.
+**No R2 proxy.** Provider CDNs (`cdn.7tv.app`, `cdn.frankerfacez.com`, `cdn.betterttv.net`, `static-cdn.jtvnw.net`) are fast and cache aggressively. Browser caches the image bytes per HTTP headers. Round-tripping through our Worker buys nothing for a single-broadcaster install.
+
+CSP must whitelist the four CDN hosts in `next.config.ts` — that's the only cost.
+
+**Refresh triggers:**
+1. Cron in `apps/server/src/scheduled.ts` every 12 hours.
+2. Broadcaster-initiated "Refresh emotes now" button on Dashboard → Channel → Emotes (calls a tRPC mutation that re-runs the fetcher pipeline).
 
 ---
 

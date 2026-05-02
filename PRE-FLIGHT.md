@@ -38,7 +38,7 @@ Total: ~95-120 minutes
 You probably already have an account from MrDemonWolf, Inc. Reuse it.
 
 - [ ] **1.1** Go to **https://dash.cloudflare.com**, log in
-- [ ] **1.2** Confirm you have **Workers Paid plan** ($5/mo). If not: Workers & Pages → Plans → upgrade. The Free plan won't cut it for D1 + R2 + Cron + custom domains.
+- [ ] **1.2** **Free plan is fine.** D1, R2, KV, Cron triggers, and custom domains on Workers are all on the Free tier as of 2026. Single-broadcaster traffic stays well under the 100k req/day Worker limit. Only upgrade to Paid ($5/mo) if you actually hit a quota — not preemptively.
 - [ ] **1.3** Note your **Account ID** (right sidebar of any Cloudflare dashboard page) → save in 1Password as `CLOUDFLARE_ACCOUNT_ID`
 - [ ] **1.4** Create an **API token** for local Wrangler use:
   - Profile (top-right) → API Tokens → Create Token

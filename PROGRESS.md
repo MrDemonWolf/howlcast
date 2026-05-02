@@ -43,7 +43,7 @@
 
 - [ ] BTS scaffold command run
 - [ ] D1 database created
-- [ ] R2 buckets created (3: public, emotes, isr)
+- [ ] R2 buckets created (2: public, isr — emotes bucket removed, images load direct from provider CDNs)
 - [ ] KV namespace created
 - [ ] `wrangler.jsonc` (web + server) updated with bindings
 - [ ] OpenNext `r2IncrementalCache` + `d1NextModeTagCache` configured

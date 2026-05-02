@@ -29,6 +29,12 @@
   - `howlcast-mark-white.svg` — pure white for photo/busy backgrounds
   - `howlcast-mark-on-cyan.svg` — navy-on-cyan tile, for cyan callouts
 
+### Setup-time decisions (NEW)
+
+- **Twitch user ID is the single setup input.** First-run wizard asks for nothing else identity-wise. From the Twitch ID HowlCast seeds: display name, bio, profile picture (downloaded to R2 once), and pulls channel emotes from all 4 providers (Twitch + 7TV + BTTV + FFZ). Broadcaster can edit any seeded field afterward.
+- **No R2 emote image proxy.** Emote images load directly from each provider's CDN. Browsers cache them via HTTP headers. CSP whitelist for the 4 CDN hosts is the only cost. KV caches metadata only (name → CDN URL map), refreshed by cron every 12 hours, plus a manual "Refresh emotes now" button in Dashboard → Channel → Emotes.
+- **Twitch global emotes are included** alongside broadcaster's channel emotes. Channel emotes (including subscriber-tier ones) are fine to expose — broadcaster opts in by virtue of running their own platform.
+
 ### OUT
 
 - ❌ **Theater layout** — removed, only Den remains

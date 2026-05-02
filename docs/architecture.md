@@ -1,6 +1,17 @@
 # Architecture
 
-> **TL;DR:** Two Cloudflare Workers (web + api), one D1 database, three R2 buckets, GetStream handles all media. Better-T Stack scaffolds it.
+> **TL;DR:** Two Cloudflare Workers (web + api), one D1 database, two R2 buckets (public assets + ISR), GetStream handles all media. Better-T Stack scaffolds it.
+
+## Broadcaster identity from Twitch
+
+The first-run setup wizard takes a single input: **broadcaster Twitch user ID**. From it HowlCast pulls and seeds:
+
+- **Display name** → `profiles.displayName` (editable after)
+- **Bio** → `profiles.bio` (Twitch description; editable after)
+- **Profile picture** → fetched from Twitch `users.profile_image_url`, downloaded to R2 `howlcast-public` once, stored as `profiles.avatarKey`
+- **Channel emotes** → 4 providers query by Twitch ID (see `docs/integrations/emotes.md`)
+
+The Twitch ID is also stored on `channelConfig.broadcasterTwitchId` for the cron + manual refresh flows. Broadcaster can edit any of the seeded profile fields freely after setup — Twitch is just the seed, not an ongoing source of truth.
 
 ## What you'll find here
 
@@ -81,8 +92,8 @@ OBS ──RTMPS──► GetStream ──WebRTC──► viewer browsers
 | KV | `HOWLCAST_EMOTES` | Emote metadata cache, Twitch app token, rate limit |
 | KV (optional) | `HOWLCAST_SESSIONS` | Better Auth secondary cache |
 | R2 | `howlcast-public` | Avatars, banners, panel images |
-| R2 | `howlcast-emotes` | Proxied emote image cache |
 | R2 | `howlcast-isr` | OpenNext incremental cache |
+| ~~R2~~ | ~~`howlcast-emotes`~~ | **REMOVED** — emote images load direct from provider CDNs (browser-cached). See `docs/integrations/emotes.md`. |
 | Images | binding `IMAGES` | Avatar/banner resizing |
 | Secrets | (Worker secrets) | `BETTER_AUTH_SECRET`, `STREAM_API_KEY`, `STREAM_API_SECRET`, `RESEND_API_KEY`, `TWITCH_CLIENT_ID`, `TWITCH_CLIENT_SECRET` |
 
