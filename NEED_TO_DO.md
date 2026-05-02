@@ -57,13 +57,18 @@ Real magic-link emails (currently mailpit / console fallback in dev):
 
 ---
 
-## 🟢 LATER (Phase 5+ surfaces these in the dashboard UI)
+## 🟢 LATER (now in the dashboard UI — go fill these in)
 
-| What                                         | Where it lands                                                  |
-| -------------------------------------------- | --------------------------------------------------------------- |
-| Discord webhooks (public + private channels) | Phase 5 → Dashboard → Channel → Notifications                   |
-| Twitch ID lookup                             | Phase 5.0 setup wizard at `/setup` (auto-detects from username) |
-| `howlcast.tv` domain attach                  | After you buy via Cloudflare Registrar (~$30/yr)                |
+Phase 5 shipped — log in and configure these from `/dashboard`:
+
+| What                        | Where in the dashboard                                       |
+| --------------------------- | ------------------------------------------------------------ |
+| Discord webhooks            | Dashboard → **Notifications** → paste the two URLs           |
+| Send invite emails          | Dashboard → **Invite emails** → enter email, magic link goes |
+| Add panels                  | Dashboard → **Panels** → Add panel                           |
+| Edit bio / pronouns         | Dashboard → **Account**                                      |
+| Pop out chat for OBS        | Dashboard → **Chat** → Pop out (or paste `/popout/chat`)     |
+| `howlcast.tv` domain attach | After you buy via Cloudflare Registrar (~$30/yr)             |
 
 ---
 

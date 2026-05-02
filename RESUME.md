@@ -6,7 +6,7 @@
 
 ## Where we are
 
-**Phase 4 — Chat & Emotes.** Fully shipped: real GetStream Video player + Chat dock are wired (lazy-loaded), `channel.createCall` mutation provisions the call+channel, 12h cron pulls emotes from Twitch/7TV/BTTV/FFZ → KV, custom emote rendering hooks into stream-chat-react. Phase 5 (broadcaster dashboard) is next. Lint stack swapped: biome → eslint+prettier (matches fangdash).
+**Phase 5 — Broadcaster Dashboard.** Fully shipped. All 9 sub-pages live: Stream (Go Live + RTMPS + title), Panels editor, Emotes grid + refresh, Invites (send/list/revoke + accept route), Stream key, Notifications (Discord webhooks UI), Status, Account, Chat + popout. Setup wizard rebuilt as a true first-run installer (creates broadcaster account in one flow). /signup deleted (invite-only). Login simplified to single-form. UX polished: brand chrome, step indicator, password meter, larger choice cards, Welcome success state. Phase 6 (polish + viewer Account + Stats) is next.
 
 **Live URLs:**
 
@@ -47,6 +47,24 @@
 ## Recent commit history
 
 ```
+79e481d phase 5.3-5.9: full broadcaster dashboard
+4415105 phase 5.2: live → stream dashboard page (go live + rtmps + title)
+9c75cc1 phase 5.0 v3: onboarding ui polish
+09340aa chore: scrub remaining mrdemonwolf placeholders, keep mrdemonwolf inc. branding
+0b2bc92 chore: drop /signup, allowSignups, and @mrdemonwolf hardcoding
+8357c24 phase 5.0 v2: simpler single-form login
+5e4e068 phase 5.0 v2: first-run setup creates account + broadcaster in one flow
+aa9543a fix(web): dashboard layout reads via api, not direct db
+4a00b59 phase 5.1: dashboard shell + broadcaster middleware
+587797f phase 5.0a: twitch helix lib + setup tRPC router
+75353d4 fix(web): chat css path moved in stream-chat-react v14
+c0ae417 fix(ci): adopt existing cloudflare resources on first ci deploy
+7472604 fix(ci): forward deploy-time env vars through turbo to alchemy
+9e0809b chore(ci): bump oven-sh/setup-bun v2.1.3 -> v2.2.0
+b07bdc5 fix(ci): pass alchemy + stream + twitch secrets to deploy step
+a6208b0 fix(ci): use CloudflareStateStore for alchemy in CI
+04ded53 refactor: read broadcasterTwitchId from db, drop the env var
+40e7cd5 docs: phase 4 sweep — progress, resume, need_to_do
 e3ead0a phase 4: custom emote rendering in chat
 eda0a19 phase 4: emote pipeline (twitch/7tv/bttv/ffz -> kv, 12h cron)
 7aa26bc phase 4: channel.createCall mutation seeds streamCallId + chatChannelCid

@@ -100,23 +100,24 @@
 
 ## Phase 5 — Broadcaster Dashboard
 
-- [ ] `/dashboard/*` middleware (broadcaster only)
-- [ ] Dashboard shell (sidebar + main panel) — matches `dash-shell.css`
-- [ ] Header chrome (avatar, name, BROADCASTER label, on-air pill, End button)
-- [ ] Streamer Mode toggle in header
-- [ ] **Live → Stream** page (Go Live, public/private toggle, animated counters)
-- [ ] **Live → Stats** page (7-day analytics)
-- [ ] **Channel → Panels** page (drag/edit/add/delete)
-- [ ] **Channel → Emotes** page (flat list, no tier headers)
-- [ ] **Channel → Invite emails** page (single template)
-- [ ] **Channel → Stream key** page (RTMPS + masked key + OBS preset)
-- [ ] **Channel → Notifications** page (two Discord webhooks)
-- [ ] **Server → Self-host status** page (uptime, RAM, disk, transcoder)
-- [ ] **Server → Account (broadcaster)** page (broadcaster's own profile)
-- [ ] Invite system (create, copy link, list, revoke)
-- [ ] `/dashboard/chat` (OBS browser source)
-- [ ] White-label settings (logo, name, footer attribution)
-- [ ] PP / TOS WYSIWYG editor + `/privacy` + `/terms` routes
+- [x] First-run setup wizard at `/setup` (creates broadcaster account in one flow)
+- [x] `/dashboard/*` broadcaster middleware (session + setup + role gate)
+- [x] Dashboard shell (sidebar + main panel) — Tailwind port of dash-shell.css
+- [x] Header chrome (avatar, BROADCASTER label, on-air pill, View channel link)
+- [x] **Live → Stream** page (Provision + Go Live + RTMPS card + title/visibility)
+- [x] **Channel → Panels** page (up/down reorder + add/edit/delete drawer)
+- [x] **Channel → Emotes** page (merged grid + manual refresh)
+- [x] **Channel → Invite emails** page (send + list + revoke; magic-link email)
+- [x] **Channel → Stream key** page (RTMPS + masked key + reveal/copy)
+- [x] **Channel → Notifications** page (two Discord webhooks + per-event toggles)
+- [x] **Server → Self-host status** page (worker health URLs)
+- [x] **Server → Account (broadcaster)** page (profile + link to /account/security)
+- [x] Invite system (create, list, revoke, accept at `/invite/[code]`)
+- [x] `/dashboard/chat` + `/popout/chat` (OBS browser source)
+- [ ] **Live → Stats** page (7-day analytics) — Phase 6
+- [ ] White-label settings (logo, name, footer attribution) — Phase 6
+- [ ] PP / TOS WYSIWYG editor + `/privacy` + `/terms` routes — Phase 6
+- [ ] Streamer Mode toggle in header — Phase 6 polish
 
 ## Phase 6 — Polish & Launch
 
