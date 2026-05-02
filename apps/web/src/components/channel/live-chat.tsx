@@ -8,7 +8,7 @@
 // can watch but not post. The `canPost` flag is computed upstream from
 // `profiles.isInvited` — false for guests, true for invited members.
 
-import "stream-chat-react/dist/css/v2/index.css";
+import "stream-chat-react/dist/css/index.css";
 
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
