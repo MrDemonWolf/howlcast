@@ -40,14 +40,15 @@ app.use(
 
 app.get("/api/health", (c) => c.json({ ok: true }));
 
-// GetStream webhook receiver. HMAC-verified against STREAM_WEBHOOK_SECRET.
+// GetStream webhook receiver. GetStream signs Video webhooks with the app's
+// API Secret (no separate webhook secret) — verified via X-SIGNATURE header.
 // Updates channelConfig.liveStartedAt/liveEndedAt on call.live_started /
-// call.session_ended / call.ended. Discord fanout is Stage 3D.
+// call.session_ended / call.ended. Discord fanout runs after the DB write.
 app.post("/api/webhooks/getstream", async (c) => {
 	const sig = c.req.header("x-signature") ?? "";
 	const raw = await c.req.text();
 
-	const ok = await verifyStreamWebhook(raw, sig, env.STREAM_WEBHOOK_SECRET);
+	const ok = await verifyStreamWebhook(raw, sig, env.STREAM_API_SECRET);
 	if (!ok) return c.json({ error: "invalid signature" }, 401);
 
 	let event: { type?: string; call_cid?: string };

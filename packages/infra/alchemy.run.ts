@@ -47,13 +47,11 @@ export const server = await Worker("server", {
 		RESEND_API_KEY: alchemy.secret(process.env.RESEND_API_KEY ?? ""),
 		SMTP_URL: process.env.SMTP_URL ?? "",
 		MAIL_FROM: process.env.MAIL_FROM ?? "HowlCast <invites@mail.howlcast.tv>",
-		// GetStream — sign user/admin JWTs for video + chat, verify webhooks.
+		// GetStream — sign user/admin JWTs for video + chat, also verify the
+		// Video webhook signature (signed with the same API Secret).
 		// Empty string means "not configured" — procedures throw a clear error.
 		STREAM_API_KEY: alchemy.secret(process.env.STREAM_API_KEY ?? ""),
 		STREAM_API_SECRET: alchemy.secret(process.env.STREAM_API_SECRET ?? ""),
-		STREAM_WEBHOOK_SECRET: alchemy.secret(
-			process.env.STREAM_WEBHOOK_SECRET ?? "",
-		),
 	},
 	crons: ["0 */12 * * *"],
 	dev: {

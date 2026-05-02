@@ -5,10 +5,10 @@
 // at the structural level: player card on left column, streamer info row
 // directly below, panels grid, chat dock on the right (340-360px).
 //
-// Player + chat are placeholders here — Phase 4 wires the actual GetStream
-// SDK + chat. For now we drive the LIVE badge and viewer-count UI off the
-// `stream.isLive` query, polling every 10s. When public mode is on, the
-// chat input is replaced with the invite-only CTA card.
+// The Player + Chat slots are filled by lazy-loaded GetStream SDK
+// components — 200KB+ minified. Loading them dynamically means anonymous
+// viewers landing while offline don't pay the cost. The LIVE badge,
+// viewer chip, mode pill, and panels grid all drive off real tRPC data.
 
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -19,9 +19,24 @@ import {
 	PawPrint,
 	Settings,
 } from "lucide-react";
+import dynamic from "next/dynamic";
 import { trpc } from "@/utils/trpc";
 
 const POLL_MS = 10_000;
+
+const LivePlayer = dynamic(() => import("./live-player"), {
+	ssr: false,
+	loading: () => null,
+});
+
+const LiveChat = dynamic(() => import("./live-chat"), {
+	ssr: false,
+	loading: () => (
+		<div className="flex flex-1 items-center justify-center text-muted-foreground text-xs">
+			Loading chat…
+		</div>
+	),
+});
 
 export default function ChannelPage() {
 	const info = useQuery(trpc.channel.getInfo.queryOptions());
@@ -31,17 +46,46 @@ export default function ChannelPage() {
 	});
 	const panelsQuery = useQuery(trpc.channel.getPanels.queryOptions());
 
+	// Stream credentials — only requested when GetStream is configured.
+	// `getViewerToken` will throw PRECONDITION_FAILED if keys are empty,
+	// caught by the query and surfaced via react-query's error handler.
+	const credentials = useQuery({
+		...trpc.stream.getStreamCredentials.queryOptions(),
+		retry: false,
+	});
+	const viewerToken = useQuery({
+		...trpc.stream.getViewerToken.queryOptions(),
+		retry: false,
+	});
+
 	const isLive = !!live.data?.isLive;
 	const visibility = info.data?.visibility ?? "public";
 	const isPrivate = visibility === "invite_only";
 	const broadcaster = info.data?.broadcaster ?? null;
 	const title = info.data?.title ?? null;
 
+	const canMountStream =
+		!!viewerToken.data &&
+		!!credentials.data?.callId &&
+		!!credentials.data?.channelCid;
+
 	return (
 		<main className="mx-auto w-full max-w-[1400px] px-4 py-6 lg:px-6">
 			<div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_360px]">
 				<section className="flex flex-col gap-4">
-					<PlayerSlot isLive={isLive} />
+					<PlayerSlot
+						isLive={isLive}
+						credentials={
+							canMountStream && isLive
+								? {
+										apiKey: viewerToken.data!.apiKey,
+										userId: viewerToken.data!.userId,
+										token: viewerToken.data!.token,
+										callId: credentials.data!.callId!,
+									}
+								: null
+						}
+					/>
 
 					<StreamerInfo
 						displayName={broadcaster?.displayName ?? "MrDemonWolf"}
@@ -54,28 +98,60 @@ export default function ChannelPage() {
 				</section>
 
 				<aside className="lg:sticky lg:top-6 lg:self-start">
-					<ChatDock isPrivate={isPrivate} />
+					<ChatDock
+						isPrivate={isPrivate}
+						credentials={
+							canMountStream
+								? {
+										apiKey: viewerToken.data!.apiKey,
+										userId: viewerToken.data!.userId,
+										token: viewerToken.data!.token,
+										channelCid: credentials.data!.channelCid!,
+										// canPost: signed-in users only. Phase 5 will read
+										// profiles.isInvited to gate posting more strictly.
+										canPost: !viewerToken.data!.userId.startsWith("guest-"),
+									}
+								: null
+						}
+					/>
 				</aside>
 			</div>
 		</main>
 	);
 }
 
-function PlayerSlot({ isLive }: { isLive: boolean }) {
+type PlayerCreds = {
+	apiKey: string;
+	userId: string;
+	token: string;
+	callId: string;
+};
+
+function PlayerSlot({
+	isLive,
+	credentials,
+}: {
+	isLive: boolean;
+	credentials: PlayerCreds | null;
+}) {
 	return (
 		<div className="relative aspect-video overflow-hidden rounded-lg border border-border bg-black">
-			<div className="absolute inset-0 flex items-center justify-center text-muted-foreground text-xs">
-				<span className="font-mono uppercase tracking-wider">
-					{isLive ? "live · 1080p · 60fps" : "offline"}
-				</span>
-			</div>
+			{isLive && credentials ? (
+				<LivePlayer {...credentials} />
+			) : (
+				<div className="absolute inset-0 flex items-center justify-center text-muted-foreground text-xs">
+					<span className="font-mono uppercase tracking-wider">
+						{isLive ? "connecting…" : "offline"}
+					</span>
+				</div>
+			)}
 			{isLive ? (
 				<>
-					<span className="absolute top-3 left-3 inline-flex items-center gap-1.5 rounded-md bg-[var(--live)] px-2 py-1 font-mono text-[10px] text-white uppercase tracking-wider">
+					<span className="pointer-events-none absolute top-3 left-3 inline-flex items-center gap-1.5 rounded-md bg-[var(--live)] px-2 py-1 font-mono text-[10px] text-white uppercase tracking-wider">
 						<i className="block h-1.5 w-1.5 animate-pulse rounded-full bg-white" />
 						Live
 					</span>
-					<span className="absolute top-3 right-3 inline-flex items-center gap-1.5 rounded-md bg-black/60 px-2 py-1 text-[11px] text-white backdrop-blur">
+					<span className="pointer-events-none absolute top-3 right-3 inline-flex items-center gap-1.5 rounded-md bg-black/60 px-2 py-1 text-[11px] text-white backdrop-blur">
 						<Eye className="h-3 w-3" aria-hidden="true" />
 						<span className="font-mono">—</span>
 					</span>
@@ -186,7 +262,21 @@ function PanelCard({ panel }: { panel: Panel }) {
 	return inner;
 }
 
-function ChatDock({ isPrivate }: { isPrivate: boolean }) {
+type ChatCreds = {
+	apiKey: string;
+	userId: string;
+	token: string;
+	channelCid: string;
+	canPost: boolean;
+};
+
+function ChatDock({
+	isPrivate,
+	credentials,
+}: {
+	isPrivate: boolean;
+	credentials: ChatCreds | null;
+}) {
 	return (
 		<div className="flex h-[640px] flex-col rounded-lg border border-border bg-card">
 			<header className="flex items-center justify-between border-border border-b px-4 py-3">
@@ -200,14 +290,22 @@ function ChatDock({ isPrivate }: { isPrivate: boolean }) {
 				</button>
 			</header>
 
-			<div className="flex flex-1 items-center justify-center px-6 text-center">
-				<div className="flex flex-col items-center gap-2 text-muted-foreground">
-					<MessageSquareOff className="h-6 w-6" aria-hidden="true" />
-					<p className="text-sm">Chat ships with Phase 4.</p>
+			{credentials ? (
+				<div className="flex flex-1 flex-col overflow-hidden">
+					<LiveChat {...credentials} />
 				</div>
-			</div>
+			) : (
+				<div className="flex flex-1 items-center justify-center px-6 text-center">
+					<div className="flex flex-col items-center gap-2 text-muted-foreground">
+						<MessageSquareOff className="h-6 w-6" aria-hidden="true" />
+						<p className="text-sm">
+							Chat unavailable until the broadcaster goes live.
+						</p>
+					</div>
+				</div>
+			)}
 
-			{isPrivate ? (
+			{isPrivate && !credentials?.canPost ? (
 				<div className="border-border border-t p-3">
 					<div className="flex items-start gap-3 rounded-md border border-cyan-soft bg-cyan-glow p-3">
 						<Mail className="mt-0.5 h-4 w-4 flex-none text-cyan" />
@@ -223,16 +321,7 @@ function ChatDock({ isPrivate }: { isPrivate: boolean }) {
 						</div>
 					</div>
 				</div>
-			) : (
-				<div className="border-border border-t p-3">
-					<input
-						type="text"
-						disabled
-						placeholder="Send a message"
-						className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm placeholder:text-muted-foreground/60 disabled:cursor-not-allowed"
-					/>
-				</div>
-			)}
+			) : null}
 		</div>
 	);
 }
