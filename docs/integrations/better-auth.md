@@ -1,6 +1,8 @@
 # Better Auth Integration
 
-> **TL;DR:** Better Auth ≥1.5 with native D1 support. Per-request factory pattern (NOT module-scope). Plugins: `username`, `twoFactor`, `passkey`, `magicLink`. Resend for emails.
+> **TL;DR:** Better Auth ≥1.6 with native D1 support. Per-request factory pattern (NOT module-scope). Plugins: `username`, `twoFactor`, `passkey` (via `@better-auth/passkey`), `magicLink`. Magic-link emails go through `@howlcast/mail` (Resend / SMTP / console). Auth lives at `packages/auth/src/index.ts`; client at `apps/web/src/lib/auth-client.ts`. Sign-in UI at `apps/web/src/components/auth/login-form.tsx`. Security center at `apps/web/src/app/account/security/page.tsx`.
+
+For mail transport details see [`docs/integrations/mail.md`](./mail.md).
 
 ## What you'll find here
 

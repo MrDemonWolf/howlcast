@@ -46,12 +46,12 @@ Full docs live in [`docs/`](docs/). Start with
 
 Quick start once accounts are wired:
 
-1. Clone the repository and install dependencies with `pnpm install`.
+1. Clone the repository and install dependencies with `bun install`.
 2. Copy `.env` values into `apps/server/.env`, `apps/web/.env`, and
    `packages/infra/.env` per the manifests in
    [`PRE-FLIGHT.md`](PRE-FLIGHT.md).
-3. Run `pnpm db:generate` to materialise the initial migrations.
-4. Run `pnpm dev` to boot both Workers locally.
+3. Run `bun run db:generate` to materialise the initial migrations.
+4. Run `bun run dev` to boot both Workers locally.
 5. Open `http://localhost:3001` for the web app and
    `http://localhost:3000/api/health` for the API health check.
 
@@ -72,15 +72,15 @@ Quick start once accounts are wired:
 | Email            | Resend                                      |
 | Infrastructure   | Alchemy                                     |
 | Deploy target    | Cloudflare Workers                          |
-| Build tooling    | Turborepo, pnpm catalogs, Biome, Husky      |
-| Runtime          | Node 20+, pnpm 9+                           |
+| Build tooling    | Turborepo, bun + Turborepo catalogs, Biome, Husky      |
+| Runtime          | Node 20+, bun 1.3+                           |
 
 ## Development
 
 ### Prerequisites
 
 - Node.js 20 or newer
-- pnpm 9 or newer
+- bun 1.3 or newer
 - Wrangler 4 or newer, authenticated against your Cloudflare account
 - A Cloudflare account on the Free plan (Paid is not required)
 - A GetStream account with API credentials
@@ -92,13 +92,13 @@ Quick start once accounts are wired:
 1. Install dependencies.
 
    ```bash
-   pnpm install
+   bun install
    ```
 
 2. Generate the initial Drizzle migration from the auth schema.
 
    ```bash
-   pnpm db:generate
+   bun run db:generate
    ```
 
 3. Populate `apps/server/.env`, `apps/web/.env`, and `packages/infra/.env`
@@ -108,30 +108,30 @@ Quick start once accounts are wired:
 4. Boot the dev environment.
 
    ```bash
-   pnpm dev
+   bun run dev
    ```
 
 5. Deploy to your Cloudflare account when you are ready.
 
    ```bash
-   pnpm deploy
+   bun run deploy
    ```
 
 ### Development Scripts
 
-- `pnpm dev` - Run both Workers under Alchemy with hot reload.
-- `pnpm dev:web` - Run the web Worker only.
-- `pnpm dev:server` - Run the API Worker only.
-- `pnpm dev:mail` - Start mailpit (local dev inbox at http://localhost:8025).
-- `pnpm dev:mail:stop` - Stop the mailpit container.
-- `pnpm dev:mail:logs` - Tail the mailpit container logs.
-- `pnpm build` - Build all workspaces via Turborepo.
-- `pnpm check-types` - Type-check every workspace.
-- `pnpm check` - Run Biome with autofix on the entire repository.
-- `pnpm db:generate` - Generate Drizzle migrations from the schema.
-- `pnpm db:push` - Push the Drizzle schema directly (skips migration files).
-- `pnpm run deploy` - Provision and deploy all Cloudflare resources via Alchemy.
-- `pnpm destroy` - Tear down the Alchemy-managed Cloudflare resources.
+- `bun run dev` - Run both Workers under Alchemy with hot reload.
+- `bun run dev:web` - Run the web Worker only.
+- `bun run dev:server` - Run the API Worker only.
+- `bun run dev:mail` - Start mailpit (local dev inbox at http://localhost:8025).
+- `bun run dev:mail:stop` - Stop the mailpit container.
+- `bun run dev:mail:logs` - Tail the mailpit container logs.
+- `bun run build` - Build all workspaces via Turborepo.
+- `bun run check-types` - Type-check every workspace.
+- `bun run check` - Run Biome with autofix on the entire repository.
+- `bun run db:generate` - Generate Drizzle migrations from the schema.
+- `bun run db:push` - Push the Drizzle schema directly (skips migration files).
+- `bun run deploy` - Provision and deploy all Cloudflare resources via Alchemy.
+- `bun run destroy` - Tear down the Alchemy-managed Cloudflare resources.
 
 ### Email in development
 
@@ -139,7 +139,7 @@ HowlCast uses three email transports, chosen automatically:
 
 1. If `RESEND_API_KEY` is set, mail goes through Resend. Production path.
 2. Else if `SMTP_URL` is set and reachable, mail goes through SMTP. Local
-   default points at mailpit on `localhost:1025`. Run `pnpm dev:mail` to
+   default points at mailpit on `localhost:1025`. Run `bun run dev:mail` to
    start mailpit, then open the inbox at http://localhost:8025 to see
    captured emails.
 3. Else the email is printed to the server terminal. Zero-setup fallback;

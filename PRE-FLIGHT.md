@@ -47,7 +47,7 @@ You probably already have an account from MrDemonWolf, Inc. Reuse it.
   - Save token in 1Password as `CLOUDFLARE_API_TOKEN`
 - [ ] **1.5** Install Wrangler globally:
   ```bash
-  pnpm add -g wrangler
+  bun add -g wrangler
   ```
 - [ ] **1.6** Authenticate:
   ```bash
@@ -276,7 +276,7 @@ That way no matter where you start (GitHub / Jira / Drive), you can hop to the o
 ## Step 9 — Local dev tools check
 
 - [ ] **9.1** Node version 20+: `node -v`
-- [ ] **9.2** pnpm 9+: `pnpm -v`
+- [ ] **9.2** bun 1.3+: `bun -v`
 - [ ] **9.3** Wrangler 4+: `wrangler -v`
 - [ ] **9.4** Git: `git --version`
 - [ ] **9.5** Modern terminal (you have Ghostty — good)
@@ -329,7 +329,7 @@ NEXT_PUBLIC_STREAM_KEY=...                     # Same value as STREAM_API_KEY
 When all 9+ items are in 1Password and DNS records are verified:
 
 ```bash
-pnpm create better-t-stack@latest howlcast \
+bun create better-t-stack@latest howlcast \
   --frontend next \
   --backend hono \
   --runtime workers \
@@ -339,7 +339,7 @@ pnpm create better-t-stack@latest howlcast \
   --db-setup d1 \
   --auth better-auth \
   --addons turborepo biome husky \
-  --package-manager pnpm \
+  --package-manager bun \
   --web-deploy cloudflare \
   --server-deploy cloudflare \
   --yes

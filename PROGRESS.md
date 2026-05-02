@@ -41,30 +41,30 @@
 
 ## Phase 1 — Foundation
 
-- [ ] BTS scaffold command run
-- [ ] D1 database created
-- [ ] R2 buckets created (2: public, isr — emotes bucket removed, images load direct from provider CDNs)
-- [ ] KV namespace created
-- [ ] `wrangler.jsonc` (web + server) updated with bindings
-- [ ] OpenNext `r2IncrementalCache` + `d1NextModeTagCache` configured
-- [ ] Theme tokens ported from `design-handoff/project/shared.css` into `apps/web/src/styles/globals.css`
-- [ ] Better Auth plugins added (username, twoFactor, passkey, magicLink)
-- [ ] Resend wired into magic link callback
-- [ ] Drizzle auth schema regenerated and migrated
-- [ ] Local secrets in `.dev.vars`
-- [ ] `crossSubDomainCookies` configured
-- [ ] `pnpm dev` boots both workers locally
-- [ ] First deploy to a `*.workers.dev` URL works
+- [x] BTS scaffold command run
+- [x] D1 database created
+- [x] R2 buckets created (2: public, isr — emotes bucket removed, images load direct from provider CDNs)
+- [x] KV namespace created
+- [x] `wrangler.jsonc` (web + server) updated with bindings
+- [x] OpenNext `r2IncrementalCache` + `d1NextModeTagCache` configured
+- [x] Theme tokens ported from `design-handoff/project/shared.css` into `apps/web/src/styles/globals.css`
+- [x] Better Auth plugins added (username, twoFactor, passkey, magicLink)
+- [x] Resend wired into magic link callback
+- [x] Drizzle auth schema regenerated and migrated
+- [x] Local secrets in `.dev.vars`
+- [x] `crossSubDomainCookies` configured
+- [x] `bun run dev` boots both workers locally
+- [x] First deploy to a `*.workers.dev` URL works
 
 ## Phase 2 — Auth
 
-- [ ] Sign up / sign in pages built
-- [ ] Email + password works
-- [ ] Username login works
-- [ ] Magic link works (real email sent via Resend)
-- [ ] Passkey enroll + sign in works (on real domain, not `*.workers.dev`)
-- [ ] 2FA enroll + verify works
-- [ ] `/account/security` page complete
+- [x] Sign up / sign in pages built
+- [x] Email + password works
+- [x] Username login works
+- [x] Magic link works (real email sent via Resend)
+- [x] Passkey enroll + sign in works (on real domain, not `*.workers.dev`)
+- [x] 2FA enroll + verify works
+- [x] `/account/security` page complete
 - [ ] Migrations applied to remote D1
 
 ## Phase 3 — Channel & Streaming

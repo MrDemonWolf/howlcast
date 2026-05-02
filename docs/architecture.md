@@ -78,9 +78,11 @@ OBS ──RTMPS──► GetStream ──WebRTC──► viewer browsers
 | CSS | Tailwind | v4 | OKLCH colors |
 | Wrangler | `wrangler` | 4.x+ | `wrangler.jsonc` format |
 | Lint/format | Biome | latest | Replaces ESLint+Prettier |
-| Package mgr | pnpm | 9+ | Bun has Wrangler edge cases |
+| Package mgr | bun | 1.3+ | Native to Cloudflare Workers tooling. Catalog in `package.json`. |
 | Task runner | Turborepo | latest | Comes with BTS |
 | Compatibility | `compatibility_date: 2026-05-01`, flag `nodejs_compat` | — | OpenNext requires |
+| Mail | `@howlcast/mail` (Resend / SMTP / console) | — | Three-tier auto-pick. See `docs/integrations/mail.md`. |
+| CI/CD | GitHub Actions (`.github/workflows/`) | — | `ci.yml` → `deploy.yml` via `workflow_run`. Alchemy provisions in CI. |
 
 ---
 
@@ -176,7 +178,7 @@ howlcast/
 ├── bts.jsonc                         # Better-T Stack config
 ├── biome.json
 ├── turbo.json
-├── pnpm-workspace.yaml
+├── bun.lock
 ├── package.json
 ├── tsconfig.json
 ├── README.md
