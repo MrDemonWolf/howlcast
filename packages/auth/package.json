@@ -1,0 +1,24 @@
+{
+	"name": "@howlcast/auth",
+	"type": "module",
+	"exports": {
+		".": {
+			"default": "./src/index.ts"
+		},
+		"./*": {
+			"default": "./src/*.ts"
+		}
+	},
+	"scripts": {},
+	"dependencies": {
+		"@howlcast/db": "workspace:*",
+		"@howlcast/env": "workspace:*",
+		"better-auth": "catalog:",
+		"dotenv": "catalog:",
+		"zod": "catalog:"
+	},
+	"devDependencies": {
+		"@howlcast/config": "workspace:*",
+		"typescript": "catalog:"
+	}
+}

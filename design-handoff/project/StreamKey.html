@@ -375,7 +375,7 @@
 
   <script>
     // toggle the masked key
-    (function(){
+    (()=> {
       const input = document.getElementById('streamkey');
       const btn = document.getElementById('reveal-btn');
       const link = document.getElementById('reveal-toggle');
@@ -383,8 +383,8 @@
         if(e) e.preventDefault();
         input.classList.toggle('masked');
       }
-      btn && btn.addEventListener('click', toggle);
-      link && link.addEventListener('click', toggle);
+      btn?.addEventListener('click', toggle);
+      link?.addEventListener('click', toggle);
     })();
   </script>
 

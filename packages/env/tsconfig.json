@@ -1,0 +1,3 @@
+{
+	"extends": "@howlcast/config/tsconfig.base.json"
+}
