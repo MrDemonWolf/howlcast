@@ -31,25 +31,6 @@ const emotesKv = await KVNamespace("emotes", {
 	title: "HOWLCAST_EMOTES",
 });
 
-export const web = await Nextjs("web", {
-	name: "howlcast",
-	cwd: "../../apps/web",
-	bindings: {
-		NEXT_PUBLIC_SERVER_URL: alchemy.env.NEXT_PUBLIC_SERVER_URL!,
-		DB: db,
-		PUBLIC_BUCKET: publicBucket,
-		ISR_BUCKET: isrBucket,
-		CORS_ORIGIN: alchemy.env.CORS_ORIGIN!,
-		BETTER_AUTH_SECRET: alchemy.secret.env.BETTER_AUTH_SECRET!,
-		BETTER_AUTH_URL: alchemy.env.BETTER_AUTH_URL!,
-	},
-	dev: {
-		env: {
-			PORT: "3001",
-		},
-	},
-});
-
 export const server = await Worker("server", {
 	name: "howlcast-api",
 	cwd: "../../apps/server",
@@ -66,6 +47,25 @@ export const server = await Worker("server", {
 	crons: ["0 */12 * * *"],
 	dev: {
 		port: 3000,
+	},
+});
+
+export const web = await Nextjs("web", {
+	name: "howlcast",
+	cwd: "../../apps/web",
+	bindings: {
+		NEXT_PUBLIC_SERVER_URL: server.url!,
+		DB: db,
+		PUBLIC_BUCKET: publicBucket,
+		ISR_BUCKET: isrBucket,
+		CORS_ORIGIN: alchemy.env.CORS_ORIGIN!,
+		BETTER_AUTH_SECRET: alchemy.secret.env.BETTER_AUTH_SECRET!,
+		BETTER_AUTH_URL: alchemy.env.BETTER_AUTH_URL!,
+	},
+	dev: {
+		env: {
+			PORT: "3001",
+		},
 	},
 });
 
