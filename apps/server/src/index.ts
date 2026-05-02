@@ -1,10 +1,11 @@
 import { trpcServer } from "@hono/trpc-server";
 import { createContext } from "@howlcast/api/context";
+import { fanOutDiscord } from "@howlcast/api/lib/discord";
 import { verifyStreamWebhook } from "@howlcast/api/lib/stream";
 import { appRouter } from "@howlcast/api/routers/index";
 import { createAuth } from "@howlcast/auth";
 import { createDb } from "@howlcast/db";
-import { channelConfig } from "@howlcast/db/schema";
+import { channelConfig, profiles } from "@howlcast/db/schema";
 import { env } from "@howlcast/env/server";
 import { eq } from "drizzle-orm";
 import { Hono } from "hono";
@@ -59,22 +60,49 @@ app.post("/api/webhooks/getstream", async (c) => {
 	const db = createDb();
 	const now = new Date();
 
-	if (event.type === "call.live_started") {
+	const isLiveEvent = event.type === "call.live_started";
+	const isEndEvent =
+		event.type === "call.session_ended" || event.type === "call.ended";
+
+	if (!isLiveEvent && !isEndEvent) return c.json({ ok: true });
+
+	if (isLiveEvent) {
 		await db
 			.update(channelConfig)
 			.set({ liveStartedAt: now, liveEndedAt: null })
 			.where(eq(channelConfig.id, "site"));
-		// TODO 3D: fan out Discord webhook (public + private) on go-live
-	} else if (
-		event.type === "call.session_ended" ||
-		event.type === "call.ended"
-	) {
+	} else {
 		await db
 			.update(channelConfig)
 			.set({ liveEndedAt: now })
 			.where(eq(channelConfig.id, "site"));
-		// TODO 3D: fan out Discord webhook on stream end
 	}
+
+	// Discord fanout — best-effort, runs after the DB write so live state
+	// is correct even if Discord is down. fanOutDiscord swallows errors.
+	const cfg = await db
+		.select()
+		.from(channelConfig)
+		.where(eq(channelConfig.id, "site"))
+		.get();
+	const broadcaster = cfg
+		? await db
+				.select()
+				.from(profiles)
+				.where(eq(profiles.userId, cfg.ownerId))
+				.get()
+		: null;
+	const channelUrl = env.BETTER_AUTH_URL.replace(
+		/^https?:\/\/(api\.)?/,
+		"https://",
+	).replace(/\/$/, "");
+
+	await fanOutDiscord(isLiveEvent ? "live" : "end", {
+		displayName: broadcaster?.displayName ?? "MrDemonWolf",
+		avatarUrl: null,
+		channelUrl,
+		title: cfg?.title ?? null,
+	});
 
 	return c.json({ ok: true });
 });
