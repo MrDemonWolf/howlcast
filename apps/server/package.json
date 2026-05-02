@@ -22,7 +22,7 @@
 	"devDependencies": {
 		"@cloudflare/workers-types": "catalog:",
 		"@howlcast/config": "workspace:*",
-		"@types/node": "^22.13.14",
+		"@types/node": "^24",
 		"alchemy": "catalog:",
 		"tsdown": "^0.21.9",
 		"typescript": "catalog:",

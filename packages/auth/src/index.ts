@@ -1,8 +1,13 @@
 import { createDb } from "@howlcast/db";
 import * as schema from "@howlcast/db/schema/auth";
 import { env } from "@howlcast/env/server";
+import { sendMail } from "@howlcast/mail";
+import { magicLinkEmail } from "@howlcast/mail/templates/magic-link";
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
+import { magicLink } from "better-auth/plugins/magic-link";
+import { twoFactor } from "better-auth/plugins/two-factor";
+import { username } from "better-auth/plugins/username";
 
 export function createAuth() {
 	const db = createDb();
@@ -10,34 +15,48 @@ export function createAuth() {
 	return betterAuth({
 		database: drizzleAdapter(db, {
 			provider: "sqlite",
-
-			schema: schema,
+			schema,
 		}),
-		trustedOrigins: [env.CORS_ORIGIN],
+		trustedOrigins: [
+			env.CORS_ORIGIN,
+			"https://howlcast.mrdemonwolf.workers.dev",
+			"https://howlcast.tv",
+		],
 		emailAndPassword: {
 			enabled: true,
+			minPasswordLength: 8,
 		},
-		// uncomment cookieCache setting when ready to deploy to Cloudflare using *.workers.dev domains
-		// session: {
-		//   cookieCache: {
-		//     enabled: true,
-		//     maxAge: 60,
-		//   },
-		// },
 		secret: env.BETTER_AUTH_SECRET,
 		baseURL: env.BETTER_AUTH_URL,
 		advanced: {
 			defaultCookieAttributes: {
-				sameSite: "none",
+				sameSite: "lax",
 				secure: true,
 				httpOnly: true,
 			},
-			// uncomment crossSubDomainCookies setting when ready to deploy and replace <your-workers-subdomain> with your actual workers subdomain
-			// https://developers.cloudflare.com/workers/wrangler/configuration/#workersdev
-			// crossSubDomainCookies: {
-			//   enabled: true,
-			//   domain: "<your-workers-subdomain>",
-			// },
 		},
+		plugins: [
+			username({
+				minUsernameLength: 3,
+				maxUsernameLength: 24,
+			}),
+			twoFactor({
+				issuer: "HowlCast",
+			}),
+			magicLink({
+				expiresIn: 15 * 60,
+				async sendMagicLink({ email, url }) {
+					const { subject, html, text } = magicLinkEmail({ magicUrl: url });
+					await sendMail(
+						{
+							RESEND_API_KEY: env.RESEND_API_KEY || undefined,
+							SMTP_URL: env.SMTP_URL || undefined,
+							MAIL_FROM: env.MAIL_FROM || undefined,
+						},
+						{ to: email, subject, html, text },
+					);
+				},
+			}),
+		],
 	});
 }

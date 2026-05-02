@@ -15,7 +15,7 @@
 	"devDependencies": {
 		"@howlcast/config": "workspace:*",
 		"@howlcast/infra": "workspace:*",
-		"@types/node": "^22.13.14",
+		"@types/node": "^24",
 		"typescript": "catalog:"
 	}
 }

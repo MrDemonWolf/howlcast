@@ -43,6 +43,10 @@ export const server = await Worker("server", {
 		CORS_ORIGIN: alchemy.env.CORS_ORIGIN!,
 		BETTER_AUTH_SECRET: alchemy.secret.env.BETTER_AUTH_SECRET!,
 		BETTER_AUTH_URL: alchemy.env.BETTER_AUTH_URL!,
+		// Mail transport — Resend (prod) > SMTP (dev mailpit) > console fallback.
+		RESEND_API_KEY: alchemy.secret(process.env.RESEND_API_KEY ?? ""),
+		SMTP_URL: process.env.SMTP_URL ?? "",
+		MAIL_FROM: process.env.MAIL_FROM ?? "HowlCast <invites@mail.howlcast.tv>",
 	},
 	crons: ["0 */12 * * *"],
 	dev: {

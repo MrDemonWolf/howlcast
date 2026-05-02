@@ -54,3 +54,7 @@ temp
 
 # Next.js build artifacts
 .open-next
+
+# Claude Code session artifacts
+.claude/
+

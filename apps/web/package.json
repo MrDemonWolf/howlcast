@@ -36,7 +36,7 @@
 		"@howlcast/config": "workspace:*",
 		"@tailwindcss/postcss": "^4.1.18",
 		"@tanstack/react-query-devtools": "^5.91.1",
-		"@types/node": "^20",
+		"@types/node": "^24",
 		"@types/react": "catalog:",
 		"@types/react-dom": "catalog:",
 		"alchemy": "catalog:",
