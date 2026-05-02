@@ -2,8 +2,8 @@
 
 > Update this as you go. Claude Code will read it to know where you are.
 
-**Last updated:** 2026-05-01 (design locked from Claude Design handoff)
-**Current phase:** Pre-Phase 1 (workspace setup)
+**Last updated:** 2026-05-02 (Phase 5 fully shipped + deployed live)
+**Current phase:** Phase 5 done; Phase 6 (Polish & Launch) is next
 
 ---
 
@@ -121,24 +121,26 @@
 
 ## Phase 6 — Polish & Launch
 
-- [ ] First-run setup wizard
-- [ ] Viewer Account page (`/account` — display name, pronouns, avatar, login, sessions)
-- [ ] White-label rendering site-wide (brand mark, wordmark, footer)
-- [ ] PP / TOS routes wired
+- [x] First-run setup wizard (shipped in Phase 5.0)
+- [x] `/api/health` endpoint
+- [x] CI: typecheck + lint + format check
+- [x] Auto-deploy from `main`
+- [x] Sonner toasts for mutations (in use across all dashboard pages)
+- [x] Favicon + Apple touch icons (layout.tsx already configures these)
+- [ ] **Live → Stats** dashboard page (7-day analytics)
+- [ ] **Streamer Mode toggle** in dashboard header (mask key + redact notifications)
+- [ ] Viewer `/account` page (display name, pronouns, avatar, login, sessions)
+- [ ] White-label settings (logo, platform name, footer attribution) + rendering site-wide
+- [ ] PP / TOS WYSIWYG editor (Tiptap + rehype-sanitize) + `/privacy` + `/terms` routes
 - [ ] Error boundaries on every page
 - [ ] 404 page
 - [ ] Loading skeletons
-- [ ] Sonner toasts for mutations
 - [ ] OG images via `@vercel/og`
-- [ ] Favicon + Apple touch icons
 - [ ] robots.txt + sitemap
-- [ ] Cloudflare Web Analytics
-- [ ] `/api/health` endpoint
-- [ ] CI: typecheck + lint + drizzle generate verify
-- [ ] Auto-deploy from `main`
+- [ ] Cloudflare Web Analytics snippet
 - [ ] Cross-browser tested (Safari, Chrome, Firefox, mobile)
-- [ ] Live test with real OBS push
-- [ ] Operations runbook written
+- [ ] **Hard live OBS test** — RTMPS push, webhook fires, Discord fanout fires, channel page goes live
+- [ ] Operations runbook written (`docs/operations.md`)
 
 ## Phase 7 — Docs Site
 

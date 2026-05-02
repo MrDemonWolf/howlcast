@@ -6,15 +6,19 @@
 
 ## Where we are
 
-**Phase 5 — Broadcaster Dashboard.** Fully shipped. All 9 sub-pages live: Stream (Go Live + RTMPS + title), Panels editor, Emotes grid + refresh, Invites (send/list/revoke + accept route), Stream key, Notifications (Discord webhooks UI), Status, Account, Chat + popout. Setup wizard rebuilt as a true first-run installer (creates broadcaster account in one flow). /signup deleted (invite-only). Login simplified to single-form. UX polished: brand chrome, step indicator, password meter, larger choice cards, Welcome success state. Phase 6 (polish + viewer Account + Stats) is next.
+**Phase 5 — Broadcaster Dashboard. Fully shipped + deployed live.**
+
+All 9 dashboard pages are live (Stream / Panels / Emotes / Invites / Stream key / Notifications / Status / Account / Chat + popout), the first-run setup wizard creates the broadcaster account in one flow, /signup is gone (invite-only by design — viewers arrive via emailed magic links), and the login UI is single-form (email+password primary, magic + passkey secondary).
+
+**Phase 6 (polish + viewer Account + Stats + branding + legal + OBS test) is the next phase.** Not started.
 
 **Live URLs:**
 
 - Web: <https://howlcast.mrdemonwolf.workers.dev>
 - API: <https://howlcast-api.mrdemonwolf.workers.dev>
-- Both `/api/health` return `{"ok":true}`.
+- Both `/api/health` return `{"ok":true}`. CI/Deploy via GH Actions, all secrets in place.
 
-**Repo:** <https://github.com/MrDemonWolf/howlcast> — public, default branch `main`. Not pushed since the start (per user's standing instruction). Local commits ahead.
+**Repo:** <https://github.com/MrDemonWolf/howlcast> — public, default branch `main`. Pushed up through `be0eac2`. Branch protection enabled (no force-push, no deletion).
 
 ---
 
@@ -24,29 +28,80 @@
 - **Monorepo:** Turborepo. `apps/web` (Next.js 16 OpenNext), `apps/server` (Hono), `packages/{api,auth,db,env,infra,mail,ui,config}`.
 - **Auth:** Better Auth 1.6.9 + plugins (`username`, `twoFactor`, `passkey` via `@better-auth/passkey`, `magicLink`).
 - **Mail:** `@howlcast/mail` — Resend → SMTP/mailpit → console fallback.
-- **DB:** Cloudflare D1 (`howlcast-db`). Drizzle ORM. Migrations in `packages/db/src/migrations/`. Latest migration: `0002_supreme_master_chief.sql`.
-- **Infra:** Alchemy 0.93. Resources declared in `packages/infra/alchemy.run.ts`. State stored in CF KV per stage.
-- **CI/CD:** `.github/workflows/{ci,deploy,update-license-year}.yml`. Bun-based, `oven-sh/setup-bun@v2.1.3`. Deploy chains via `workflow_run` after CI green on main. **Secrets not yet set in GH** — `NEED_TO_DO.md` step 2.
-- **Brand:** navy `#091533` + cyan `#0FACED` + Bricolage Grotesque + Geist. Dark only. Wolf-themed but understated. `assets/logos/howlcast-*.svg` are the brand assets.
+- **DB:** Cloudflare D1 (`howlcast-db`). Drizzle ORM. Migrations in `packages/db/src/migrations/`. Latest migration: `0004_lean_nocturne.sql` (drops `allow_signups` after we removed `/signup` entirely).
+- **Infra:** Alchemy 0.93. Resources declared in `packages/infra/alchemy.run.ts`. CI uses `CloudflareStateStore` (state in a Worker + Durable Object); local dev uses file-based store.
+- **CI/CD:** `.github/workflows/{ci,deploy,update-license-year}.yml`. `oven-sh/setup-bun@v2.2.0`. Deploy chains via `workflow_run` after CI green on main. **All 10 secrets set** (cloudflare, alchemy, better-auth, stream, twitch).
+- **Lint/format:** eslint + prettier (matches fangdash setup). Biome was removed.
+- **Brand:** navy `#091533` + cyan `#0FACED` + Bricolage Grotesque + Geist. Dark only. Wolf-themed but understated. `assets/logos/howlcast-*.svg` + `apps/web/public/logos/*` are the brand assets.
 
 ---
 
 ## Critical decisions (don't relitigate)
 
-- **Single broadcaster, single-tenant.** No `/[username]` route. **The channel page IS the home page (`/`).** Locked May 2026.
+- **Single broadcaster, single-tenant.** No `/[username]` route. The channel page IS the home page (`/`).
 - **Two roles only:** broadcaster + viewer. One `is_invited` boolean replaces all tier/sub logic. No mods role (broadcaster moderates via GetStream's built-in tools).
 - **Den layout only.** No theater, no editorial.
-- **Two Discord webhooks** (public + private), DB-stored, edited from Dashboard → Channel → Notifications. **No other notification channels** (no email-on-live, RSS, web push).
+- **Two Discord webhooks** (public + private), DB-stored, edited from Dashboard → Notifications. **No other notification channels.**
 - **Single email template:** "Private stream invite". No sub thank-you, raid alert, etc.
 - **No R2 emote proxy.** Emote images load direct from provider CDNs (browser-cached). Only metadata is in KV.
-- **Twitch ID = single setup input** (Phase 6 wizard). Seeds display name, bio, avatar, broadcaster Twitch ID. Pulls emotes from all 4 providers (Twitch, 7TV, BTTV, FFZ) using that one ID.
-- **Cross-subdomain cookies are blocked on `*.workers.dev`** (Public Suffix List). Same-origin proxy via Next.js rewrites is the workaround. `apps/web/next.config.ts` rewrites `/api/*` to `${NEXT_PUBLIC_SERVER_URL}/api/*`. In prod (`howlcast.tv` + `api.howlcast.tv`), enable `crossSubDomainCookies` for actual cross-origin sessions.
+- **Twitch ID = single setup input.** The first-run wizard at `/setup` resolves it via Helix and writes `channelConfig.broadcasterTwitchId`.
+- **Cross-subdomain cookies are blocked on `*.workers.dev`** (Public Suffix List). Same-origin proxy via Next.js rewrites is the workaround. In prod (`howlcast.tv` + `api.howlcast.tv`), enable `crossSubDomainCookies` for cross-origin sessions.
+- **No `/signup` route.** Setup creates the broadcaster account; viewers arrive via emailed magic-link invites only. `allowSignups` column was dropped in 0004.
+- **No hardcoded `mrdemonwolf` user references.** `MrDemonWolf, Inc.` company branding in metadata is fine. Broadcaster's display name reads from DB.
+
+---
+
+## What's live (full feature surface)
+
+### Public (`/`, `/login`, `/invite/[code]`, `/popout/chat`)
+
+- Channel page (home) — branded chrome, real GetStream player + chat (lazy-loaded), LIVE badge polling, panels grid, public/private mode pill.
+- `/login` — single-form sign-in (email+password primary, magic-link + passkey secondary, "use username instead" toggle).
+- `/invite/[code]` — viewer onboarding. Signed-out: magic-link form. Signed-in: one-click accept → flips `profiles.isInvited`.
+- `/popout/chat` — chrome-free chat for OBS browser source.
+
+### First-run (`/setup`)
+
+3-step wizard, single page state machine:
+
+1. Twitch lookup → recap card with avatar + 7TV/BTTV/FFZ provider counts
+2. Email + password + display name (with strength meter, inline email validation)
+3. Visibility (Invite-only default)
+
+Creates broadcaster account via `auth.api.signUpEmail`, writes `profiles` (broadcaster, verified, invited) + `channelConfig` row, sets session cookie, redirects to `/dashboard`. Locked once `setupCompletedAt` is set.
+
+### Broadcaster (`/dashboard/*`)
+
+Sidebar shell with 3 sections:
+
+- **Live** → Stream (`/dashboard`): Provision call → Go live → End. RTMPS card + Title/visibility editor.
+- **Channel** → Panels (drag-equiv reorder + drawer editor), Emotes (merged grid + manual refresh), Invite emails (send/list/revoke), Stream key (full RTMPS detail), Notifications (two Discord webhooks UI), Chat (popout-capable).
+- **Server** → Self-host status, Account (broadcaster profile).
+
+Three-tier middleware: session → setupCompleted → role=broadcaster.
+
+### tRPC routers
+
+- `setup` — `getStatus` (public query), `lookup` + `commit` (public mutations, locked after first run)
+- `channel` — `getInfo` / `getPanels` / `getEmotes` (public), `createCall` / `updateConfig` / `upsertPanel` / `deletePanel` / `reorderPanels` / `refreshEmotes` (broadcaster)
+- `stream` — `isLive` / `getStreamCredentials` / `getViewerToken` (public), `getBroadcasterToken` / `provision` / `goLive` / `stopLive` (broadcaster)
+- `admin` — `listWebhooks` / `upsertWebhook` / `createInvite` / `listInvites` / `acceptInvite` / `revokeInvite` / `updateProfile`
+
+### Server routes (apps/server)
+
+- `/api/auth/*` — better-auth handler
+- `/api/trpc/*` — all routers
+- `/api/health` — `{ok:true}`
+- `/api/webhooks/getstream` — HMAC-verified Video webhook receiver. Updates `channelConfig.liveStartedAt/EndedAt` + fans out Discord embeds.
+
+Worker also has a 12h cron handler that pulls emotes from Twitch/7TV/BTTV/FFZ → `EMOTES_KV`.
 
 ---
 
 ## Recent commit history
 
 ```
+be0eac2 docs: phase 5 sweep — progress, resume, need_to_do
 79e481d phase 5.3-5.9: full broadcaster dashboard
 4415105 phase 5.2: live → stream dashboard page (go live + rtmps + title)
 9c75cc1 phase 5.0 v3: onboarding ui polish
@@ -94,86 +149,64 @@ a39c4a3 scaffold from better-t-stack 3.27
 
 ---
 
-## What's left in Phase 3 (next session pick-up here)
+## What's next — Phase 6 (Polish & Launch)
 
-### Stage 3B — GetStream JWT signer + tRPC procedures (in progress)
+Roughly in priority order:
 
-**Reference doc:** `docs/integrations/getstream.md` already contains the WebCrypto JWT signing pattern verbatim. Use it.
+1. **Live → Stats page** — broadcaster analytics. 7-day rolling viewer count + minutes streamed. Source: GetStream call recordings or Cloudflare Worker analytics + a small `stream_sessions` table we'd add.
+2. **Viewer `/account` page** — display name, pronouns, avatar; sessions list (mirrors broadcaster /account but for viewers).
+3. **Streamer Mode toggle** in dashboard header — masks the stream key + redacts notification text in case the broadcaster screen-shares.
+4. **White-label settings** — `whiteLabel` table (logo, name, footer attribution); rendered site-wide. Reference `docs/branding-spec.md`.
+5. **PP / TOS WYSIWYG** + `/privacy` + `/terms` routes — Tiptap editor, rehype-sanitize. Single-row `legalDocs` table.
+6. **Error boundaries** on every page + 404 page + loading skeletons.
+7. **OG images** via `@vercel/og`.
+8. **Cloudflare Web Analytics** snippet.
+9. **Hard live OBS test** — real RTMPS push, verify webhook fires, Discord fanout fires, channel page goes live.
+10. **Operations runbook** — deploy/rollback steps in `docs/`.
 
-Files to create/touch:
-
-- `packages/api/src/lib/stream.ts` — `signStreamUserToken()`, `signAdminToken()`, REST helpers for create-call / go-live / stop-live.
-- `packages/api/src/routers/stream.ts` — tRPC procedures: `getViewerToken`, `getBroadcasterToken`, `getStreamCredentials`, `isLive`.
-- `apps/server/src/index.ts` — mount `/api/webhooks/getstream` route with HMAC verification.
-- `apps/server/.env` — add `STREAM_API_KEY`, `STREAM_API_SECRET`, `STREAM_WEBHOOK_SECRET` (placeholders; user supplies real values from PRE-FLIGHT step 3).
-- `packages/infra/alchemy.run.ts` — bind the three Stream env vars to the server worker (use `process.env` fallback to empty string, same pattern as RESEND_API_KEY).
-
-**Constraints:**
-
-- Workers-compatible only. Sign with WebCrypto, no `@stream-io/node-sdk`.
-- The same JWT works for both Video and Chat — sign once, init both clients.
-- Webhook secret is a separate value (`STREAM_WEBHOOK_SECRET`), set on the GetStream dashboard webhook config + matching env var here.
-
-**Skip until user supplies keys:** actual go-live testing, OBS push. Code lands fine without keys; tRPC procedures throw a clear "Stream not configured" error if `STREAM_API_KEY` is empty.
-
-### Stage 3C — Channel page replacing `/`
-
-**Reference design:** `design-handoff/project/HowlCast.html` — match visually.
-
-User clarified: **single tenant, channel page = home page**. Migrate `apps/web/src/app/page.tsx` from the current "Sign in / Dashboard" landing into the actual channel layout:
-
-- Player on top of left column (GetStream Video player wrapper component)
-- Streamer info row directly below (avatar, name, verified, title)
-- Panels grid (3 col → 2 col → 1 col responsive)
-- Chat dock right (340–360px), pop-out button in chat header — Phase 4 wires the actual chat
-- Public mode: chat read-only, input replaced with "Chat is invite-only · DM mrdemonwolf to join the den" CTA card
-- Private mode: gated behind `isInvited` check
-- Mobile: collapses to single column, chat moves below panels
-
-LIVE badge + viewer count overlay drive off `isLive` tRPC query polling every ~10s (or use webhook-driven invalidation later).
-
-### Stage 3D — Discord webhooks fire on go-live/end
-
-GetStream sends `call.live_started` / `call.live_ended` events to `/api/webhooks/getstream`. Verify HMAC with `STREAM_WEBHOOK_SECRET`. On match:
-
-- Update `channel_config.liveStartedAt` / `liveEndedAt`.
-- Read the configured `webhooks` rows (public, private). For each enabled one, POST a Discord embed (title, broadcaster name + avatar, link to channel page, "LIVE NOW" / "Stream ended").
-- Respect `notifyOnLive` / `notifyOnEnd` toggles per row.
+After Phase 6: **Phase 7** is the Astro Starlight docs site at `docs.howlcast.tv`.
 
 ---
 
 ## Open user actions (NEED_TO_DO.md authoritative)
 
-1. **Push to GitHub** — `git push origin main`. Triggers CI.
-2. **GH Actions secrets** — `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`, `ALCHEMY_PASSWORD`, `BETTER_AUTH_SECRET`. Optional `RESEND_API_KEY` later.
-3. **Phase 3 keys** (when Stage 3B starts to need them): GetStream `STREAM_API_KEY`/`STREAM_API_SECRET`, Discord webhook URLs (paste into DB via dashboard once Phase 5 ships), Twitch `TWITCH_CLIENT_ID`/`TWITCH_CLIENT_SECRET`/`BROADCASTER_TWITCH_ID`.
-4. **Domain** — `howlcast.tv` purchase whenever you're ready, unblocks Phase 1.21–1.23 custom domain attach.
+These are things only Nathanial can do (account creation, paid setup, etc.):
+
+1. ✅ **Push to GitHub** — done (up through `be0eac2`)
+2. ✅ **GH Actions secrets** — all 10 set (Cloudflare, Alchemy, Better-Auth, Stream, Twitch)
+3. ✅ **GetStream account + keys** — done; webhook configured at Video & Audio dashboard
+4. ✅ **Twitch dev app** — `TWITCH_CLIENT_ID` + `TWITCH_CLIENT_SECRET` set
+5. **Decide testing path** — local dev (recommended) vs. wipe prod D1 to re-run `/setup`. User has an existing prod account from earlier wizard test; can't re-run setup against prod without wiping.
+6. **Configure Discord webhooks** — once user goes through Dashboard → Notifications and pastes URLs (no env work needed, all UI now)
+7. **Resend domain verify** — for real prod email delivery (currently falls through to console). Eventually.
+8. **Buy `howlcast.tv` domain** — unlocks custom-domain attach (Phase 1.21–1.23 deferred items).
 
 ---
 
 ## How to pick this back up after `/compact`
 
-Open Claude Code in the repo and paste:
+Paste this single prompt to a fresh Claude Code session in the repo:
 
 ```
 Read RESUME.md, PROGRESS.md, NEED_TO_DO.md, and CLAUDE.md.
-Tell me where we left off, what the next concrete action is, and run a `git status` + `git log --oneline -10` to verify state matches RESUME.md.
+Tell me where we left off, what the next concrete action is, and run a
+`git status` + `git log --oneline -10` to verify state matches RESUME.md.
 ```
 
 That's it. RESUME.md → PROGRESS.md → next action.
 
 ---
 
-## Original kickoff prompt (for cold-start sessions)
+## Original kickoff prompt (for cold-start sessions starting fresh)
 
 > Read these files in order, then summarize what you understand and tell me the next concrete action:
 >
 > 1. CLAUDE.md
 > 2. DESIGN-DECISIONS.md
 > 3. docs/architecture.md
-> 4. docs/build-plan.md (Phase 3 — channel & streaming)
+> 4. docs/build-plan.md (Phase 6 — polish & launch)
 > 5. PROGRESS.md
-> 6. docs/branding-spec.md (Phase 5 spec — read for full context)
+> 6. docs/branding-spec.md (Phase 6 white-label / legal docs spec)
 > 7. RESUME.md (this file)
 > 8. NEED_TO_DO.md
 >
