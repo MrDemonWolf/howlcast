@@ -22,3 +22,6 @@ catalog:
   "@types/react": ^19.2.10
   "@types/react-dom": ^19.2.3
   tailwindcss: ^4.1.18
+  resend: ^4.4.0
+  nodemailer: ^7.0.10
+  "@types/nodemailer": ^7.0.4

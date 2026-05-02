@@ -1,0 +1,23 @@
+{
+	"name": "@howlcast/mail",
+	"type": "module",
+	"private": true,
+	"exports": {
+		".": {
+			"default": "./src/index.ts"
+		},
+		"./templates/*": {
+			"default": "./src/templates/*.ts"
+		}
+	},
+	"scripts": {},
+	"dependencies": {
+		"resend": "catalog:"
+	},
+	"devDependencies": {
+		"@howlcast/config": "workspace:*",
+		"@types/nodemailer": "catalog:",
+		"nodemailer": "catalog:",
+		"typescript": "catalog:"
+	}
+}

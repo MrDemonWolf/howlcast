@@ -122,13 +122,28 @@ Quick start once accounts are wired:
 - `pnpm dev` - Run both Workers under Alchemy with hot reload.
 - `pnpm dev:web` - Run the web Worker only.
 - `pnpm dev:server` - Run the API Worker only.
+- `pnpm dev:mail` - Start mailpit (local dev inbox at http://localhost:8025).
+- `pnpm dev:mail:stop` - Stop the mailpit container.
+- `pnpm dev:mail:logs` - Tail the mailpit container logs.
 - `pnpm build` - Build all workspaces via Turborepo.
 - `pnpm check-types` - Type-check every workspace.
 - `pnpm check` - Run Biome with autofix on the entire repository.
 - `pnpm db:generate` - Generate Drizzle migrations from the schema.
 - `pnpm db:push` - Push the Drizzle schema directly (skips migration files).
-- `pnpm deploy` - Provision and deploy all Cloudflare resources via Alchemy.
+- `pnpm run deploy` - Provision and deploy all Cloudflare resources via Alchemy.
 - `pnpm destroy` - Tear down the Alchemy-managed Cloudflare resources.
+
+### Email in development
+
+HowlCast uses three email transports, chosen automatically:
+
+1. If `RESEND_API_KEY` is set, mail goes through Resend. Production path.
+2. Else if `SMTP_URL` is set and reachable, mail goes through SMTP. Local
+   default points at mailpit on `localhost:1025`. Run `pnpm dev:mail` to
+   start mailpit, then open the inbox at http://localhost:8025 to see
+   captured emails.
+3. Else the email is printed to the server terminal. Zero-setup fallback;
+   handy when you just want to click a magic link without spinning Docker.
 
 ### Code Quality
 

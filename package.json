@@ -26,7 +26,10 @@
 			"@trpc/client": "^11.16.0",
 			"@types/react": "^19.2.10",
 			"@types/react-dom": "^19.2.3",
-			"tailwindcss": "^4.1.18"
+			"tailwindcss": "^4.1.18",
+			"resend": "^4.4.0",
+			"nodemailer": "^7.0.10",
+			"@types/nodemailer": "^7.0.4"
 		}
 	},
 	"type": "module",
@@ -40,6 +43,9 @@
 		"db:generate": "turbo -F @howlcast/db db:generate",
 		"deploy": "turbo -F @howlcast/infra deploy",
 		"destroy": "turbo -F @howlcast/infra destroy",
+		"dev:mail": "docker compose -f docker-compose.dev.yml up -d mailpit",
+		"dev:mail:stop": "docker compose -f docker-compose.dev.yml down",
+		"dev:mail:logs": "docker compose -f docker-compose.dev.yml logs -f mailpit",
 		"check": "biome check --write .",
 		"prepare": "husky"
 	},
