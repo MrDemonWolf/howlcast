@@ -110,7 +110,7 @@ export default function SetupWizard() {
 						<Input
 							id="su-username"
 							name="username"
-							placeholder="mrdemonwolf"
+							placeholder="your_twitch_handle"
 							autoFocus
 							required
 							disabled={lookup.isPending}

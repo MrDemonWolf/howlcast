@@ -79,7 +79,7 @@ export default function ChannelPage() {
 					/>
 
 					<StreamerInfo
-						displayName={broadcaster?.displayName ?? "MrDemonWolf"}
+						displayName={broadcaster?.displayName ?? "HowlCast"}
 						verified={broadcaster?.verified ?? false}
 						title={title}
 						isPrivate={isPrivate}

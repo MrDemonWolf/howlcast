@@ -88,7 +88,7 @@ app.post("/api/webhooks/getstream", async (c) => {
 	);
 
 	await fanOutDiscord(isLiveEvent ? "live" : "end", {
-		displayName: broadcaster?.displayName ?? "MrDemonWolf",
+		displayName: broadcaster?.displayName ?? "HowlCast",
 		avatarUrl: null,
 		channelUrl,
 		title: cfg?.title ?? null,
