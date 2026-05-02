@@ -30,6 +30,7 @@ OBS encoder ──RTMPS──► GetStream ingress
 ```
 
 **Your Worker's job:**
+
 - Sign JWTs with `STREAM_API_SECRET`
 - Call GetStream REST endpoints (create call, go live, etc.)
 - Receive webhooks when stream state changes
@@ -45,39 +46,38 @@ The official `@stream-io/node-sdk` is not advertised as Workers-compatible. Sign
 ```ts
 // apps/server/src/lib/stream.ts
 export async function signStreamUserToken(
-  apiSecret: string,
-  payload: { user_id: string; call_cids?: string[]; role?: string },
-  ttlSec = 3600
+	apiSecret: string,
+	payload: { user_id: string; call_cids?: string[]; role?: string },
+	ttlSec = 3600,
 ) {
-  const enc = new TextEncoder();
-  const now = Math.floor(Date.now() / 1000);
-  const fullPayload = { iat: now, exp: now + ttlSec, ...payload };
+	const enc = new TextEncoder();
+	const now = Math.floor(Date.now() / 1000);
+	const fullPayload = { iat: now, exp: now + ttlSec, ...payload };
 
-  const b64url = (obj: object | Uint8Array) => {
-    const bytes = obj instanceof Uint8Array
-      ? obj
-      : enc.encode(JSON.stringify(obj));
-    return btoa(String.fromCharCode(...bytes))
-      .replace(/=+$/, "")
-      .replace(/\+/g, "-")
-      .replace(/\//g, "_");
-  };
+	const b64url = (obj: object | Uint8Array) => {
+		const bytes = obj instanceof Uint8Array ? obj : enc.encode(JSON.stringify(obj));
+		return btoa(String.fromCharCode(...bytes))
+			.replace(/=+$/, "")
+			.replace(/\+/g, "-")
+			.replace(/\//g, "_");
+	};
 
-  const head = b64url({ alg: "HS256", typ: "JWT" });
-  const body = b64url(fullPayload);
-  const key = await crypto.subtle.importKey(
-    "raw", enc.encode(apiSecret),
-    { name: "HMAC", hash: "SHA-256" }, false, ["sign"]
-  );
-  const sig = new Uint8Array(
-    await crypto.subtle.sign("HMAC", key, enc.encode(`${head}.${body}`))
-  );
-  return `${head}.${body}.${b64url(sig)}`;
+	const head = b64url({ alg: "HS256", typ: "JWT" });
+	const body = b64url(fullPayload);
+	const key = await crypto.subtle.importKey(
+		"raw",
+		enc.encode(apiSecret),
+		{ name: "HMAC", hash: "SHA-256" },
+		false,
+		["sign"],
+	);
+	const sig = new Uint8Array(await crypto.subtle.sign("HMAC", key, enc.encode(`${head}.${body}`)));
+	return `${head}.${body}.${b64url(sig)}`;
 }
 
 // Server-only admin token (for REST calls to GetStream)
 export const signAdminToken = (apiSecret: string) =>
-  signStreamUserToken(apiSecret, { user_id: "" } as any, 3600);
+	signStreamUserToken(apiSecret, { user_id: "" } as any, 3600);
 ```
 
 **The same JWT works for both Video and Chat.** Sign once, init both clients.
@@ -90,22 +90,22 @@ export const signAdminToken = (apiSecret: string) =>
 const adminToken = await signAdminToken(env.STREAM_API_SECRET);
 
 await fetch(
-  `https://video.stream-io-api.com/api/v2/video/call/livestream/${broadcasterId}?api_key=${env.STREAM_API_KEY}`,
-  {
-    method: "POST",
-    headers: {
-      Authorization: adminToken,
-      "stream-auth-type": "jwt",
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      data: {
-        created_by_id: broadcasterId,
-        members: [{ user_id: broadcasterId, role: "host" }],
-        custom: { channelCid: `livestream:${broadcasterId}` },
-      },
-    }),
-  }
+	`https://video.stream-io-api.com/api/v2/video/call/livestream/${broadcasterId}?api_key=${env.STREAM_API_KEY}`,
+	{
+		method: "POST",
+		headers: {
+			Authorization: adminToken,
+			"stream-auth-type": "jwt",
+			"Content-Type": "application/json",
+		},
+		body: JSON.stringify({
+			data: {
+				created_by_id: broadcasterId,
+				members: [{ user_id: broadcasterId, role: "host" }],
+				custom: { channelCid: `livestream:${broadcasterId}` },
+			},
+		}),
+	},
 );
 ```
 
@@ -118,25 +118,25 @@ Response includes `call.ingress.rtmp.address` — that's the **RTMPS server URL 
 ```ts
 // Go live + start HLS as fallback
 await fetch(
-  `https://video.stream-io-api.com/api/v2/video/call/livestream/${broadcasterId}/go_live?api_key=${env.STREAM_API_KEY}`,
-  {
-    method: "POST",
-    headers: {
-      Authorization: adminToken,
-      "stream-auth-type": "jwt",
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({ start_hls: true }),
-  }
+	`https://video.stream-io-api.com/api/v2/video/call/livestream/${broadcasterId}/go_live?api_key=${env.STREAM_API_KEY}`,
+	{
+		method: "POST",
+		headers: {
+			Authorization: adminToken,
+			"stream-auth-type": "jwt",
+			"Content-Type": "application/json",
+		},
+		body: JSON.stringify({ start_hls: true }),
+	},
 );
 
 // Stop the stream
 await fetch(
-  `https://video.stream-io-api.com/api/v2/video/call/livestream/${broadcasterId}/stop_live?api_key=${env.STREAM_API_KEY}`,
-  {
-    method: "POST",
-    headers: { Authorization: adminToken, "stream-auth-type": "jwt" },
-  }
+	`https://video.stream-io-api.com/api/v2/video/call/livestream/${broadcasterId}/stop_live?api_key=${env.STREAM_API_KEY}`,
+	{
+		method: "POST",
+		headers: { Authorization: adminToken, "stream-auth-type": "jwt" },
+	},
 );
 ```
 
@@ -147,27 +147,27 @@ await fetch(
 ```tsx
 "use client";
 import {
-  StreamVideo,
-  StreamVideoClient,
-  StreamCall,
-  LivestreamPlayer,
+	StreamVideo,
+	StreamVideoClient,
+	StreamCall,
+	LivestreamPlayer,
 } from "@stream-io/video-react-sdk";
 import "@stream-io/video-react-sdk/dist/css/styles.css";
 
 export function ChannelPlayer({ apiKey, userId, token, callId }: Props) {
-  const client = new StreamVideoClient({
-    apiKey,
-    user: { id: userId },
-    token,
-  });
+	const client = new StreamVideoClient({
+		apiKey,
+		user: { id: userId },
+		token,
+	});
 
-  return (
-    <StreamVideo client={client}>
-      <StreamCall call={client.call("livestream", callId)}>
-        <LivestreamPlayer callType="livestream" callId={callId} />
-      </StreamCall>
-    </StreamVideo>
-  );
+	return (
+		<StreamVideo client={client}>
+			<StreamCall call={client.call("livestream", callId)}>
+				<LivestreamPlayer callType="livestream" callId={callId} />
+			</StreamCall>
+		</StreamVideo>
+	);
 }
 ```
 
@@ -181,7 +181,7 @@ Use the **same ID** for both:
 
 ```ts
 const channel = chatClient.channel("livestream", broadcasterId, {
-  name: `${displayName}'s stream`,
+	name: `${displayName}'s stream`,
 });
 await channel.create();
 ```
@@ -200,33 +200,37 @@ import { findAndReplace } from "hast-util-find-and-replace";
 import { u } from "unist-builder";
 
 const emoteRehypePlugin = (emoteMap: Map<string, EmoteRecord>) => () => (tree: any) => {
-  // Word-level: match any whole word that exists in the emote map
-  // (handles `FeelsGoodMan`-style word emotes, not just `:colon:` syntax)
-  findAndReplace(tree, /\b([A-Za-z0-9_:!]+)\b/g, (full, word) => {
-    const e = emoteMap.get(word);
-    if (!e) return false;
-    return u("element", {
-      tagName: "img",
-      properties: {
-        src: e.url1x,
-        srcset: `${e.url1x} 1x, ${e.url2x} 2x`,
-        alt: word,
-        dataEmoteId: e.id,
-        className: "inline-emote",
-      },
-    }, []);
-  });
+	// Word-level: match any whole word that exists in the emote map
+	// (handles `FeelsGoodMan`-style word emotes, not just `:colon:` syntax)
+	findAndReplace(tree, /\b([A-Za-z0-9_:!]+)\b/g, (full, word) => {
+		const e = emoteMap.get(word);
+		if (!e) return false;
+		return u(
+			"element",
+			{
+				tagName: "img",
+				properties: {
+					src: e.url1x,
+					srcset: `${e.url1x} 1x, ${e.url2x} 2x`,
+					alt: word,
+					dataEmoteId: e.id,
+					className: "inline-emote",
+				},
+			},
+			[],
+		);
+	});
 };
 
-const customRenderText = (emoteMap: Map<string, EmoteRecord>) =>
-  (text: string, mentioned: User[]) =>
-    renderText(text, mentioned, {
-      allowedTagNames: [...defaultAllowedTagNames, "img"],
-      getRehypePlugins: (defaults) => [emoteRehypePlugin(emoteMap), ...defaults],
-    });
+const customRenderText =
+	(emoteMap: Map<string, EmoteRecord>) => (text: string, mentioned: User[]) =>
+		renderText(text, mentioned, {
+			allowedTagNames: [...defaultAllowedTagNames, "img"],
+			getRehypePlugins: (defaults) => [emoteRehypePlugin(emoteMap), ...defaults],
+		});
 
 // Usage:
-<MessageList renderText={customRenderText(emoteMap)} />
+<MessageList renderText={customRenderText(emoteMap)} />;
 ```
 
 Then post-process in a custom `Message` component to swap raw `<img>` for `<EmoteWithTooltip>` components for hover previews.
@@ -239,19 +243,22 @@ Configure once at app init (one-time script):
 
 ```ts
 await streamChatClient.updateChannelType("livestream", {
-  grants: {
-    broadcaster: [
-      "create-message", "update-any-message", "delete-any-message",
-      "ban-user", "mute-user", "pin-message", "upload-attachment",
-    ],
-    user: [
-      "create-message", "create-reaction", "read-channel",
-    ],
-    anonymous: ["read-channel"],
-  },
-  blocklist: "profanity_en_2020_v1",
-  blocklist_behavior: "block",
-  automod: "simple",
+	grants: {
+		broadcaster: [
+			"create-message",
+			"update-any-message",
+			"delete-any-message",
+			"ban-user",
+			"mute-user",
+			"pin-message",
+			"upload-attachment",
+		],
+		user: ["create-message", "create-reaction", "read-channel"],
+		anonymous: ["read-channel"],
+	},
+	blocklist: "profanity_en_2020_v1",
+	blocklist_behavior: "block",
+	automod: "simple",
 });
 ```
 
@@ -266,27 +273,26 @@ Assign role per user: `await chatClient.upsertUser({ id, role: "user" })` for vi
 GetStream sends webhooks for `call.live_started`, `call.session_ended`, `call.ended`. Verify them:
 
 ```ts
-async function verifyStreamWebhook(
-  rawBody: string,
-  sigHeader: string,
-  apiSecret: string,
-) {
-  const enc = new TextEncoder();
-  const key = await crypto.subtle.importKey(
-    "raw", enc.encode(apiSecret),
-    { name: "HMAC", hash: "SHA-256" }, false, ["sign"]
-  );
-  const sig = new Uint8Array(
-    await crypto.subtle.sign("HMAC", key, enc.encode(rawBody))
-  );
-  const hex = Array.from(sig).map(b => b.toString(16).padStart(2, "0")).join("");
-  if (hex.length !== sigHeader.length) return false;
-  // Constant-time compare to prevent timing attacks
-  let r = 0;
-  for (let i = 0; i < hex.length; i++) {
-    r |= hex.charCodeAt(i) ^ sigHeader.charCodeAt(i);
-  }
-  return r === 0;
+async function verifyStreamWebhook(rawBody: string, sigHeader: string, apiSecret: string) {
+	const enc = new TextEncoder();
+	const key = await crypto.subtle.importKey(
+		"raw",
+		enc.encode(apiSecret),
+		{ name: "HMAC", hash: "SHA-256" },
+		false,
+		["sign"],
+	);
+	const sig = new Uint8Array(await crypto.subtle.sign("HMAC", key, enc.encode(rawBody)));
+	const hex = Array.from(sig)
+		.map((b) => b.toString(16).padStart(2, "0"))
+		.join("");
+	if (hex.length !== sigHeader.length) return false;
+	// Constant-time compare to prevent timing attacks
+	let r = 0;
+	for (let i = 0; i < hex.length; i++) {
+		r |= hex.charCodeAt(i) ^ sigHeader.charCodeAt(i);
+	}
+	return r === 0;
 }
 ```
 
@@ -298,6 +304,7 @@ On `call.session_ended` / `call.ended`: write `liveEndedAt` + KV `live:current =
 ## Built-in moderation features
 
 **All built-in, no custom code required:**
+
 - Slow mode: `channel.enableSlowMode(seconds)`
 - Ban with timeout: `channel.banUser(id, { timeout: 30 })` (minutes)
 - Shadow ban: `channel.banUser(id, { shadow: true })`

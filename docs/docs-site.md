@@ -20,6 +20,7 @@
 **The trap:** writing setup docs before you've deployed the thing yourself = guessing. You'll write 3000 words, then rewrite half of them when you hit real-world friction during Phase 1–6.
 
 **The right time:** after Phase 6 ships. By then you've:
+
 - Run the BTS scaffold yourself
 - Hit every gotcha in the docs we wrote
 - Deployed to real Cloudflare
@@ -36,14 +37,14 @@
 
 **Recommendation: Starlight.** It's an addon in Better-T Stack already, so adding it is one command.
 
-| Option | Pros | Cons | Verdict |
-|---|---|---|---|
-| **Starlight (Astro)** | Fastest, less JS, killer default theme, built-in Pagefind search, BTS addon, Markdown-first | Different framework from main app | **Pick this** |
-| Fumadocs (Next.js) | Same framework as main app, also a BTS addon | Heavier, more JS shipped, slower for content | Skip — extra weight not worth same-framework |
-| Nextra (Next.js) | Mature, popular | Less polished defaults than Starlight | Skip |
-| Mintlify | Beautiful | SaaS only, not self-hosted (violates your principle) | Skip |
-| Docusaurus | Mature, plugin ecosystem | React-heavy, slower, dated UX | Skip |
-| VitePress | Fast, simple | Vue-based (you're React/TS) | Skip |
+| Option                | Pros                                                                                        | Cons                                                 | Verdict                                      |
+| --------------------- | ------------------------------------------------------------------------------------------- | ---------------------------------------------------- | -------------------------------------------- |
+| **Starlight (Astro)** | Fastest, less JS, killer default theme, built-in Pagefind search, BTS addon, Markdown-first | Different framework from main app                    | **Pick this**                                |
+| Fumadocs (Next.js)    | Same framework as main app, also a BTS addon                                                | Heavier, more JS shipped, slower for content         | Skip — extra weight not worth same-framework |
+| Nextra (Next.js)      | Mature, popular                                                                             | Less polished defaults than Starlight                | Skip                                         |
+| Mintlify              | Beautiful                                                                                   | SaaS only, not self-hosted (violates your principle) | Skip                                         |
+| Docusaurus            | Mature, plugin ecosystem                                                                    | React-heavy, slower, dated UX                        | Skip                                         |
+| VitePress             | Fast, simple                                                                                | Vue-based (you're React/TS)                          | Skip                                         |
 
 **Don't worry about "two frameworks."** Astro for the docs site is fine. It's content, not an app — no shared state, no shared components needed. You write `.mdx` and it builds static HTML.
 
@@ -52,17 +53,20 @@
 ## What the docs site IS
 
 **It is:**
+
 - A public landing page describing HowlCast
 - A complete deploy-it-yourself guide for someone who wants to run their own HowlCast instance
 - Reference docs for configuration, environment variables, troubleshooting
 - The public face of the project (if you ever open-source it)
 
 **It is NOT:**
+
 - The HowlCast app itself (that's `howlcast.tv`)
 - Your private notes (those are in `docs/` in the repo)
 - A blog (no posts, no CMS — just docs)
 
 **Domain options:**
+
 - `docs.howlcast.tv` — clean, recommended
 - `howlcast.dev` — if you want to separate marketing/docs from the running platform
 - `howlcast.tv/docs` — subpath, harder to deploy independently
@@ -161,46 +165,46 @@ Starlight's theme is overridable via CSS custom properties. Drop this in `apps/d
 
 ```css
 :root {
-  --sl-color-accent-low: #0a2547;
-  --sl-color-accent: #0FACED;          /* HowlCast cyan */
-  --sl-color-accent-high: #b3eaff;
-  --sl-color-white: #ffffff;
-  --sl-color-gray-1: #e6eaf2;
-  --sl-color-gray-2: #b3bccc;
-  --sl-color-gray-3: #7d8699;
-  --sl-color-gray-4: #4d5566;
-  --sl-color-gray-5: #2a2f3d;
-  --sl-color-gray-6: #1a1f2d;
-  --sl-color-black: #091533;           /* HowlCast navy */
+	--sl-color-accent-low: #0a2547;
+	--sl-color-accent: #0faced; /* HowlCast cyan */
+	--sl-color-accent-high: #b3eaff;
+	--sl-color-white: #ffffff;
+	--sl-color-gray-1: #e6eaf2;
+	--sl-color-gray-2: #b3bccc;
+	--sl-color-gray-3: #7d8699;
+	--sl-color-gray-4: #4d5566;
+	--sl-color-gray-5: #2a2f3d;
+	--sl-color-gray-6: #1a1f2d;
+	--sl-color-black: #091533; /* HowlCast navy */
 }
 
 /* Force dark mode only — match the rest of HowlCast */
-:root[data-theme='light'] {
-  color-scheme: dark;
+:root[data-theme="light"] {
+	color-scheme: dark;
 }
 ```
 
 Reference in `astro.config.mjs`:
 
 ```js
-import { defineConfig } from 'astro/config';
-import starlight from '@astrojs/starlight';
+import { defineConfig } from "astro/config";
+import starlight from "@astrojs/starlight";
 
 export default defineConfig({
-  integrations: [
-    starlight({
-      title: 'HowlCast',
-      description: 'Self-hosted live streaming for one streamer',
-      logo: { src: './src/assets/logo.svg' },
-      customCss: ['./src/styles/custom.css'],
-      social: { github: 'https://github.com/mrdemonwolf/howlcast' },
-      sidebar: [
-        { label: 'Quickstart', link: '/quickstart' },
-        { label: 'Guides', autogenerate: { directory: 'guides' } },
-        { label: 'Reference', autogenerate: { directory: 'reference' } },
-      ],
-    }),
-  ],
+	integrations: [
+		starlight({
+			title: "HowlCast",
+			description: "Self-hosted live streaming for one streamer",
+			logo: { src: "./src/assets/logo.svg" },
+			customCss: ["./src/styles/custom.css"],
+			social: { github: "https://github.com/mrdemonwolf/howlcast" },
+			sidebar: [
+				{ label: "Quickstart", link: "/quickstart" },
+				{ label: "Guides", autogenerate: { directory: "guides" } },
+				{ label: "Reference", autogenerate: { directory: "reference" } },
+			],
+		}),
+	],
 });
 ```
 
@@ -211,22 +215,26 @@ export default defineConfig({
 Starlight builds to static HTML. Two deploy options:
 
 **Option A — Cloudflare Workers Static Assets (recommended):**
+
 ```bash
 cd apps/docs
 pnpm build
 pnpm wrangler deploy
 ```
+
 With this `wrangler.jsonc`:
+
 ```jsonc
 {
-  "name": "howlcast-docs",
-  "compatibility_date": "2026-05-01",
-  "assets": { "directory": "./dist" },
-  "routes": [{ "pattern": "docs.howlcast.tv", "custom_domain": true }]
+	"name": "howlcast-docs",
+	"compatibility_date": "2026-05-01",
+	"assets": { "directory": "./dist" },
+	"routes": [{ "pattern": "docs.howlcast.tv", "custom_domain": true }],
 }
 ```
 
 **Option B — Cloudflare Pages (if you prefer the dashboard):**
+
 - Connect the GitHub repo
 - Build command: `cd apps/docs && pnpm build`
 - Build output: `apps/docs/dist`
@@ -312,7 +320,7 @@ That's it. Don't write content yet. Don't build out subpages. Just claim the URL
 
 A short file for future-you (or contributors):
 
-```md
+````md
 # HowlCast Docs
 
 The docs site for HowlCast. Built with Astro + Starlight.
@@ -322,6 +330,7 @@ The docs site for HowlCast. Built with Astro + Starlight.
 ```bash
 pnpm dev    # start dev server on :4321
 ```
+````
 
 ## Deploy
 
@@ -343,4 +352,7 @@ Just edit the .mdx file. `pnpm dev` hot-reloads.
 ## When you change theme
 
 Edit `src/styles/custom.css`, restart `pnpm dev`.
+
+```
+
 ```

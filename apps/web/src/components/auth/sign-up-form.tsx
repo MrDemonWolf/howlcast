@@ -58,13 +58,7 @@ export default function SignUpForm() {
 				</div>
 				<div className="flex flex-col gap-1.5">
 					<Label htmlFor="su-email">Email</Label>
-					<Input
-						id="su-email"
-						name="email"
-						type="email"
-						autoComplete="email"
-						required
-					/>
+					<Input id="su-email" name="email" type="email" autoComplete="email" required />
 				</div>
 				<div className="flex flex-col gap-1.5">
 					<Label htmlFor="su-password">Password</Label>
@@ -76,9 +70,7 @@ export default function SignUpForm() {
 						minLength={8}
 						required
 					/>
-					<p className="text-muted-foreground text-xs">
-						At least 8 characters.
-					</p>
+					<p className="text-muted-foreground text-xs">At least 8 characters.</p>
 				</div>
 				<Button type="submit" disabled={submitting} className="mt-2">
 					{submitting ? "Creating account…" : "Create account"}

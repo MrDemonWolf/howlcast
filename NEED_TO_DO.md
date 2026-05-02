@@ -25,12 +25,12 @@ Repo: <https://github.com/MrDemonWolf/howlcast/settings/secrets/actions>
 
 Click **New repository secret** for each:
 
-| # | Name | Value | Where to get it |
-|---|---|---|---|
-| 2.1 | `CLOUDFLARE_API_TOKEN` | (paste) | <https://dash.cloudflare.com/profile/api-tokens> → Create Token → **Custom token**. Permissions: **Account → Workers Scripts: Edit**, **Account → D1: Edit**, **Account → R2: Edit**, **Account → Workers KV Storage: Edit**, **User → User Details: Read**. Account resources: **Include → MrDemonWolf Inc.** |
-| 2.2 | `CLOUDFLARE_ACCOUNT_ID` | `b44e8f4116067556c6a165c1dcc74f42` | already known |
-| 2.3 | `ALCHEMY_PASSWORD` | (paste from `packages/infra/.env`) | run `cat packages/infra/.env` and copy the value |
-| 2.4 | `BETTER_AUTH_SECRET` | (paste from `apps/server/.env`) | run `cat apps/server/.env` and copy the value |
+| #   | Name                    | Value                              | Where to get it                                                                                                                                                                                                                                                                                                |
+| --- | ----------------------- | ---------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 2.1 | `CLOUDFLARE_API_TOKEN`  | (paste)                            | <https://dash.cloudflare.com/profile/api-tokens> → Create Token → **Custom token**. Permissions: **Account → Workers Scripts: Edit**, **Account → D1: Edit**, **Account → R2: Edit**, **Account → Workers KV Storage: Edit**, **User → User Details: Read**. Account resources: **Include → MrDemonWolf Inc.** |
+| 2.2 | `CLOUDFLARE_ACCOUNT_ID` | `b44e8f4116067556c6a165c1dcc74f42` | already known                                                                                                                                                                                                                                                                                                  |
+| 2.3 | `ALCHEMY_PASSWORD`      | (paste from `packages/infra/.env`) | run `cat packages/infra/.env` and copy the value                                                                                                                                                                                                                                                               |
+| 2.4 | `BETTER_AUTH_SECRET`    | (paste from `apps/server/.env`)    | run `cat apps/server/.env` and copy the value                                                                                                                                                                                                                                                                  |
 
 After 2.1–2.4 land, push another commit (or rerun the failed Deploy from the Actions tab) and watch CI → Deploy go green end-to-end.
 
@@ -39,6 +39,7 @@ After 2.1–2.4 land, push another commit (or rerun the failed Deploy from the A
 ### 3. Optional: GitHub Environment for prod
 
 For an extra "review before deploy" gate:
+
 1. Repo Settings → **Environments** → **New environment** → name it `production`
 2. Optionally add yourself as a **required reviewer** so each prod deploy needs one click
 
@@ -55,6 +56,7 @@ You'll need these the moment we wire GetStream + Discord webhooks. Do them when 
 ### 4. GetStream account + API keys
 
 Follow PRE-FLIGHT.md step 3. Save in 1Password:
+
 - `STREAM_API_KEY`
 - `STREAM_API_SECRET`
 
@@ -67,6 +69,7 @@ PRE-FLIGHT.md step 7. Make two channels in your Discord server, create a webhook
 ### 6. Twitch developer app
 
 PRE-FLIGHT.md step 5. Save:
+
 - `TWITCH_CLIENT_ID`
 - `TWITCH_CLIENT_SECRET`
 - `BROADCASTER_TWITCH_ID` (your numeric Twitch user ID)
@@ -96,6 +99,7 @@ PRE-FLIGHT.md step 2. Through Cloudflare Registrar (~$30/yr). Once you own it, C
 Three workflows in `.github/workflows/`:
 
 **`ci.yml`** — runs on every push and PR to `main`.
+
 1. Setup Bun (pinned to `package.json` `packageManager`)
 2. Cache `~/.bun/install/cache` keyed on `bun.lock`
 3. `bun install --frozen-lockfile`
@@ -103,6 +107,7 @@ Three workflows in `.github/workflows/`:
 5. `bun x biome check .`
 
 **`deploy.yml`** — runs after `ci.yml` succeeds on `main`.
+
 - Triggered by `workflow_run` on `CI` workflow with conclusion `success` on `main`
 - Or manually via `workflow_dispatch` (Actions tab)
 - Runs `bun run deploy` (Alchemy)
@@ -117,6 +122,7 @@ Concurrency group is `deploy` so two pushes don't race.
 ## First-run setup page (Phase 6 — not built yet)
 
 Heads up: when you visit `/dashboard` today it's the BTS placeholder. Phase 6 builds `/setup`:
+
 1. Detect `channelConfig.setupCompletedAt IS NULL` → force redirect from `/` to `/setup`
 2. Single input: **broadcaster Twitch user ID**
 3. Server fetches Twitch Helix for display name, bio, avatar URL

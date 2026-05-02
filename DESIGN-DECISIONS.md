@@ -10,7 +10,7 @@
 - **Single broadcaster** (you only) — single-tenant install
 - **Public / Private stream toggle** — controlled per stream
 - **Public stream** = anyone watches + reads chat, **only invited can post**
-- **Private stream** = only invited can watch *or* chat
+- **Private stream** = only invited can watch _or_ chat
 - **Two Discord webhooks** — public stream URL + private stream URL (only broadcaster setup needed)
 - **Viewer Account page** — viewers get just: display name, pronouns, profile picture, basic email login + 2FA + sessions
 - **Broadcaster Dashboard** — full streaming admin (Stream, Stats, Panels, Emotes, Invite emails, Stream key, Notifications, Self-host status, Account)
@@ -81,6 +81,7 @@ The "invite" is what gates **chat posting** (always) and **private-stream watchi
 ## Pages — final structure
 
 ### Channel page (HowlCast.html)
+
 - Two-column desktop, sticky chat right, scrollable left
 - Player on top of left column
 - Streamer info row directly below (avatar, name, verified, title)
@@ -91,7 +92,9 @@ The "invite" is what gates **chat posting** (always) and **private-stream watchi
 - Mobile: collapses to single column, chat moves below panels
 
 ### Dashboard (Dashboard.html) — broadcaster only
+
 Sidebar nav structure (locked, matches design screenshots):
+
 ```
 [Avatar · MrDemonWolf · BROADCASTER]
 [On air · 02:14 · End button]
@@ -114,7 +117,9 @@ SERVER
 ```
 
 ### Account page (Account.html) — viewer only
+
 Three sections:
+
 1. **How you appear** — display name, pronouns, profile picture
 2. **Login & security** — email, password, two-factor (TOTP)
 3. **Active sessions** — current + other sessions, sign-out remotely
@@ -123,14 +128,18 @@ Three sections:
 That's it. No channel URL, no mod settings, no notifications config (broadcaster owns those).
 
 ### Email templates (Email.html)
+
 **One template only:** Private stream invite
+
 - Subject: `You're on the list for {{date}} 🐺`
 - Sent: before going live, only to invited viewers
 - Body: invite copy, stream details, magic link tied to email
 - Footer: "Self-hosted on mrdemonwolf.com infrastructure · no trackers · unsubscribe"
 
 ### Notifications page (Notifications.html) — broadcaster
+
 **Two cards only:**
+
 1. **Public stream webhook** — Discord URL, "Notify when live" toggle, "Notify when ended" toggle, test button
 2. **Private stream webhook** — same but separate URL
 3. **Discord embed preview** — what it'll look like in Discord
@@ -138,6 +147,7 @@ That's it. No channel URL, no mod settings, no notifications config (broadcaster
 Nothing else. No multi-channel fanout. No throttling. No per-event grid.
 
 ### Other dashboard pages
+
 - **Stats** — 7-day audience analytics
 - **Panels** — drag/edit/add/delete the channel page panels
 - **Emotes** — flat emote library (no tier headers, no subscriber gates)
@@ -169,6 +179,7 @@ Three sections on one page:
    - Default content seeded with placeholder + "review before going live" warning banner
 
 Renders site-wide:
+
 - Brand mark in nav (channel + dashboard)
 - Email template branding
 - Footer on every page
@@ -249,6 +260,7 @@ The role/tier model collapses with subscribers gone:
 ## Cyan discipline (locked, do not violate)
 
 Cyan appears ONLY on:
+
 - Primary CTA buttons (filled cyan)
 - Focus rings (3px glow with 0.18 alpha)
 - Brand mark (the H tile, or whichever logo variant you pick)

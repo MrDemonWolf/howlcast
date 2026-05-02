@@ -49,6 +49,7 @@ Single page, three sections stacked. Match the dashboard's existing `.card` patt
 ```
 
 **Behavior:**
+
 - Upload accepts: `.svg` (preferred), `.png` (≥256px), `.jpg`
 - Stored in R2 at `branding/logo-{hash}.{ext}` so it's CDN-cached
 - "Reset to default" puts back the cyan H tile (or whichever variant got picked from `assets/logo-variants.html`)
@@ -73,6 +74,7 @@ Single page, three sections stacked. Match the dashboard's existing `.card` patt
 ```
 
 **Behavior:**
+
 - Three radio options
 - "Off" is gated behind a license check (TBD whether HowlCast Pro is a thing for v1 — see `docs/decisions.md` #11). For now, "Off" is selectable but shows a soft notice.
 - Custom field accepts plain text, max 80 chars
@@ -103,6 +105,7 @@ Single page, three sections stacked. Match the dashboard's existing `.card` patt
 ```
 
 **Behavior:**
+
 - Tab switcher between Privacy and Terms (same editor, different content)
 - Editor toolbar: bold, italic, H1, H2, bullet list, ordered list, link, undo/redo
 - Library: **Tiptap** (already shadcn-friendly, lightweight, works in Workers via SSR)
@@ -119,32 +122,33 @@ The seed templates should be generic enough to be legally functional but obvious
 
 When the broadcaster customizes any of these, here's what changes:
 
-| Setting | Affects |
-|---|---|
-| Custom logo | Channel page nav · Dashboard nav · Email template header · Favicon · OG images · Apple touch icons |
-| Custom platform name | Same places as logo (the wordmark text) · `<title>` tag prefix · Email subject prefix |
-| Footer attribution | Footer of every page (channel, dashboard, account, /privacy, /terms) |
-| Privacy/Terms content | `/privacy` and `/terms` routes · Footer links |
+| Setting               | Affects                                                                                            |
+| --------------------- | -------------------------------------------------------------------------------------------------- |
+| Custom logo           | Channel page nav · Dashboard nav · Email template header · Favicon · OG images · Apple touch icons |
+| Custom platform name  | Same places as logo (the wordmark text) · `<title>` tag prefix · Email subject prefix              |
+| Footer attribution    | Footer of every page (channel, dashboard, account, /privacy, /terms)                               |
+| Privacy/Terms content | `/privacy` and `/terms` routes · Footer links                                                      |
 
 ## Schema (already in `architecture.md`)
 
 ```ts
 // White-label settings — single row, id='site'
 export const whiteLabel = sqliteTable("white_label", {
-  id: text("id").primaryKey().default("site"),
-  customLogoKey: text("custom_logo_key"),         // R2 key, null = use default
-  customPlatformName: text("custom_platform_name"),// null = "HowlCast"
-  footerAttribution: text("footer_attribution", { enum: ["default", "custom", "off"] })
-    .notNull().default("default"),
-  customFooterText: text("custom_footer_text"),   // used when footerAttribution = "custom"
-  updatedAt: integer("updated_at", { mode: "timestamp_ms" }).notNull(),
+	id: text("id").primaryKey().default("site"),
+	customLogoKey: text("custom_logo_key"), // R2 key, null = use default
+	customPlatformName: text("custom_platform_name"), // null = "HowlCast"
+	footerAttribution: text("footer_attribution", { enum: ["default", "custom", "off"] })
+		.notNull()
+		.default("default"),
+	customFooterText: text("custom_footer_text"), // used when footerAttribution = "custom"
+	updatedAt: integer("updated_at", { mode: "timestamp_ms" }).notNull(),
 });
 
 // Privacy + Terms — two rows, ids = 'privacy' | 'terms'
 export const legalDocs = sqliteTable("legal_docs", {
-  id: text("id").primaryKey(),                    // 'privacy' | 'terms'
-  bodyHtml: text("body_html").notNull(),          // sanitized rich text from WYSIWYG
-  updatedAt: integer("updated_at", { mode: "timestamp_ms" }).notNull(),
+	id: text("id").primaryKey(), // 'privacy' | 'terms'
+	bodyHtml: text("body_html").notNull(), // sanitized rich text from WYSIWYG
+	updatedAt: integer("updated_at", { mode: "timestamp_ms" }).notNull(),
 });
 ```
 
@@ -169,44 +173,42 @@ Used everywhere via a `usePlatformName()` hook (or just read from a layout-level
 
 ```tsx
 function Footer() {
-  const wl = useWhiteLabel();
-  return (
-    <footer>
-      <div className="legal-links">
-        <Link href="/privacy">Privacy</Link>
-        <Link href="/terms">Terms</Link>
-      </div>
-      <div className="attribution">
-        {wl.footerAttribution === "default" && (
-          <span>Powered by HowlCast by MrDemonWolf, Inc.</span>
-        )}
-        {wl.footerAttribution === "custom" && (
-          <span>{wl.customFooterText}</span>
-        )}
-        {wl.footerAttribution === "off" && null}
-      </div>
-    </footer>
-  );
+	const wl = useWhiteLabel();
+	return (
+		<footer>
+			<div className="legal-links">
+				<Link href="/privacy">Privacy</Link>
+				<Link href="/terms">Terms</Link>
+			</div>
+			<div className="attribution">
+				{wl.footerAttribution === "default" && (
+					<span>Powered by HowlCast by MrDemonWolf, Inc.</span>
+				)}
+				{wl.footerAttribution === "custom" && <span>{wl.customFooterText}</span>}
+				{wl.footerAttribution === "off" && null}
+			</div>
+		</footer>
+	);
 }
 ```
 
 ### Tiptap setup (Phase 5)
 
 ```tsx
-import { useEditor, EditorContent } from '@tiptap/react';
-import StarterKit from '@tiptap/starter-kit';
-import Link from '@tiptap/extension-link';
+import { useEditor, EditorContent } from "@tiptap/react";
+import StarterKit from "@tiptap/starter-kit";
+import Link from "@tiptap/extension-link";
 
 function LegalEditor({ doc, onSave }) {
-  const editor = useEditor({
-    extensions: [
-      StarterKit,        // bold, italic, headings, lists, undo/redo
-      Link.configure({ openOnClick: false }),
-    ],
-    content: doc.bodyHtml,
-  });
+	const editor = useEditor({
+		extensions: [
+			StarterKit, // bold, italic, headings, lists, undo/redo
+			Link.configure({ openOnClick: false }),
+		],
+		content: doc.bodyHtml,
+	});
 
-  // Save handler sanitizes via rehype-sanitize before persisting
+	// Save handler sanitizes via rehype-sanitize before persisting
 }
 ```
 
@@ -251,14 +253,18 @@ This is **Phase 5 (Dashboard) work**, items 5.16 + 5.17 in the build plan. The s
 Both should start with a banner-style notice at the top:
 
 ```html
-<div style="border:1px solid #f5a623; background:#fffbf0; padding:12px; border-radius:8px; margin-bottom:16px; font-size:13px;">
-  <strong>⚠ Placeholder text.</strong> This was auto-generated. Review and customize before going live with real users. Consider talking to a lawyer if you're not sure.
+<div
+	style="border:1px solid #f5a623; background:#fffbf0; padding:12px; border-radius:8px; margin-bottom:16px; font-size:13px;"
+>
+	<strong>⚠ Placeholder text.</strong> This was auto-generated. Review and customize before going
+	live with real users. Consider talking to a lawyer if you're not sure.
 </div>
 ```
 
 Then a basic structure for each:
 
 **Privacy Policy seed:**
+
 - Who collects the data (you, the broadcaster)
 - What data is collected (email, display name, IP for fraud prevention, chat messages)
 - Why (auth, chat moderation, transactional emails)
@@ -269,6 +275,7 @@ Then a basic structure for each:
 - Last updated (auto-stamped)
 
 **Terms of Service seed:**
+
 - This is a private community streaming platform
 - You must be 13+ (or whatever the local age requirement is)
 - Don't post anything illegal, harassing, or in violation of the broadcaster's den rules

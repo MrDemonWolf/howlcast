@@ -48,13 +48,7 @@ export function Tabs({
 	);
 }
 
-export function TabsList({
-	className,
-	children,
-}: {
-	className?: string;
-	children: ReactNode;
-}) {
+export function TabsList({ className, children }: { className?: string; children: ReactNode }) {
 	return (
 		<div
 			role="tablist"

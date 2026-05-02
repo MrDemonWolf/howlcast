@@ -11,14 +11,7 @@
 // viewer chip, mode pill, and panels grid all drive off real tRPC data.
 
 import { useQuery } from "@tanstack/react-query";
-import {
-	BadgeCheck,
-	Eye,
-	Mail,
-	MessageSquareOff,
-	PawPrint,
-	Settings,
-} from "lucide-react";
+import { BadgeCheck, Eye, Mail, MessageSquareOff, PawPrint, Settings } from "lucide-react";
 import dynamic from "next/dynamic";
 import { trpc } from "@/utils/trpc";
 
@@ -65,9 +58,7 @@ export default function ChannelPage() {
 	const title = info.data?.title ?? null;
 
 	const canMountStream =
-		!!viewerToken.data &&
-		!!credentials.data?.callId &&
-		!!credentials.data?.channelCid;
+		!!viewerToken.data && !!credentials.data?.callId && !!credentials.data?.channelCid;
 
 	return (
 		<main className="mx-auto w-full max-w-[1400px] px-4 py-6 lg:px-6">
@@ -127,13 +118,7 @@ type PlayerCreds = {
 	callId: string;
 };
 
-function PlayerSlot({
-	isLive,
-	credentials,
-}: {
-	isLive: boolean;
-	credentials: PlayerCreds | null;
-}) {
+function PlayerSlot({ isLive, credentials }: { isLive: boolean; credentials: PlayerCreds | null }) {
 	return (
 		<div className="relative aspect-video overflow-hidden rounded-lg border border-border bg-black">
 			{isLive && credentials ? (
@@ -183,10 +168,7 @@ function StreamerInfo({
 						{displayName}
 					</h1>
 					{verified ? (
-						<BadgeCheck
-							className="h-4 w-4 flex-none text-cyan"
-							aria-label="verified"
-						/>
+						<BadgeCheck className="h-4 w-4 flex-none text-cyan" aria-label="verified" />
 					) : null}
 				</div>
 				<p className="mt-0.5 truncate text-muted-foreground text-sm">
@@ -236,9 +218,7 @@ function PanelCard({ panel }: { panel: Panel }) {
 	const inner = (
 		<article className="flex h-full flex-col rounded-lg border border-border bg-card p-4 transition hover:border-line-3">
 			{panel.title ? (
-				<h2 className="font-display font-semibold text-foreground text-sm">
-					{panel.title}
-				</h2>
+				<h2 className="font-display font-semibold text-foreground text-sm">{panel.title}</h2>
 			) : null}
 			{panel.body ? (
 				<p className="mt-1.5 line-clamp-6 whitespace-pre-line text-muted-foreground text-sm">
@@ -249,12 +229,7 @@ function PanelCard({ panel }: { panel: Panel }) {
 	);
 	if (panel.linkUrl) {
 		return (
-			<a
-				href={panel.linkUrl}
-				target="_blank"
-				rel="noopener noreferrer"
-				className="block"
-			>
+			<a href={panel.linkUrl} target="_blank" rel="noopener noreferrer" className="block">
 				{inner}
 			</a>
 		);
@@ -298,9 +273,7 @@ function ChatDock({
 				<div className="flex flex-1 items-center justify-center px-6 text-center">
 					<div className="flex flex-col items-center gap-2 text-muted-foreground">
 						<MessageSquareOff className="h-6 w-6" aria-hidden="true" />
-						<p className="text-sm">
-							Chat unavailable until the broadcaster goes live.
-						</p>
+						<p className="text-sm">Chat unavailable until the broadcaster goes live.</p>
 					</div>
 				</div>
 			)}
@@ -310,13 +283,10 @@ function ChatDock({
 					<div className="flex items-start gap-3 rounded-md border border-cyan-soft bg-cyan-glow p-3">
 						<Mail className="mt-0.5 h-4 w-4 flex-none text-cyan" />
 						<div className="min-w-0">
-							<p className="font-medium text-foreground text-sm">
-								Chat is invite-only.
-							</p>
+							<p className="font-medium text-foreground text-sm">Chat is invite-only.</p>
 							<p className="mt-0.5 text-muted-foreground text-xs">
 								Watching is open to anyone. Posting is for the den. DM{" "}
-								<span className="font-mono text-cyan">@mrdemonwolf</span> to get
-								in.
+								<span className="font-mono text-cyan">@mrdemonwolf</span> to get in.
 							</p>
 						</div>
 					</div>

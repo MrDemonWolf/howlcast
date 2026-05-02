@@ -62,8 +62,7 @@ app.post("/api/webhooks/getstream", async (c) => {
 	const now = new Date();
 
 	const isLiveEvent = event.type === "call.live_started";
-	const isEndEvent =
-		event.type === "call.session_ended" || event.type === "call.ended";
+	const isEndEvent = event.type === "call.session_ended" || event.type === "call.ended";
 
 	if (!isLiveEvent && !isEndEvent) return c.json({ ok: true });
 
@@ -73,30 +72,19 @@ app.post("/api/webhooks/getstream", async (c) => {
 			.set({ liveStartedAt: now, liveEndedAt: null })
 			.where(eq(channelConfig.id, "site"));
 	} else {
-		await db
-			.update(channelConfig)
-			.set({ liveEndedAt: now })
-			.where(eq(channelConfig.id, "site"));
+		await db.update(channelConfig).set({ liveEndedAt: now }).where(eq(channelConfig.id, "site"));
 	}
 
 	// Discord fanout — best-effort, runs after the DB write so live state
 	// is correct even if Discord is down. fanOutDiscord swallows errors.
-	const cfg = await db
-		.select()
-		.from(channelConfig)
-		.where(eq(channelConfig.id, "site"))
-		.get();
+	const cfg = await db.select().from(channelConfig).where(eq(channelConfig.id, "site")).get();
 	const broadcaster = cfg
-		? await db
-				.select()
-				.from(profiles)
-				.where(eq(profiles.userId, cfg.ownerId))
-				.get()
+		? await db.select().from(profiles).where(eq(profiles.userId, cfg.ownerId)).get()
 		: null;
-	const channelUrl = env.BETTER_AUTH_URL.replace(
-		/^https?:\/\/(api\.)?/,
-		"https://",
-	).replace(/\/$/, "");
+	const channelUrl = env.BETTER_AUTH_URL.replace(/^https?:\/\/(api\.)?/, "https://").replace(
+		/\/$/,
+		"",
+	);
 
 	await fanOutDiscord(isLiveEvent ? "live" : "end", {
 		displayName: broadcaster?.displayName ?? "MrDemonWolf",

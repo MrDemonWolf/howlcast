@@ -8,29 +8,20 @@ import { env } from "@howlcast/env/server";
 import { TRPCError } from "@trpc/server";
 import { eq } from "drizzle-orm";
 import { protectedProcedure, publicProcedure, router } from "../index";
-import {
-	StreamNotConfiguredError,
-	signAdminToken,
-	signStreamUserToken,
-} from "../lib/stream";
+import { StreamNotConfiguredError, signAdminToken, signStreamUserToken } from "../lib/stream";
 
 const SITE_ID = "site";
 
 async function loadConfig() {
 	const db = createDb();
-	const row = await db
-		.select()
-		.from(channelConfig)
-		.where(eq(channelConfig.id, SITE_ID))
-		.get();
+	const row = await db.select().from(channelConfig).where(eq(channelConfig.id, SITE_ID)).get();
 	return row ?? null;
 }
 
 function streamNotConfigured(): TRPCError {
 	return new TRPCError({
 		code: "PRECONDITION_FAILED",
-		message:
-			"Stream not configured. Set STREAM_API_KEY and STREAM_API_SECRET to enable.",
+		message: "Stream not configured. Set STREAM_API_KEY and STREAM_API_SECRET to enable.",
 	});
 }
 
@@ -72,8 +63,7 @@ export const streamRouter = router({
 	// Token for an anonymous or signed-in viewer. Anonymous viewers get a
 	// stable but ephemeral guest id so the SDK has something to work with.
 	getViewerToken: publicProcedure.query(async ({ ctx }) => {
-		if (!env.STREAM_API_KEY || !env.STREAM_API_SECRET)
-			throw streamNotConfigured();
+		if (!env.STREAM_API_KEY || !env.STREAM_API_SECRET) throw streamNotConfigured();
 
 		const userId = ctx.session?.user.id ?? `guest-${crypto.randomUUID()}`;
 		try {
@@ -91,8 +81,7 @@ export const streamRouter = router({
 	// Broadcaster-only. Returns an admin-capable token plus the call/channel
 	// identifiers needed to drive the OBS push and dashboard go-live UI.
 	getBroadcasterToken: protectedProcedure.query(async ({ ctx }) => {
-		if (!env.STREAM_API_KEY || !env.STREAM_API_SECRET)
-			throw streamNotConfigured();
+		if (!env.STREAM_API_KEY || !env.STREAM_API_SECRET) throw streamNotConfigured();
 
 		const db = createDb();
 		const me = await db

@@ -1,11 +1,5 @@
 import alchemy from "alchemy";
-import {
-	D1Database,
-	KVNamespace,
-	Nextjs,
-	R2Bucket,
-	Worker,
-} from "alchemy/cloudflare";
+import { D1Database, KVNamespace, Nextjs, R2Bucket, Worker } from "alchemy/cloudflare";
 import { config } from "dotenv";
 
 config({ path: "./.env" });

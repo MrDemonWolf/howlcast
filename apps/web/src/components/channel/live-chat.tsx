@@ -12,13 +12,7 @@ import "stream-chat-react/dist/css/v2/index.css";
 
 import { useEffect, useMemo, useState } from "react";
 import { StreamChat } from "stream-chat";
-import {
-	Channel,
-	Chat,
-	MessageComposer,
-	MessageList,
-	Window,
-} from "stream-chat-react";
+import { Channel, Chat, MessageComposer, MessageList, Window } from "stream-chat-react";
 
 type Props = {
 	apiKey: string;
@@ -28,13 +22,7 @@ type Props = {
 	canPost: boolean;
 };
 
-export default function LiveChat({
-	apiKey,
-	userId,
-	token,
-	channelCid,
-	canPost,
-}: Props) {
+export default function LiveChat({ apiKey, userId, token, channelCid, canPost }: Props) {
 	const client = useMemo(() => StreamChat.getInstance(apiKey), [apiKey]);
 	const [ready, setReady] = useState(false);
 

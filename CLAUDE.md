@@ -38,6 +38,7 @@
 6. **[`PROGRESS.md`](PROGRESS.md)** — where I actually am right now
 
 For specific topics:
+
 - Streaming → [`docs/integrations/getstream.md`](docs/integrations/getstream.md)
 - Auth → [`docs/integrations/better-auth.md`](docs/integrations/better-auth.md)
 - Emotes → [`docs/integrations/emotes.md`](docs/integrations/emotes.md)
@@ -97,4 +98,4 @@ Ask me. Don't guess. I'd rather answer one clarifying question than untangle a w
 
 ---
 
-*If this file ever conflicts with my latest message, my message wins. Update this file to match.*
+_If this file ever conflicts with my latest message, my message wins. Update this file to match._

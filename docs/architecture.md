@@ -60,44 +60,44 @@ OBS ──RTMPS──► GetStream ──WebRTC──► viewer browsers
 
 ## Stack (pinned versions, May 2026)
 
-| Layer | Pick | Version | Notes |
-|---|---|---|---|
-| Scaffold | `create-better-t-stack` | 3.27+ | Use it. Don't fight it. |
-| Framework | Next.js | 16.x | App Router, OpenNext-compatible |
-| CF Adapter | `@opennextjs/cloudflare` | **≥1.17.1** | 1.17.1 patches CVE-2026-3125 |
-| Backend | Hono | 4.12+ | Separate worker |
-| API | tRPC v11 + `@hono/trpc-server` | 11.10+ | v11 GA since Mar 2025 |
-| Client query | `@trpc/tanstack-react-query` | 11.10+ | New integration |
-| ORM | Drizzle | latest | `dialect: 'sqlite'` |
-| Auth | Better Auth | **≥1.5** | Native D1 support since 1.5 |
-| Plugins | `username`, `twoFactor`, `passkey`, `magicLink` | matching 1.5+ | All official |
-| Email | Resend | latest | 3k/mo free, official CF tutorial |
-| Video | `@stream-io/video-react-sdk` | 1.34+ | `livestream` call type |
-| Chat | `stream-chat-react` | 13.14+ | `livestream` channel type |
-| UI | shadcn/ui | latest registry | New York style |
-| CSS | Tailwind | v4 | OKLCH colors |
-| Wrangler | `wrangler` | 4.x+ | `wrangler.jsonc` format |
-| Lint/format | Biome | latest | Replaces ESLint+Prettier |
-| Package mgr | bun | 1.3+ | Native to Cloudflare Workers tooling. Catalog in `package.json`. |
-| Task runner | Turborepo | latest | Comes with BTS |
-| Compatibility | `compatibility_date: 2026-05-01`, flag `nodejs_compat` | — | OpenNext requires |
-| Mail | `@howlcast/mail` (Resend / SMTP / console) | — | Three-tier auto-pick. See `docs/integrations/mail.md`. |
-| CI/CD | GitHub Actions (`.github/workflows/`) | — | `ci.yml` → `deploy.yml` via `workflow_run`. Alchemy provisions in CI. |
+| Layer         | Pick                                                   | Version         | Notes                                                                 |
+| ------------- | ------------------------------------------------------ | --------------- | --------------------------------------------------------------------- |
+| Scaffold      | `create-better-t-stack`                                | 3.27+           | Use it. Don't fight it.                                               |
+| Framework     | Next.js                                                | 16.x            | App Router, OpenNext-compatible                                       |
+| CF Adapter    | `@opennextjs/cloudflare`                               | **≥1.17.1**     | 1.17.1 patches CVE-2026-3125                                          |
+| Backend       | Hono                                                   | 4.12+           | Separate worker                                                       |
+| API           | tRPC v11 + `@hono/trpc-server`                         | 11.10+          | v11 GA since Mar 2025                                                 |
+| Client query  | `@trpc/tanstack-react-query`                           | 11.10+          | New integration                                                       |
+| ORM           | Drizzle                                                | latest          | `dialect: 'sqlite'`                                                   |
+| Auth          | Better Auth                                            | **≥1.5**        | Native D1 support since 1.5                                           |
+| Plugins       | `username`, `twoFactor`, `passkey`, `magicLink`        | matching 1.5+   | All official                                                          |
+| Email         | Resend                                                 | latest          | 3k/mo free, official CF tutorial                                      |
+| Video         | `@stream-io/video-react-sdk`                           | 1.34+           | `livestream` call type                                                |
+| Chat          | `stream-chat-react`                                    | 13.14+          | `livestream` channel type                                             |
+| UI            | shadcn/ui                                              | latest registry | New York style                                                        |
+| CSS           | Tailwind                                               | v4              | OKLCH colors                                                          |
+| Wrangler      | `wrangler`                                             | 4.x+            | `wrangler.jsonc` format                                               |
+| Lint/format   | Biome                                                  | latest          | Replaces ESLint+Prettier                                              |
+| Package mgr   | bun                                                    | 1.3+            | Native to Cloudflare Workers tooling. Catalog in `package.json`.      |
+| Task runner   | Turborepo                                              | latest          | Comes with BTS                                                        |
+| Compatibility | `compatibility_date: 2026-05-01`, flag `nodejs_compat` | —               | OpenNext requires                                                     |
+| Mail          | `@howlcast/mail` (Resend / SMTP / console)             | —               | Three-tier auto-pick. See `docs/integrations/mail.md`.                |
+| CI/CD         | GitHub Actions (`.github/workflows/`)                  | —               | `ci.yml` → `deploy.yml` via `workflow_run`. Alchemy provisions in CI. |
 
 ---
 
 ## Storage layout (one Cloudflare account)
 
-| Resource | Name | Purpose |
-|---|---|---|
-| D1 | `howlcast-db` | Users, sessions, channel config, panels, invites, mods, emote sources, audit log |
-| KV | `HOWLCAST_EMOTES` | Emote metadata cache, Twitch app token, rate limit |
-| KV (optional) | `HOWLCAST_SESSIONS` | Better Auth secondary cache |
-| R2 | `howlcast-public` | Avatars, banners, panel images |
-| R2 | `howlcast-isr` | OpenNext incremental cache |
-| ~~R2~~ | ~~`howlcast-emotes`~~ | **REMOVED** — emote images load direct from provider CDNs (browser-cached). See `docs/integrations/emotes.md`. |
-| Images | binding `IMAGES` | Avatar/banner resizing |
-| Secrets | (Worker secrets) | `BETTER_AUTH_SECRET`, `STREAM_API_KEY`, `STREAM_API_SECRET`, `RESEND_API_KEY`, `TWITCH_CLIENT_ID`, `TWITCH_CLIENT_SECRET` |
+| Resource      | Name                  | Purpose                                                                                                                   |
+| ------------- | --------------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| D1            | `howlcast-db`         | Users, sessions, channel config, panels, invites, mods, emote sources, audit log                                          |
+| KV            | `HOWLCAST_EMOTES`     | Emote metadata cache, Twitch app token, rate limit                                                                        |
+| KV (optional) | `HOWLCAST_SESSIONS`   | Better Auth secondary cache                                                                                               |
+| R2            | `howlcast-public`     | Avatars, banners, panel images                                                                                            |
+| R2            | `howlcast-isr`        | OpenNext incremental cache                                                                                                |
+| ~~R2~~        | ~~`howlcast-emotes`~~ | **REMOVED** — emote images load direct from provider CDNs (browser-cached). See `docs/integrations/emotes.md`.            |
+| Images        | binding `IMAGES`      | Avatar/banner resizing                                                                                                    |
+| Secrets       | (Worker secrets)      | `BETTER_AUTH_SECRET`, `STREAM_API_KEY`, `STREAM_API_SECRET`, `RESEND_API_KEY`, `TWITCH_CLIENT_ID`, `TWITCH_CLIENT_SECRET` |
 
 ---
 
@@ -222,117 +222,144 @@ Better Auth generates `user`, `session`, `account`, `verification`, `twoFactor`,
 // apps/server/src/db/schema/channel.ts
 import { sqliteTable, text, integer, primaryKey, index } from "drizzle-orm/sqlite-core";
 
-export const profiles = sqliteTable("profiles", {
-  userId: text("user_id").primaryKey().references(() => user.id, { onDelete: "cascade" }),
-  displayName: text("display_name").notNull(),
-  bio: text("bio"),
-  pronouns: text("pronouns"),
-  avatarKey: text("avatar_key"),                  // R2 key
-  bannerKey: text("banner_key"),
-  verified: integer("verified", { mode: "boolean" }).default(false),
-  // Two roles only — no mods, no subscribers
-  role: text("role", { enum: ["broadcaster", "viewer"] })
-    .notNull().default("viewer"),
-  // Single permission flag — replaces all tier/subscriber logic.
-  // Invited viewers can: post in chat (always), watch private streams (when broadcaster is in private mode).
-  isInvited: integer("is_invited", { mode: "boolean" }).notNull().default(false),
-  invitedAt: integer("invited_at", { mode: "timestamp_ms" }),
-  invitedBy: text("invited_by"),                  // broadcaster userId who sent the invite
-}, (t) => ({
-  roleIdx: index("profiles_role_idx").on(t.role),
-  invitedIdx: index("profiles_invited_idx").on(t.isInvited),
-}));
+export const profiles = sqliteTable(
+	"profiles",
+	{
+		userId: text("user_id")
+			.primaryKey()
+			.references(() => user.id, { onDelete: "cascade" }),
+		displayName: text("display_name").notNull(),
+		bio: text("bio"),
+		pronouns: text("pronouns"),
+		avatarKey: text("avatar_key"), // R2 key
+		bannerKey: text("banner_key"),
+		verified: integer("verified", { mode: "boolean" }).default(false),
+		// Two roles only — no mods, no subscribers
+		role: text("role", { enum: ["broadcaster", "viewer"] })
+			.notNull()
+			.default("viewer"),
+		// Single permission flag — replaces all tier/subscriber logic.
+		// Invited viewers can: post in chat (always), watch private streams (when broadcaster is in private mode).
+		isInvited: integer("is_invited", { mode: "boolean" }).notNull().default(false),
+		invitedAt: integer("invited_at", { mode: "timestamp_ms" }),
+		invitedBy: text("invited_by"), // broadcaster userId who sent the invite
+	},
+	(t) => ({
+		roleIdx: index("profiles_role_idx").on(t.role),
+		invitedIdx: index("profiles_invited_idx").on(t.isInvited),
+	}),
+);
 
 export const channelConfig = sqliteTable("channel_config", {
-  id: text("id").primaryKey().default("site"),    // single row, always "site"
-  ownerId: text("owner_id").notNull().references(() => user.id),
-  title: text("title"),
-  visibility: text("visibility", { enum: ["public", "invite_only"] })
-    .notNull().default("public"),
-  matureContent: integer("mature", { mode: "boolean" }).default(false),
-  liveStartedAt: integer("live_started_at", { mode: "timestamp_ms" }),
-  liveEndedAt: integer("live_ended_at", { mode: "timestamp_ms" }),
-  streamCallId: text("stream_call_id"),
-  chatChannelCid: text("chat_channel_cid"),
-  setupCompletedAt: integer("setup_completed_at", { mode: "timestamp_ms" }),
-  updatedAt: integer("updated_at", { mode: "timestamp_ms" }).notNull(),
+	id: text("id").primaryKey().default("site"), // single row, always "site"
+	ownerId: text("owner_id")
+		.notNull()
+		.references(() => user.id),
+	title: text("title"),
+	visibility: text("visibility", { enum: ["public", "invite_only"] })
+		.notNull()
+		.default("public"),
+	matureContent: integer("mature", { mode: "boolean" }).default(false),
+	liveStartedAt: integer("live_started_at", { mode: "timestamp_ms" }),
+	liveEndedAt: integer("live_ended_at", { mode: "timestamp_ms" }),
+	streamCallId: text("stream_call_id"),
+	chatChannelCid: text("chat_channel_cid"),
+	setupCompletedAt: integer("setup_completed_at", { mode: "timestamp_ms" }),
+	updatedAt: integer("updated_at", { mode: "timestamp_ms" }).notNull(),
 });
 
-export const panels = sqliteTable("panels", {
-  id: text("id").primaryKey(),
-  position: integer("position").notNull(),
-  title: text("title"),
-  body: text("body"),                             // markdown
-  imageKey: text("image_key"),
-  linkUrl: text("link_url"),
-  createdAt: integer("created_at", { mode: "timestamp_ms" }).notNull(),
-}, (t) => ({ posIdx: index("panels_position_idx").on(t.position) }));
+export const panels = sqliteTable(
+	"panels",
+	{
+		id: text("id").primaryKey(),
+		position: integer("position").notNull(),
+		title: text("title"),
+		body: text("body"), // markdown
+		imageKey: text("image_key"),
+		linkUrl: text("link_url"),
+		createdAt: integer("created_at", { mode: "timestamp_ms" }).notNull(),
+	},
+	(t) => ({ posIdx: index("panels_position_idx").on(t.position) }),
+);
 
 export const invites = sqliteTable("invites", {
-  code: text("code").primaryKey(),
-  createdBy: text("created_by").notNull().references(() => user.id),
-  usedBy: text("used_by").references(() => user.id),
-  usedAt: integer("used_at", { mode: "timestamp_ms" }),
-  expiresAt: integer("expires_at", { mode: "timestamp_ms" }),
-  maxUses: integer("max_uses").notNull().default(1),
-  useCount: integer("use_count").notNull().default(0),
-  // No preassignRole — accepting an invite always sets isInvited = true
+	code: text("code").primaryKey(),
+	createdBy: text("created_by")
+		.notNull()
+		.references(() => user.id),
+	usedBy: text("used_by").references(() => user.id),
+	usedAt: integer("used_at", { mode: "timestamp_ms" }),
+	expiresAt: integer("expires_at", { mode: "timestamp_ms" }),
+	maxUses: integer("max_uses").notNull().default(1),
+	useCount: integer("use_count").notNull().default(0),
+	// No preassignRole — accepting an invite always sets isInvited = true
 });
 
 export const webhooks = sqliteTable("webhooks", {
-  id: text("id").primaryKey(),                    // 'public' | 'private'
-  url: text("url"),                               // null = not configured
-  notifyOnLive: integer("notify_on_live", { mode: "boolean" }).default(true),
-  notifyOnEnd: integer("notify_on_end", { mode: "boolean" }).default(true),
-  lastFiredAt: integer("last_fired_at", { mode: "timestamp_ms" }),
-  lastError: text("last_error"),
-  updatedAt: integer("updated_at", { mode: "timestamp_ms" }).notNull(),
+	id: text("id").primaryKey(), // 'public' | 'private'
+	url: text("url"), // null = not configured
+	notifyOnLive: integer("notify_on_live", { mode: "boolean" }).default(true),
+	notifyOnEnd: integer("notify_on_end", { mode: "boolean" }).default(true),
+	lastFiredAt: integer("last_fired_at", { mode: "timestamp_ms" }),
+	lastError: text("last_error"),
+	updatedAt: integer("updated_at", { mode: "timestamp_ms" }).notNull(),
 });
 
 // White-label settings — single row, id='site'
 export const whiteLabel = sqliteTable("white_label", {
-  id: text("id").primaryKey().default("site"),
-  customLogoKey: text("custom_logo_key"),         // R2 key, null = use default
-  customPlatformName: text("custom_platform_name"),// null = "HowlCast"
-  footerAttribution: text("footer_attribution", { enum: ["default", "custom", "off"] })
-    .notNull().default("default"),
-  customFooterText: text("custom_footer_text"),   // used when footerAttribution = "custom"
-  updatedAt: integer("updated_at", { mode: "timestamp_ms" }).notNull(),
+	id: text("id").primaryKey().default("site"),
+	customLogoKey: text("custom_logo_key"), // R2 key, null = use default
+	customPlatformName: text("custom_platform_name"), // null = "HowlCast"
+	footerAttribution: text("footer_attribution", { enum: ["default", "custom", "off"] })
+		.notNull()
+		.default("default"),
+	customFooterText: text("custom_footer_text"), // used when footerAttribution = "custom"
+	updatedAt: integer("updated_at", { mode: "timestamp_ms" }).notNull(),
 });
 
 // Privacy + Terms — two rows, ids = 'privacy' | 'terms'
 export const legalDocs = sqliteTable("legal_docs", {
-  id: text("id").primaryKey(),                    // 'privacy' | 'terms'
-  bodyHtml: text("body_html").notNull(),          // sanitized rich text from WYSIWYG
-  updatedAt: integer("updated_at", { mode: "timestamp_ms" }).notNull(),
+	id: text("id").primaryKey(), // 'privacy' | 'terms'
+	bodyHtml: text("body_html").notNull(), // sanitized rich text from WYSIWYG
+	updatedAt: integer("updated_at", { mode: "timestamp_ms" }).notNull(),
 });
 
 export const userBans = sqliteTable("user_bans", {
-  userId: text("user_id").primaryKey().references(() => user.id, { onDelete: "cascade" }),
-  reason: text("reason"),
-  bannedBy: text("banned_by").notNull().references(() => user.id),
-  bannedAt: integer("banned_at", { mode: "timestamp_ms" }).notNull(),
-  expiresAt: integer("expires_at", { mode: "timestamp_ms" }),  // null = permanent
+	userId: text("user_id")
+		.primaryKey()
+		.references(() => user.id, { onDelete: "cascade" }),
+	reason: text("reason"),
+	bannedBy: text("banned_by")
+		.notNull()
+		.references(() => user.id),
+	bannedAt: integer("banned_at", { mode: "timestamp_ms" }).notNull(),
+	expiresAt: integer("expires_at", { mode: "timestamp_ms" }), // null = permanent
 });
 
 export const emoteSources = sqliteTable("emote_sources", {
-  id: text("id").primaryKey(),
-  provider: text("provider", { enum: ["7tv", "bttv", "ffz", "twitch"] }).notNull(),
-  scope: text("scope", { enum: ["channel", "global"] }).notNull(),
-  externalId: text("external_id"),
-  enabled: integer("enabled", { mode: "boolean" }).default(true),
-  lastFetchedAt: integer("last_fetched_at", { mode: "timestamp_ms" }),
-  lastError: text("last_error"),
+	id: text("id").primaryKey(),
+	provider: text("provider", { enum: ["7tv", "bttv", "ffz", "twitch"] }).notNull(),
+	scope: text("scope", { enum: ["channel", "global"] }).notNull(),
+	externalId: text("external_id"),
+	enabled: integer("enabled", { mode: "boolean" }).default(true),
+	lastFetchedAt: integer("last_fetched_at", { mode: "timestamp_ms" }),
+	lastError: text("last_error"),
 });
 
-export const auditLog = sqliteTable("audit_log", {
-  id: text("id").primaryKey(),
-  actorId: text("actor_id").notNull().references(() => user.id),
-  action: text("action").notNull(),
-  targetId: text("target_id"),
-  metadata: text("metadata"),                     // JSON blob
-  createdAt: integer("created_at", { mode: "timestamp_ms" }).notNull(),
-}, (t) => ({ actorIdx: index("audit_actor_idx").on(t.actorId) }));
+export const auditLog = sqliteTable(
+	"audit_log",
+	{
+		id: text("id").primaryKey(),
+		actorId: text("actor_id")
+			.notNull()
+			.references(() => user.id),
+		action: text("action").notNull(),
+		targetId: text("target_id"),
+		metadata: text("metadata"), // JSON blob
+		createdAt: integer("created_at", { mode: "timestamp_ms" }).notNull(),
+	},
+	(t) => ({ actorIdx: index("audit_actor_idx").on(t.actorId) }),
+);
 ```
 
 ---

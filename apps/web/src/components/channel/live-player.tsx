@@ -29,10 +29,7 @@ export default function LivePlayer({ apiKey, userId, token, callId }: Props) {
 		[apiKey, userId, token],
 	);
 
-	const call = useMemo(
-		() => client.call("livestream", callId),
-		[client, callId],
-	);
+	const call = useMemo(() => client.call("livestream", callId), [client, callId]);
 
 	return (
 		<StreamVideo client={client}>

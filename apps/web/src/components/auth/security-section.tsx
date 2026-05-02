@@ -33,9 +33,7 @@ function Card({
 		<section className="rounded-lg border border-border bg-card p-6">
 			<header className="mb-4">
 				<h2 className="font-semibold text-foreground text-lg">{title}</h2>
-				{description ? (
-					<p className="mt-1 text-muted-foreground text-sm">{description}</p>
-				) : null}
+				{description ? <p className="mt-1 text-muted-foreground text-sm">{description}</p> : null}
 			</header>
 			{children}
 		</section>
@@ -70,14 +68,10 @@ export default function SecuritySection() {
 
 	async function enableTwoFactor(e: FormEvent<HTMLFormElement>) {
 		e.preventDefault();
-		const password = String(
-			new FormData(e.currentTarget).get("password") ?? "",
-		);
+		const password = String(new FormData(e.currentTarget).get("password") ?? "");
 		const res = await authClient.twoFactor.enable({ password });
 		if (toastAuthError(res, "Could not enable 2FA.")) return;
-		const data = res.data as
-			| { totpURI?: string; backupCodes?: string[] }
-			| undefined;
+		const data = res.data as { totpURI?: string; backupCodes?: string[] } | undefined;
 		const uri = data?.totpURI ?? null;
 		setTotpUri(uri);
 		setTotpSecret(uri ? new URL(uri).searchParams.get("secret") : null);
@@ -98,9 +92,7 @@ export default function SecuritySection() {
 
 	async function disableTwoFactor(e: FormEvent<HTMLFormElement>) {
 		e.preventDefault();
-		const password = String(
-			new FormData(e.currentTarget).get("password") ?? "",
-		);
+		const password = String(new FormData(e.currentTarget).get("password") ?? "");
 		const res = await authClient.twoFactor.disable({ password });
 		if (toastAuthError(res, "Could not disable 2FA.")) return;
 		toast.success("2FA disabled.");
@@ -138,9 +130,7 @@ export default function SecuritySection() {
 
 	if (!session) {
 		return (
-			<p className="text-muted-foreground text-sm">
-				You need to be signed in to view this page.
-			</p>
+			<p className="text-muted-foreground text-sm">You need to be signed in to view this page.</p>
 		);
 	}
 
@@ -151,10 +141,7 @@ export default function SecuritySection() {
 				description="Add a TOTP code on top of your password. Required if your account ever gets shared."
 			>
 				{!totpUri ? (
-					<form
-						onSubmit={enableTwoFactor}
-						className="flex flex-col gap-3 sm:max-w-sm"
-					>
+					<form onSubmit={enableTwoFactor} className="flex flex-col gap-3 sm:max-w-sm">
 						<Label htmlFor="tfa-pwd">Confirm with password</Label>
 						<Input
 							id="tfa-pwd"
@@ -172,16 +159,13 @@ export default function SecuritySection() {
 					<div className="flex flex-col gap-4">
 						<div>
 							<p className="text-muted-foreground text-sm">
-								Add this URI to your authenticator app, or paste the secret
-								manually.
+								Add this URI to your authenticator app, or paste the secret manually.
 							</p>
 							<pre className="mt-2 overflow-x-auto rounded-md bg-background px-3 py-2 font-mono text-xs">
 								{totpUri}
 							</pre>
 							{totpSecret ? (
-								<p className="mt-1 font-mono text-muted-foreground text-xs">
-									Secret: {totpSecret}
-								</p>
+								<p className="mt-1 font-mono text-muted-foreground text-xs">Secret: {totpSecret}</p>
 							) : null}
 						</div>
 						{backupCodes.length > 0 ? (
@@ -194,10 +178,7 @@ export default function SecuritySection() {
 								</pre>
 							</div>
 						) : null}
-						<form
-							onSubmit={verifyTotp}
-							className="flex flex-col gap-3 sm:max-w-sm"
-						>
+						<form onSubmit={verifyTotp} className="flex flex-col gap-3 sm:max-w-sm">
 							<Label htmlFor="tfa-code">Verify a code</Label>
 							<Input id="tfa-code" name="code" inputMode="numeric" required />
 							<Button type="submit" className="mt-1 w-fit">
@@ -208,13 +189,8 @@ export default function SecuritySection() {
 				)}
 
 				<details className="mt-6">
-					<summary className="cursor-pointer text-muted-foreground text-sm">
-						Disable 2FA
-					</summary>
-					<form
-						onSubmit={disableTwoFactor}
-						className="mt-3 flex flex-col gap-3 sm:max-w-sm"
-					>
+					<summary className="cursor-pointer text-muted-foreground text-sm">Disable 2FA</summary>
+					<form onSubmit={disableTwoFactor} className="mt-3 flex flex-col gap-3 sm:max-w-sm">
 						<Label htmlFor="tfa-disable-pwd">Confirm with password</Label>
 						<Input
 							id="tfa-disable-pwd"
@@ -234,10 +210,7 @@ export default function SecuritySection() {
 				title="Passkeys"
 				description="Register a passkey to skip the password on supported devices."
 			>
-				<form
-					onSubmit={addPasskey}
-					className="mb-6 flex flex-col gap-3 sm:max-w-sm"
-				>
+				<form onSubmit={addPasskey} className="mb-6 flex flex-col gap-3 sm:max-w-sm">
 					<Label htmlFor="pk-name">Name this passkey</Label>
 					<Input id="pk-name" name="name" placeholder="MacBook Touch ID" />
 					<Button type="submit" className="w-fit">
@@ -255,9 +228,7 @@ export default function SecuritySection() {
 								key={pk.id}
 								className="flex items-center justify-between rounded-md border border-border bg-background px-3 py-2"
 							>
-								<span className="font-medium text-sm">
-									{pk.name ?? "Passkey"}
-								</span>
+								<span className="font-medium text-sm">{pk.name ?? "Passkey"}</span>
 								<Button
 									type="button"
 									variant="ghost"
@@ -272,20 +243,12 @@ export default function SecuritySection() {
 				)}
 			</Card>
 
-			<Card
-				title="Active sessions"
-				description="Devices and browsers signed in to your account."
-			>
+			<Card title="Active sessions" description="Devices and browsers signed in to your account.">
 				<div className="mb-4 flex items-center justify-between">
 					<p className="text-muted-foreground text-sm">
 						{sessions.length} session{sessions.length === 1 ? "" : "s"}
 					</p>
-					<Button
-						type="button"
-						variant="outline"
-						size="sm"
-						onClick={revokeAllOthers}
-					>
+					<Button type="button" variant="outline" size="sm" onClick={revokeAllOthers}>
 						Revoke all others
 					</Button>
 				</div>
@@ -299,9 +262,7 @@ export default function SecuritySection() {
 								<div className="truncate font-medium text-sm">
 									{s.userAgent ?? "Unknown device"}
 								</div>
-								<div className="truncate text-muted-foreground text-xs">
-									{s.ipAddress ?? "—"}
-								</div>
+								<div className="truncate text-muted-foreground text-xs">{s.ipAddress ?? "—"}</div>
 							</div>
 							<Button
 								type="button"

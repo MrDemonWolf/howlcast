@@ -28,9 +28,7 @@ function buildEmbed(event: FanoutEvent, input: EmbedInput) {
 		username: "HowlCast",
 		embeds: [
 			{
-				title: isLive
-					? `${input.displayName} is LIVE`
-					: `${input.displayName}'s stream ended`,
+				title: isLive ? `${input.displayName} is LIVE` : `${input.displayName}'s stream ended`,
 				description: isLive ? (input.title ?? "Tune in.") : null,
 				url: isLive ? input.channelUrl : undefined,
 				color: isLive ? COLOR_LIVE : COLOR_END,
@@ -81,11 +79,7 @@ export async function fanOutDiscord(event: FanoutEvent, input: EmbedInput) {
 			const result = await postOne(row.url, body);
 			await db
 				.update(webhooks)
-				.set(
-					result.ok
-						? { lastFiredAt: now, lastError: null }
-						: { lastError: result.error },
-				)
+				.set(result.ok ? { lastFiredAt: now, lastError: null } : { lastError: result.error })
 				.where(eq(webhooks.id, row.id));
 		}),
 	);

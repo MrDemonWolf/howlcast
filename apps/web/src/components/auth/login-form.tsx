@@ -4,12 +4,7 @@ import { Button } from "@howlcast/ui/components/button";
 import { DisplayHeading } from "@howlcast/ui/components/display-heading";
 import { Input } from "@howlcast/ui/components/input";
 import { Label } from "@howlcast/ui/components/label";
-import {
-	Tabs,
-	TabsContent,
-	TabsList,
-	TabsTrigger,
-} from "@howlcast/ui/components/tabs";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@howlcast/ui/components/tabs";
 import { Fingerprint, KeyRound, Mail, User } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -105,9 +100,7 @@ export default function LoginForm() {
 			<DisplayHeading size="lg" className="mb-2 text-center">
 				Sign in
 			</DisplayHeading>
-			<p className="mb-8 text-center text-muted-foreground text-sm">
-				For the inner circle.
-			</p>
+			<p className="mb-8 text-center text-muted-foreground text-sm">For the inner circle.</p>
 
 			<Tabs
 				value={mode}
@@ -137,13 +130,7 @@ export default function LoginForm() {
 					<form onSubmit={submitEmail} className="flex flex-col gap-3">
 						<div className="flex flex-col gap-1.5">
 							<Label htmlFor="email-email">Email</Label>
-							<Input
-								id="email-email"
-								name="email"
-								type="email"
-								autoComplete="email"
-								required
-							/>
+							<Input id="email-email" name="email" type="email" autoComplete="email" required />
 						</div>
 						<div className="flex flex-col gap-1.5">
 							<Label htmlFor="email-password">Password</Label>
@@ -166,12 +153,7 @@ export default function LoginForm() {
 					<form onSubmit={submitUsername} className="flex flex-col gap-3">
 						<div className="flex flex-col gap-1.5">
 							<Label htmlFor="u-username">Username</Label>
-							<Input
-								id="u-username"
-								name="username"
-								autoComplete="username"
-								required
-							/>
+							<Input id="u-username" name="username" autoComplete="username" required />
 						</div>
 						<div className="flex flex-col gap-1.5">
 							<Label htmlFor="u-password">Password</Label>
@@ -194,13 +176,7 @@ export default function LoginForm() {
 					<form onSubmit={submitMagic} className="flex flex-col gap-3">
 						<div className="flex flex-col gap-1.5">
 							<Label htmlFor="magic-email">Email</Label>
-							<Input
-								id="magic-email"
-								name="email"
-								type="email"
-								autoComplete="email"
-								required
-							/>
+							<Input id="magic-email" name="email" type="email" autoComplete="email" required />
 							<p className="text-muted-foreground text-xs">
 								We'll email you a one-time link. Expires in 15 minutes.
 							</p>
@@ -214,8 +190,7 @@ export default function LoginForm() {
 				<TabsContent value="passkey" className="w-full">
 					<div className="flex flex-col gap-3">
 						<p className="text-muted-foreground text-sm">
-							Use a registered passkey to sign in. The browser will prompt for
-							your authenticator.
+							Use a registered passkey to sign in. The browser will prompt for your authenticator.
 						</p>
 						<Button type="button" onClick={submitPasskey} disabled={submitting}>
 							{submitting ? "Authenticating…" : "Sign in with passkey"}

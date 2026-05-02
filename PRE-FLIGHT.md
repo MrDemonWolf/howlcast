@@ -237,29 +237,29 @@ This step creates the four places where the project actually lives. Do it once, 
 
 **Your 1Password vault should now have:**
 
-| Entry name | Value |
-|---|---|
-| `CLOUDFLARE_ACCOUNT_ID` | (from step 1) |
-| `CLOUDFLARE_API_TOKEN` | (from step 1) |
-| `STREAM_API_KEY` | (from step 3) |
-| `STREAM_API_SECRET` | (from step 3) |
-| `RESEND_API_KEY` | (from step 4) |
-| `TWITCH_CLIENT_ID` | (from step 5) |
-| `TWITCH_CLIENT_SECRET` | (from step 5) |
-| `BROADCASTER_TWITCH_ID` | (from step 5) |
-| `SEVENTV_USER_ID` | (from step 6, if you use 7TV) |
-| `DISCORD_WEBHOOK_PUBLIC` | (from step 7) |
-| `DISCORD_WEBHOOK_PRIVATE` | (from step 7) |
-| `GITHUB_REPO_URL` | from 8.1 — `git@github.com:mrdemonwolf/howlcast.git` |
-| `JIRA_PROJECT_URL` | from 8.5 — `https://[your-domain].atlassian.net/jira/software/projects/HC` |
-| `DRIVE_FOLDER_URL` | from 8.10 — paste the folder share link |
+| Entry name                | Value                                                                      |
+| ------------------------- | -------------------------------------------------------------------------- |
+| `CLOUDFLARE_ACCOUNT_ID`   | (from step 1)                                                              |
+| `CLOUDFLARE_API_TOKEN`    | (from step 1)                                                              |
+| `STREAM_API_KEY`          | (from step 3)                                                              |
+| `STREAM_API_SECRET`       | (from step 3)                                                              |
+| `RESEND_API_KEY`          | (from step 4)                                                              |
+| `TWITCH_CLIENT_ID`        | (from step 5)                                                              |
+| `TWITCH_CLIENT_SECRET`    | (from step 5)                                                              |
+| `BROADCASTER_TWITCH_ID`   | (from step 5)                                                              |
+| `SEVENTV_USER_ID`         | (from step 6, if you use 7TV)                                              |
+| `DISCORD_WEBHOOK_PUBLIC`  | (from step 7)                                                              |
+| `DISCORD_WEBHOOK_PRIVATE` | (from step 7)                                                              |
+| `GITHUB_REPO_URL`         | from 8.1 — `git@github.com:mrdemonwolf/howlcast.git`                       |
+| `JIRA_PROJECT_URL`        | from 8.5 — `https://[your-domain].atlassian.net/jira/software/projects/HC` |
+| `DRIVE_FOLDER_URL`        | from 8.10 — paste the folder share link                                    |
 
 Plus 2 you'll generate during scaffold:
 
-| Entry name | When |
-|---|---|
-| `BETTER_AUTH_SECRET` | During Phase 1 — generate with `openssl rand -hex 32` |
-| `STREAM_WEBHOOK_SECRET` | Phase 3 — set when configuring GetStream webhook |
+| Entry name              | When                                                  |
+| ----------------------- | ----------------------------------------------------- |
+| `BETTER_AUTH_SECRET`    | During Phase 1 — generate with `openssl rand -hex 32` |
+| `STREAM_WEBHOOK_SECRET` | Phase 3 — set when configuring GetStream webhook      |
 
 **Note:** Discord webhook URLs are NOT env vars — they get pasted into the admin dashboard once HowlCast is deployed (Phase 5). They live in the database (`webhooks` table), not in code.
 

@@ -13,11 +13,11 @@
 
 `packages/mail/src/index.ts` exports `sendMail(env, msg)`. It picks the transport based on env at call time:
 
-| Tier | Trigger | Notes |
-|---|---|---|
-| 1. Resend | `env.RESEND_API_KEY` set | HTTPS API. Works on Cloudflare Workers, no SMTP needed. Production path. |
-| 2. SMTP | `env.SMTP_URL` set + reachable | Lazy-loads `nodemailer`. Catches failed connection and falls through to tier 3. |
-| 3. Console | always | Pretty-prints subject + recipient + plain-text body to the server terminal. Zero-setup. |
+| Tier       | Trigger                        | Notes                                                                                   |
+| ---------- | ------------------------------ | --------------------------------------------------------------------------------------- |
+| 1. Resend  | `env.RESEND_API_KEY` set       | HTTPS API. Works on Cloudflare Workers, no SMTP needed. Production path.                |
+| 2. SMTP    | `env.SMTP_URL` set + reachable | Lazy-loads `nodemailer`. Catches failed connection and falls through to tier 3.         |
+| 3. Console | always                         | Pretty-prints subject + recipient + plain-text body to the server terminal. Zero-setup. |
 
 `MAIL_FROM` defaults to `HowlCast <invites@mail.howlcast.tv>` and is overridable via env.
 

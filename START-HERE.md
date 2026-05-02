@@ -36,6 +36,7 @@ Quick rundown so you know what's coming (don't do this from memory — open the 
 ```
 
 By the end you'll have:
+
 - 14 secrets in 1Password
 - A GitHub repo (`mrdemonwolf/howlcast`)
 - A Jira project (key: `HC`, kanban board)
@@ -150,6 +151,7 @@ assets/
 ## Pep talk (for ADHD brain)
 
 The hard parts are done:
+
 - ✅ Spec'd the entire product
 - ✅ Made every design decision
 - ✅ Locked in the role model
@@ -162,4 +164,4 @@ What's left is **mechanical execution**. Job 1 is boring (90 minutes of clicks).
 
 If you spiral, come back here. Two jobs. In order. That's it.
 
-🐺 *Howl when ready.*
+🐺 _Howl when ready._

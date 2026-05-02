@@ -21,12 +21,12 @@ Two roles. One bit per viewer.
 
 ## What `isInvited` controls
 
-| Action | `isInvited = false` | `isInvited = true` |
-|---|---|---|
-| Watch public stream | ✅ | ✅ |
-| Watch private stream | ❌ | ✅ |
-| Read chat | ✅ | ✅ |
-| Post in chat | ❌ | ✅ |
+| Action               | `isInvited = false` | `isInvited = true` |
+| -------------------- | ------------------- | ------------------ |
+| Watch public stream  | ✅                  | ✅                 |
+| Watch private stream | ❌                  | ✅                 |
+| Read chat            | ✅                  | ✅                 |
+| Post in chat         | ❌                  | ✅                 |
 
 That's the whole rule set. The invite gates two things: **chat posting** (always) and **private-stream watching** (when broadcaster is in private mode).
 
@@ -39,11 +39,12 @@ That's the whole rule set. The invite gates two things: **chat posting** (always
 Per stream, the broadcaster picks **public** or **private** before going live (toggle in dashboard).
 
 - **Public stream:** anyone with an account watches. Anyone reads chat. Only invited viewers post.
-- **Private stream:** only invited viewers can watch *or* read chat *or* post.
+- **Private stream:** only invited viewers can watch _or_ read chat _or_ post.
 
 Visibility is a row on `channelConfig` (single-tenant: `id = 'site'`):
+
 ```ts
-visibility: 'public' | 'invite_only'
+visibility: "public" | "invite_only";
 ```
 
 Toggled from the dashboard's Stream page before pressing Go Live.
@@ -53,46 +54,53 @@ Toggled from the dashboard's Stream page before pressing Go Live.
 Configured in **Dashboard → Channel → Notifications**. Two cards:
 
 ### Public webhook
+
 - Fires when you go live with `visibility = 'public'`
 - Posts to a Discord channel everyone in your server can see (e.g. `#announcements`)
 - Audience: anyone in your Discord
 
 ### Private webhook
+
 - Fires when you go live with `visibility = 'invite_only'`
 - Posts to a private Discord channel restricted to invited folks (e.g. `#inner-circle-live`)
 - Audience: only people Discord-permissions allow
 
 **Both webhooks fire only the matching event.** Public stream → only public webhook fires. Private stream → only private webhook fires. Never both.
 
-The Discord side handles *who actually sees* the message (channel permissions). HowlCast just sends to the right URL.
+The Discord side handles _who actually sees_ the message (channel permissions). HowlCast just sends to the right URL.
 
 ### Webhook payload format
 
 ```json
 {
-  "embeds": [{
-    "title": "MrDemonWolf is live!",
-    "description": "Late night chill stream — working on Wolf Run",
-    "url": "https://howlcast.tv",
-    "color": 1027309,
-    "timestamp": "2026-05-01T22:14:08.000Z",
-    "author": {
-      "name": "MrDemonWolf",
-      "icon_url": "https://howlcast.tv/avatar.png"
-    }
-  }]
+	"embeds": [
+		{
+			"title": "MrDemonWolf is live!",
+			"description": "Late night chill stream — working on Wolf Run",
+			"url": "https://howlcast.tv",
+			"color": 1027309,
+			"timestamp": "2026-05-01T22:14:08.000Z",
+			"author": {
+				"name": "MrDemonWolf",
+				"icon_url": "https://howlcast.tv/avatar.png"
+			}
+		}
+	]
 }
 ```
 
 When stream ends, edit the original message (Discord supports `PATCH /webhooks/{id}/messages/{message_id}`):
+
 ```json
 {
-  "embeds": [{
-    "title": "Stream ended",
-    "description": "Late night chill stream — working on Wolf Run",
-    "color": 6710886,
-    "footer": { "text": "Was live for 02:14:08" }
-  }]
+	"embeds": [
+		{
+			"title": "Stream ended",
+			"description": "Late night chill stream — working on Wolf Run",
+			"color": 6710886,
+			"footer": { "text": "Was live for 02:14:08" }
+		}
+	]
 }
 ```
 
@@ -118,26 +126,31 @@ Two rows are seeded at first run, both with `url = null` until the broadcaster p
 
 ```ts
 async function onStreamWentLive(env: Env) {
-  const config = await db.select().from(channelConfig).where(eq(channelConfig.id, 'site')).get();
-  const webhookId = config.visibility === 'public' ? 'public' : 'private';
+	const config = await db.select().from(channelConfig).where(eq(channelConfig.id, "site")).get();
+	const webhookId = config.visibility === "public" ? "public" : "private";
 
-  const webhook = await db.select().from(webhooks).where(eq(webhooks.id, webhookId)).get();
-  if (!webhook?.url || !webhook.notifyOnLive) return;
+	const webhook = await db.select().from(webhooks).where(eq(webhooks.id, webhookId)).get();
+	if (!webhook?.url || !webhook.notifyOnLive) return;
 
-  try {
-    const res = await fetch(webhook.url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        embeds: [/* see payload format above */]
-      }),
-    });
-    if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
-    await db.update(webhooks).set({ lastFiredAt: new Date(), lastError: null }).where(eq(webhooks.id, webhookId));
-  } catch (err) {
-    await db.update(webhooks).set({ lastError: err.message }).where(eq(webhooks.id, webhookId));
-    // Don't throw — webhook failures shouldn't block the stream from going live.
-  }
+	try {
+		const res = await fetch(webhook.url, {
+			method: "POST",
+			headers: { "Content-Type": "application/json" },
+			body: JSON.stringify({
+				embeds: [
+					/* see payload format above */
+				],
+			}),
+		});
+		if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
+		await db
+			.update(webhooks)
+			.set({ lastFiredAt: new Date(), lastError: null })
+			.where(eq(webhooks.id, webhookId));
+	} catch (err) {
+		await db.update(webhooks).set({ lastError: err.message }).where(eq(webhooks.id, webhookId));
+		// Don't throw — webhook failures shouldn't block the stream from going live.
+	}
 }
 ```
 

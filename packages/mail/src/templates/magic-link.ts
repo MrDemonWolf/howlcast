@@ -3,10 +3,7 @@ export interface MagicLinkTemplateInput {
 	expiresInMinutes?: number;
 }
 
-export function magicLinkEmail({
-	magicUrl,
-	expiresInMinutes = 15,
-}: MagicLinkTemplateInput): {
+export function magicLinkEmail({ magicUrl, expiresInMinutes = 15 }: MagicLinkTemplateInput): {
 	subject: string;
 	html: string;
 	text: string;

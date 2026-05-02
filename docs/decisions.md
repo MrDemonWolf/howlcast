@@ -25,7 +25,7 @@ These need answers before or during the build. Mark them when you decide.
 - WebRTC default (sub-second, chat-synced) or HLS default (better mobile data)?
 - **Recommendation:** WebRTC for everyone, HLS as opt-in fallback. Chat sync is the killer feature.
 - Note: invite-only mode REQUIRES WebRTC (HLS m3u8 isn't auth-gated by default)
-- **Decision:** _________________
+- **Decision:** **\*\*\*\***\_**\*\*\*\***
 
 ### 5. ~~Schedule tab~~ — RESOLVED
 
@@ -36,14 +36,14 @@ These need answers before or during the build. Mark them when you decide.
 - Spec says "no recording, no VODs, never store stream content"
 - Should HLS playlist be auto-cleaned beyond live window?
 - Default: GetStream auto-cleans, but worth being explicit
-- **Decision:** _________________
+- **Decision:** **\*\*\*\***\_**\*\*\*\***
 
 ### 7. OAuth providers later (Discord/Twitter login)
 
 - Not asked for, but trivial to add to Better Auth
 - Worth knowing now if you want to pre-think the user profile model
 - **Recommendation:** skip for v1, revisit if community asks
-- **Decision:** _________________
+- **Decision:** **\*\*\*\***\_**\*\*\*\***
 
 ### 8. ~~Broadcaster chat view~~ — RESOLVED
 
@@ -82,14 +82,14 @@ Subscriber tiers ($3+/mo, $8+/mo) are also out — fully removed from Emotes pag
 
 - **Recommendation:** custom logo + custom platform name + footer attribution toggle (default / custom / off)
 - "Off" might require a paid HowlCast license tier — TBD whether that's a thing for v1
-- **Decision:** _________________
+- **Decision:** **\*\*\*\***\_**\*\*\*\***
 
 ### 12. Privacy / Terms editor
 
 - Bare-minimum WYSIWYG (rich text: bold, italic, headings, links, lists)?
 - Or full markdown editor?
 - **Recommendation:** WYSIWYG via Tiptap (lighter than full markdown, friendlier for non-technical edits, easier on mobile)
-- **Decision:** _________________
+- **Decision:** **\*\*\*\***\_**\*\*\*\***
 
 ---
 
@@ -149,18 +149,18 @@ These are real things that bite. Most have already been worked around in the doc
 
 _When you decide an open question above, log it here with the date and reasoning._
 
-| # | Decision | Date | Why |
-|---|---|---|---|
-| 1 | `howlcast.tv` domain | 2026-05-01 | Default; bought via Cloudflare Registrar |
-| 2 | Cyan starburst verified mark | 2026-05-01 | Brand cohesion, distinct from Twitter/Twitch |
-| 3 | Chat open between streams | 2026-05-01 | Community persists; matches Discord-adjacent vibe |
-| 5 | Schedule tab removed | 2026-05-01 | Single-streamer platform doesn't need it; panels can hold schedule image |
-| 8 | `/dashboard/chat` for OBS browser source | 2026-05-01 | Pop-out button on channel page chat header |
-| 9 | No mods role | 2026-05-01 | Broadcaster handles all moderation directly |
-| 9a | No viewer tiers; single `isInvited` flag | 2026-05-01 | Subscribers fully removed; tier system collapsed |
-| 9b | Two Discord webhooks (public + private) | 2026-05-01 | Discord channel permissions handle audience routing |
-| 10 | `mail.howlcast.tv` for Resend | 2026-05-01 | Subdomain isolation, no MX conflicts |
-| — | Single layout (Den only) | 2026-05-01 | Theater + Editorial removed during design phase |
-| — | One email template (Private stream invite) | 2026-05-01 | Sub thank-you / starting / request templates removed |
-| — | White-label feature in scope | 2026-05-01 | Custom logo + name + footer attribution toggle |
-| — | Bare-min PP / TOS WYSIWYG editor | 2026-05-01 | Settings-driven, simple rich text |
+| #   | Decision                                   | Date       | Why                                                                      |
+| --- | ------------------------------------------ | ---------- | ------------------------------------------------------------------------ |
+| 1   | `howlcast.tv` domain                       | 2026-05-01 | Default; bought via Cloudflare Registrar                                 |
+| 2   | Cyan starburst verified mark               | 2026-05-01 | Brand cohesion, distinct from Twitter/Twitch                             |
+| 3   | Chat open between streams                  | 2026-05-01 | Community persists; matches Discord-adjacent vibe                        |
+| 5   | Schedule tab removed                       | 2026-05-01 | Single-streamer platform doesn't need it; panels can hold schedule image |
+| 8   | `/dashboard/chat` for OBS browser source   | 2026-05-01 | Pop-out button on channel page chat header                               |
+| 9   | No mods role                               | 2026-05-01 | Broadcaster handles all moderation directly                              |
+| 9a  | No viewer tiers; single `isInvited` flag   | 2026-05-01 | Subscribers fully removed; tier system collapsed                         |
+| 9b  | Two Discord webhooks (public + private)    | 2026-05-01 | Discord channel permissions handle audience routing                      |
+| 10  | `mail.howlcast.tv` for Resend              | 2026-05-01 | Subdomain isolation, no MX conflicts                                     |
+| —   | Single layout (Den only)                   | 2026-05-01 | Theater + Editorial removed during design phase                          |
+| —   | One email template (Private stream invite) | 2026-05-01 | Sub thank-you / starting / request templates removed                     |
+| —   | White-label feature in scope               | 2026-05-01 | Custom logo + name + footer attribution toggle                           |
+| —   | Bare-min PP / TOS WYSIWYG editor           | 2026-05-01 | Settings-driven, simple rich text                                        |

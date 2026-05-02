@@ -9,6 +9,7 @@
 **Phase 3 — Channel & Streaming.** All four sub-stages shipped: 3A (schema), 3B (GetStream signer + tRPC + webhook), 3C (channel page replaces `/`), 3D (Discord fanout). Phase 4 (chat + emotes, real GetStream SDKs in the player/chat slots) is next.
 
 **Live URLs:**
+
 - Web: <https://howlcast.mrdemonwolf.workers.dev>
 - API: <https://howlcast-api.mrdemonwolf.workers.dev>
 - Both `/api/health` return `{"ok":true}`.
@@ -76,6 +77,7 @@ a39c4a3 scaffold from better-t-stack 3.27
 **Reference doc:** `docs/integrations/getstream.md` already contains the WebCrypto JWT signing pattern verbatim. Use it.
 
 Files to create/touch:
+
 - `packages/api/src/lib/stream.ts` — `signStreamUserToken()`, `signAdminToken()`, REST helpers for create-call / go-live / stop-live.
 - `packages/api/src/routers/stream.ts` — tRPC procedures: `getViewerToken`, `getBroadcasterToken`, `getStreamCredentials`, `isLive`.
 - `apps/server/src/index.ts` — mount `/api/webhooks/getstream` route with HMAC verification.
@@ -83,6 +85,7 @@ Files to create/touch:
 - `packages/infra/alchemy.run.ts` — bind the three Stream env vars to the server worker (use `process.env` fallback to empty string, same pattern as RESEND_API_KEY).
 
 **Constraints:**
+
 - Workers-compatible only. Sign with WebCrypto, no `@stream-io/node-sdk`.
 - The same JWT works for both Video and Chat — sign once, init both clients.
 - Webhook secret is a separate value (`STREAM_WEBHOOK_SECRET`), set on the GetStream dashboard webhook config + matching env var here.
@@ -94,6 +97,7 @@ Files to create/touch:
 **Reference design:** `design-handoff/project/HowlCast.html` — match visually.
 
 User clarified: **single tenant, channel page = home page**. Migrate `apps/web/src/app/page.tsx` from the current "Sign in / Dashboard" landing into the actual channel layout:
+
 - Player on top of left column (GetStream Video player wrapper component)
 - Streamer info row directly below (avatar, name, verified, title)
 - Panels grid (3 col → 2 col → 1 col responsive)
@@ -107,6 +111,7 @@ LIVE badge + viewer count overlay drive off `isLive` tRPC query polling every ~1
 ### Stage 3D — Discord webhooks fire on go-live/end
 
 GetStream sends `call.live_started` / `call.live_ended` events to `/api/webhooks/getstream`. Verify HMAC with `STREAM_WEBHOOK_SECRET`. On match:
+
 - Update `channel_config.liveStartedAt` / `liveEndedAt`.
 - Read the configured `webhooks` rows (public, private). For each enabled one, POST a Discord embed (title, broadcaster name + avatar, link to channel page, "LIVE NOW" / "Stream ended").
 - Respect `notifyOnLive` / `notifyOnEnd` toggles per row.
@@ -138,6 +143,7 @@ That's it. RESUME.md → PROGRESS.md → next action.
 ## Original kickoff prompt (for cold-start sessions)
 
 > Read these files in order, then summarize what you understand and tell me the next concrete action:
+>
 > 1. CLAUDE.md
 > 2. DESIGN-DECISIONS.md
 > 3. docs/architecture.md

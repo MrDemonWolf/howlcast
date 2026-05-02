@@ -29,79 +29,78 @@ import { username, twoFactor, magicLink } from "better-auth/plugins";
 import { passkey } from "@better-auth/passkey";
 
 export const createAuth = (env: Env) =>
-  betterAuth({
-    database: env.DB,                       // native D1 (Better Auth ≥1.5)
-    secret: env.BETTER_AUTH_SECRET,
-    baseURL: env.BETTER_AUTH_URL,
-    appName: "HowlCast",
-    trustedOrigins: ["https://howlcast.tv"],
+	betterAuth({
+		database: env.DB, // native D1 (Better Auth ≥1.5)
+		secret: env.BETTER_AUTH_SECRET,
+		baseURL: env.BETTER_AUTH_URL,
+		appName: "HowlCast",
+		trustedOrigins: ["https://howlcast.tv"],
 
-    advanced: {
-      crossSubDomainCookies: {
-        enabled: true,
-        domain: ".howlcast.tv",
-      },
-      defaultCookieAttributes: {
-        sameSite: "none",
-        secure: true,
-        httpOnly: true,
-        partitioned: true,                  // Safari ITP / Chrome CHIPS
-      },
-    },
+		advanced: {
+			crossSubDomainCookies: {
+				enabled: true,
+				domain: ".howlcast.tv",
+			},
+			defaultCookieAttributes: {
+				sameSite: "none",
+				secure: true,
+				httpOnly: true,
+				partitioned: true, // Safari ITP / Chrome CHIPS
+			},
+		},
 
-    secondaryStorage: {
-      get: (k) => env.KV.get(k),
-      set: (k, v, ttl) => env.KV.put(k, v,
-        ttl ? { expirationTtl: Math.max(ttl, 60) } : {}),
-      delete: (k) => env.KV.delete(k),
-    },
+		secondaryStorage: {
+			get: (k) => env.KV.get(k),
+			set: (k, v, ttl) => env.KV.put(k, v, ttl ? { expirationTtl: Math.max(ttl, 60) } : {}),
+			delete: (k) => env.KV.delete(k),
+		},
 
-    emailAndPassword: { enabled: true },
+		emailAndPassword: { enabled: true },
 
-    plugins: [
-      username({
-        minUsernameLength: 3,
-        maxUsernameLength: 30,
-      }),
-      twoFactor({
-        issuer: "HowlCast",
-        allowPasswordless: true,
-        totpOptions: { digits: 6, period: 30 },
-      }),
-      passkey({
-        rpID: "howlcast.tv",
-        rpName: "HowlCast",
-        origin: "https://howlcast.tv",
-      }),
-      magicLink({
-        expiresIn: 600,                     // 10 min
-        allowedAttempts: 1,
-        storeToken: "hashed",
-        sendMagicLink: async ({ email, url }) => {
-          const r = await fetch("https://api.resend.com/emails", {
-            method: "POST",
-            headers: {
-              Authorization: `Bearer ${env.RESEND_API_KEY}`,
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              from: "HowlCast <login@mail.howlcast.tv>",
-              to: [email],
-              subject: "Sign in to HowlCast",
-              html: `
+		plugins: [
+			username({
+				minUsernameLength: 3,
+				maxUsernameLength: 30,
+			}),
+			twoFactor({
+				issuer: "HowlCast",
+				allowPasswordless: true,
+				totpOptions: { digits: 6, period: 30 },
+			}),
+			passkey({
+				rpID: "howlcast.tv",
+				rpName: "HowlCast",
+				origin: "https://howlcast.tv",
+			}),
+			magicLink({
+				expiresIn: 600, // 10 min
+				allowedAttempts: 1,
+				storeToken: "hashed",
+				sendMagicLink: async ({ email, url }) => {
+					const r = await fetch("https://api.resend.com/emails", {
+						method: "POST",
+						headers: {
+							Authorization: `Bearer ${env.RESEND_API_KEY}`,
+							"Content-Type": "application/json",
+						},
+						body: JSON.stringify({
+							from: "HowlCast <login@mail.howlcast.tv>",
+							to: [email],
+							subject: "Sign in to HowlCast",
+							html: `
                 <p>Click to sign in (expires in 10 minutes):</p>
                 <p><a href="${url}">${url}</a></p>
                 <p>If you didn't request this, ignore this email.</p>
               `,
-            }),
-          });
-          if (!r.ok) {
-            throw new Error(`Resend ${r.status}: ${await r.text()}`);
-          }
-        },
-      }),
-    ],
-  });
+						}),
+					});
+					if (!r.ok) {
+						throw new Error(`Resend ${r.status}: ${await r.text()}`);
+					}
+				},
+			}),
+		],
+	});
 ```
 
 **Module-scope `betterAuth(...)` instances will break in production. Don't do it.**
@@ -117,34 +116,37 @@ import { cors } from "hono/cors";
 import { createAuth } from "./lib/auth";
 
 type Env = {
-  Bindings: {
-    DB: D1Database;
-    KV: KVNamespace;
-    BETTER_AUTH_SECRET: string;
-    BETTER_AUTH_URL: string;
-    CORS_ORIGIN: string;
-    RESEND_API_KEY: string;
-  };
-  Variables: {
-    auth: ReturnType<typeof createAuth>;
-    user: any;
-    session: any;
-  };
+	Bindings: {
+		DB: D1Database;
+		KV: KVNamespace;
+		BETTER_AUTH_SECRET: string;
+		BETTER_AUTH_URL: string;
+		CORS_ORIGIN: string;
+		RESEND_API_KEY: string;
+	};
+	Variables: {
+		auth: ReturnType<typeof createAuth>;
+		user: any;
+		session: any;
+	};
 };
 
 const app = new Hono<Env>();
 
-app.use("*", cors({
-  origin: (origin, c) => c.env.CORS_ORIGIN,
-  credentials: true,
-  allowMethods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-  allowHeaders: ["Content-Type", "Authorization"],
-}));
+app.use(
+	"*",
+	cors({
+		origin: (origin, c) => c.env.CORS_ORIGIN,
+		credentials: true,
+		allowMethods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+		allowHeaders: ["Content-Type", "Authorization"],
+	}),
+);
 
 // Per-request auth factory
 app.use("*", async (c, next) => {
-  c.set("auth", createAuth(c.env));
-  await next();
+	c.set("auth", createAuth(c.env));
+	await next();
 });
 
 // Better Auth handler
@@ -152,12 +154,12 @@ app.on(["GET", "POST"], "/api/auth/*", (c) => c.get("auth").handler(c.req.raw));
 
 // tRPC context with session
 app.use("/trpc/*", async (c, next) => {
-  const session = await c.get("auth").api.getSession({
-    headers: c.req.raw.headers,
-  });
-  c.set("user", session?.user ?? null);
-  c.set("session", session?.session ?? null);
-  await next();
+	const session = await c.get("auth").api.getSession({
+		headers: c.req.raw.headers,
+	});
+	c.set("user", session?.user ?? null);
+	c.set("session", session?.session ?? null);
+	await next();
 });
 
 // Mount tRPC server here...
@@ -173,23 +175,18 @@ export default app;
 // apps/web/src/lib/auth-client.ts
 import { createAuthClient } from "better-auth/react";
 import {
-  usernameClient,
-  twoFactorClient,
-  magicLinkClient,
-  passkeyClient,
+	usernameClient,
+	twoFactorClient,
+	magicLinkClient,
+	passkeyClient,
 } from "better-auth/client/plugins";
 
 export const authClient = createAuthClient({
-  baseURL: process.env.NEXT_PUBLIC_SERVER_URL!,  // https://api.howlcast.tv
-  plugins: [
-    usernameClient(),
-    twoFactorClient(),
-    magicLinkClient(),
-    passkeyClient(),
-  ],
-  fetchOptions: {
-    credentials: "include",     // important for cross-subdomain cookies
-  },
+	baseURL: process.env.NEXT_PUBLIC_SERVER_URL!, // https://api.howlcast.tv
+	plugins: [usernameClient(), twoFactorClient(), magicLinkClient(), passkeyClient()],
+	fetchOptions: {
+		credentials: "include", // important for cross-subdomain cookies
+	},
 });
 ```
 
@@ -221,13 +218,13 @@ Run `auth:generate` again any time you add or remove plugins.
 
 Final answer is **Resend**. Comparison summary:
 
-| Provider | Free tier | Workers ease | Notes |
-|---|---|---|---|
-| **Resend** | **3k/mo, 100/day** | Trivial; CF official tutorial | **Pick this** |
-| Postmark | 100/mo (test) | Trivial | Best deliverability if you outgrow Resend |
-| Amazon SES | 3k/mo for 12 mo only | Medium (SigV4) | Cheapest at scale |
-| MailChannels | **DEAD for free CF** | n/a | Sunset Aug 2024 — DO NOT use |
-| SendGrid | None (killed May 2025) | Trivial | Skip |
+| Provider     | Free tier              | Workers ease                  | Notes                                     |
+| ------------ | ---------------------- | ----------------------------- | ----------------------------------------- |
+| **Resend**   | **3k/mo, 100/day**     | Trivial; CF official tutorial | **Pick this**                             |
+| Postmark     | 100/mo (test)          | Trivial                       | Best deliverability if you outgrow Resend |
+| Amazon SES   | 3k/mo for 12 mo only   | Medium (SigV4)                | Cheapest at scale                         |
+| MailChannels | **DEAD for free CF**   | n/a                           | Sunset Aug 2024 — DO NOT use              |
+| SendGrid     | None (killed May 2025) | Trivial                       | Skip                                      |
 
 **Setup:**
 

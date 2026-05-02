@@ -10,6 +10,7 @@
 ## Pre-flight
 
 ### Design (✅ DONE)
+
 - [x] Logo direction options ready (see [`assets/logo-variants.html`](assets/logo-variants.html))
 - [x] Design system finalized (see [`design-handoff/project/shared.css`](design-handoff/project/shared.css))
 - [x] Channel page mockup done (`design-handoff/project/HowlCast.html`)
@@ -22,9 +23,11 @@
 - [x] Design decisions locked in [`DESIGN-DECISIONS.md`](DESIGN-DECISIONS.md)
 
 ### Remaining decisions
+
 - [x] **Logo variant picked** — Howl Arc (#03). All 5 final SVGs in `assets/logos/howlcast-*.svg`
 
 ### Account / workspace setup (Step-by-step in `PRE-FLIGHT.md`)
+
 - [ ] Step 1: Cloudflare account + Wrangler CLI
 - [ ] Step 2: Domain bought (`howlcast.tv` through Cloudflare Registrar)
 - [ ] Step 3: GetStream account + API keys in 1Password
@@ -163,6 +166,7 @@ _See [`docs/docs-site.md`](docs/docs-site.md) for the full plan._
 **Done when:** a stranger can read the docs and deploy their own HowlCast in under 30 minutes.
 
 ### "Coming soon" (optional, during Phase 6)
+
 - [ ] Quick Starlight scaffold
 - [ ] One-page placeholder landing
 - [ ] Deploy to claim the URL

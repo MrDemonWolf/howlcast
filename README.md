@@ -57,23 +57,23 @@ Quick start once accounts are wired:
 
 ## Tech Stack
 
-| Layer            | Technology                                  |
-| ---------------- | ------------------------------------------- |
-| Frontend         | Next.js 16, React 19, Tailwind CSS v4       |
-| UI primitives    | shadcn/ui, lucide-react                     |
-| Backend          | Hono on Cloudflare Workers                  |
-| API              | tRPC v11                                    |
-| Auth             | Better Auth 1.5 with Drizzle adapter        |
-| Database         | Cloudflare D1 (SQLite)                      |
-| ORM              | Drizzle                                     |
-| Object storage   | Cloudflare R2 (`howlcast-public`, `howlcast-isr`) |
-| Cache            | Cloudflare KV (`HOWLCAST_EMOTES`)           |
-| Live video and chat | GetStream                                |
-| Email            | Resend                                      |
-| Infrastructure   | Alchemy                                     |
-| Deploy target    | Cloudflare Workers                          |
-| Build tooling    | Turborepo, bun + Turborepo catalogs, Biome, Husky      |
-| Runtime          | Node 20+, bun 1.3+                           |
+| Layer               | Technology                                        |
+| ------------------- | ------------------------------------------------- |
+| Frontend            | Next.js 16, React 19, Tailwind CSS v4             |
+| UI primitives       | shadcn/ui, lucide-react                           |
+| Backend             | Hono on Cloudflare Workers                        |
+| API                 | tRPC v11                                          |
+| Auth                | Better Auth 1.5 with Drizzle adapter              |
+| Database            | Cloudflare D1 (SQLite)                            |
+| ORM                 | Drizzle                                           |
+| Object storage      | Cloudflare R2 (`howlcast-public`, `howlcast-isr`) |
+| Cache               | Cloudflare KV (`HOWLCAST_EMOTES`)                 |
+| Live video and chat | GetStream                                         |
+| Email               | Resend                                            |
+| Infrastructure      | Alchemy                                           |
+| Deploy target       | Cloudflare Workers                                |
+| Build tooling       | Turborepo, bun + Turborepo catalogs, Biome, Husky |
+| Runtime             | Node 20+, bun 1.3+                                |
 
 ## Development
 

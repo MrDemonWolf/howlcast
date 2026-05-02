@@ -14,8 +14,7 @@ type AuthErrorLike =
 export function formatAuthError(input: unknown, fallback: string): string {
 	if (!input || typeof input !== "object") return fallback;
 	const wrapper = input as AuthErrorLike;
-	const inner =
-		wrapper && "error" in wrapper && wrapper.error ? wrapper.error : wrapper;
+	const inner = wrapper && "error" in wrapper && wrapper.error ? wrapper.error : wrapper;
 	if (!inner || typeof inner !== "object") return fallback;
 	const obj = inner as { message?: string | null; statusText?: string | null };
 	return obj.message ?? obj.statusText ?? fallback;
@@ -24,8 +23,7 @@ export function formatAuthError(input: unknown, fallback: string): string {
 // Convenience: show the error toast directly. Returns whether an error was present.
 export function toastAuthError(input: unknown, fallback: string): boolean {
 	const wrapper = input as { error?: unknown };
-	const hasError =
-		!!wrapper && typeof wrapper === "object" && wrapper.error != null;
+	const hasError = !!wrapper && typeof wrapper === "object" && wrapper.error != null;
 	if (!hasError) return false;
 	toast.error(formatAuthError(input, fallback));
 	return true;

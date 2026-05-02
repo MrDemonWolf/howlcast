@@ -79,9 +79,7 @@ async function sendViaSmtp(
 	});
 }
 
-function logToConsole(
-	msg: Required<Pick<MailMessage, "from" | "text">> & MailMessage,
-): void {
+function logToConsole(msg: Required<Pick<MailMessage, "from" | "text">> & MailMessage): void {
 	const banner = "═".repeat(60);
 	console.log(`\n${banner}`);
 	console.log("📬  [mail:console] No transport configured — printing email.");

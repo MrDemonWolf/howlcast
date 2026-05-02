@@ -16,11 +16,7 @@ export const channelRouter = router({
 	// branch on `setupCompleted` to redirect to /setup (Phase 6).
 	getInfo: publicProcedure.query(async () => {
 		const db = createDb();
-		const cfg = await db
-			.select()
-			.from(channelConfig)
-			.where(eq(channelConfig.id, SITE_ID))
-			.get();
+		const cfg = await db.select().from(channelConfig).where(eq(channelConfig.id, SITE_ID)).get();
 
 		if (!cfg) {
 			return {
@@ -66,11 +62,7 @@ export const channelRouter = router({
 	// Panels grid below the player. Sorted by `position`; empty list is fine.
 	getPanels: publicProcedure.query(async () => {
 		const db = createDb();
-		const rows = await db
-			.select()
-			.from(panels)
-			.orderBy(asc(panels.position))
-			.all();
+		const rows = await db.select().from(panels).orderBy(asc(panels.position)).all();
 		return rows.map((p) => ({
 			id: p.id,
 			position: p.position,

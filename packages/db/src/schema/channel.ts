@@ -22,9 +22,7 @@ export const profiles = sqliteTable(
 		role: text("role", { enum: ["broadcaster", "viewer"] })
 			.notNull()
 			.default("viewer"),
-		isInvited: integer("is_invited", { mode: "boolean" })
-			.default(false)
-			.notNull(),
+		isInvited: integer("is_invited", { mode: "boolean" }).default(false).notNull(),
 		invitedAt: integer("invited_at", { mode: "timestamp_ms" }),
 		invitedBy: text("invited_by"),
 		createdAt: integer("created_at", { mode: "timestamp_ms" })
@@ -35,10 +33,7 @@ export const profiles = sqliteTable(
 			.$onUpdate(() => /* @__PURE__ */ new Date())
 			.notNull(),
 	},
-	(t) => [
-		index("profiles_role_idx").on(t.role),
-		index("profiles_invited_idx").on(t.isInvited),
-	],
+	(t) => [index("profiles_role_idx").on(t.role), index("profiles_invited_idx").on(t.isInvited)],
 );
 
 // Channel config — single row, id = "site". Single-tenant install.
@@ -54,9 +49,7 @@ export const channelConfig = sqliteTable("channel_config", {
 	visibility: text("visibility", { enum: ["public", "invite_only"] })
 		.notNull()
 		.default("public"),
-	matureContent: integer("mature", { mode: "boolean" })
-		.default(false)
-		.notNull(),
+	matureContent: integer("mature", { mode: "boolean" }).default(false).notNull(),
 	liveStartedAt: integer("live_started_at", { mode: "timestamp_ms" }),
 	liveEndedAt: integer("live_ended_at", { mode: "timestamp_ms" }),
 	// GetStream identifiers — set when the stream is created
@@ -110,12 +103,8 @@ export const invites = sqliteTable("invites", {
 export const webhooks = sqliteTable("webhooks", {
 	id: text("id").primaryKey(),
 	url: text("url"),
-	notifyOnLive: integer("notify_on_live", { mode: "boolean" })
-		.default(true)
-		.notNull(),
-	notifyOnEnd: integer("notify_on_end", { mode: "boolean" })
-		.default(true)
-		.notNull(),
+	notifyOnLive: integer("notify_on_live", { mode: "boolean" }).default(true).notNull(),
+	notifyOnEnd: integer("notify_on_end", { mode: "boolean" }).default(true).notNull(),
 	lastFiredAt: integer("last_fired_at", { mode: "timestamp_ms" }),
 	lastError: text("last_error"),
 	updatedAt: integer("updated_at", { mode: "timestamp_ms" })

@@ -16,15 +16,15 @@ FOUNDATION  AUTH      STREAM     CHAT/EMOTE ADMIN      POLISH     DOCS SITE
 (~1 wk)    (~1 wk)    (~1.5 wk)  (~2 wk)    (~1.5 wk)  (~1 wk)    (~1 wk)
 ```
 
-| Phase | Done = | Demo |
-|---|---|---|
-| 1 | Scaffold runs, dev server boots, theme looks right | Black-on-navy Card on a custom domain |
-| 2 | Login works (4 methods + 2FA) | Sign in, see "Welcome [name]" |
-| 3 | Channel page renders, OBS push works | Open OBS, stream visible to viewer |
-| 4 | Chat works with emotes | Type message in one tab, see it with emotes in another |
-| 5 | All admin pages built | Toggle visibility, manage panels, ban a user |
-| 6 | Wizard works, errors handled, deploys auto | Fresh deploy → walk through wizard → ship |
-| 7 | Public docs site live | Stranger reads docs, deploys their own copy in 30 min |
+| Phase | Done =                                             | Demo                                                   |
+| ----- | -------------------------------------------------- | ------------------------------------------------------ |
+| 1     | Scaffold runs, dev server boots, theme looks right | Black-on-navy Card on a custom domain                  |
+| 2     | Login works (4 methods + 2FA)                      | Sign in, see "Welcome [name]"                          |
+| 3     | Channel page renders, OBS push works               | Open OBS, stream visible to viewer                     |
+| 4     | Chat works with emotes                             | Type message in one tab, see it with emotes in another |
+| 5     | All admin pages built                              | Toggle visibility, manage panels, ban a user           |
+| 6     | Wizard works, errors handled, deploys auto         | Fresh deploy → walk through wizard → ship              |
+| 7     | Public docs site live                              | Stranger reads docs, deploys their own copy in 30 min  |
 
 **Phase 7 details live in [`docs/docs-site.md`](docs-site.md).**
 
@@ -37,6 +37,7 @@ FOUNDATION  AUTH      STREAM     CHAT/EMOTE ADMIN      POLISH     DOCS SITE
 - [ ] **1.1** Install Node 20+ and pnpm 9+ if missing
 - [ ] **1.2** Install Wrangler globally + `wrangler login`
 - [ ] **1.3** Run BTS scaffold:
+
 ```bash
 pnpm create better-t-stack@latest howlcast \
   --frontend next \
@@ -53,6 +54,7 @@ pnpm create better-t-stack@latest howlcast \
   --server-deploy cloudflare \
   --yes
 ```
+
 - [ ] **1.4** `cd howlcast && pnpm install`
 - [ ] **1.5** `git init && git add -A && git commit -m "scaffold from better-t-stack 3.27"`
 - [ ] **1.6** Create Cloudflare resources:
@@ -72,6 +74,7 @@ pnpm create better-t-stack@latest howlcast \
 - [ ] **1.15** Run `pnpm --filter server auth:generate` to regen schema
 - [ ] **1.16** Run `pnpm --filter server db:generate && pnpm --filter server db:migrate` (local)
 - [ ] **1.17** Set local secrets in `apps/server/.dev.vars`:
+
 ```
 BETTER_AUTH_SECRET=...
 BETTER_AUTH_URL=http://localhost:3000
@@ -82,6 +85,7 @@ STREAM_API_SECRET=...
 TWITCH_CLIENT_ID=...
 TWITCH_CLIENT_SECRET=...
 ```
+
 - [ ] **1.18** Add `crossSubDomainCookies` config to Better Auth (see [`docs/architecture.md`](architecture.md))
 - [ ] **1.19** `pnpm dev` — confirm web boots on `:3001`, server on `:3000`
 - [ ] **1.20** First deploy: `pnpm deploy` from each app — confirm both load on `*.workers.dev`
@@ -188,6 +192,7 @@ TWITCH_CLIENT_SECRET=...
 **Goal:** all broadcaster admin functions work from the dashboard. Match `design-handoff/project/Dashboard.html` and sibling pages.
 
 **Sidebar structure (locked):**
+
 ```
 LIVE     → Stream, Stats
 CHANNEL  → Panels, Emotes, Invite emails, Stream key, Notifications
@@ -258,11 +263,11 @@ SERVER   → Branding, Self-host status, Account
 
 ## Time estimates (be honest with yourself)
 
-| Mode | Pace | Total |
-|---|---|---|
-| Full-time focused | ~40h/wk | 6–8 weeks |
+| Mode                     | Pace    | Total      |
+| ------------------------ | ------- | ---------- |
+| Full-time focused        | ~40h/wk | 6–8 weeks  |
 | Sustainable side project | ~10h/wk | 3–4 months |
-| Weekend warrior | ~4h/wk | 6+ months |
+| Weekend warrior          | ~4h/wk  | 6+ months  |
 
 The longest phases are Auth (gotchas with Workers + cookies) and Chat/Emotes (multi-provider pipeline). Everything else is well-trodden.
 
