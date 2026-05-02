@@ -1,3 +1,4 @@
+import { PawPrint } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 
@@ -19,8 +20,9 @@ export default function Home() {
 					>
 						HowlCast
 					</h1>
-					<p className="mt-4 text-base text-muted-foreground sm:text-lg">
-						Invite-only streams from MrDemonWolf.
+					<p className="mt-4 inline-flex items-center gap-2 text-base text-muted-foreground sm:text-lg">
+						<PawPrint className="h-4 w-4 text-cyan" aria-hidden="true" />
+						For the inner circle.
 					</p>
 					<div className="mt-10 flex items-center gap-3">
 						<Link

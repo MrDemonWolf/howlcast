@@ -1,89 +1,176 @@
-# HowlCast
+# HowlCast - For the Inner Circle
 
-> Self-hosted Twitch-style live streaming platform for a single broadcaster. Built on Cloudflare + GetStream. Den-not-arena vibe.
+HowlCast is a self-hosted, invite-only live streaming platform for a single
+broadcaster. It runs on Cloudflare Workers and uses GetStream for the live
+video and chat path, so streams stay fast everywhere while the surrounding
+app — auth, channel page, dashboard, emotes, panels, branding — is fully
+under your control. Built for one person who wants Twitch-style streaming
+without Twitch.
 
-**Status:** planning / pre-scaffold · design locked
-**Owner:** MrDemonWolf, Inc. (Nathanial)
-**Brand:** navy `#091533` + cyan `#0FACED` + wolf
+Stream on your terms. Keep the howl in the den.
 
----
+## Features
 
-## 👉 START HERE
+- **Invite-only by design.** A single `is_invited` flag gates chat posting on
+  every stream and gates watching on private streams. No tiers, no
+  subscriptions, no follower counts.
+- **Public or private per stream.** Toggle visibility before going live.
+  Public streams let anyone watch (invitees chat); private streams hide
+  everything from non-invitees.
+- **Cloudflare-native.** Two Workers (web on `howlcast.tv`, API on
+  `api.howlcast.tv`), D1 for data, R2 for avatars and panel images, KV for
+  emote metadata, all provisioned declaratively via Alchemy.
+- **GetStream live path.** RTMPS ingest from OBS, WebRTC playback to
+  viewers. Stream content never touches your Workers — they only mint
+  short-lived JWTs and serve UI.
+- **Multi-provider emotes.** Channel and global emotes pulled from Twitch,
+  7TV, BTTV, and FrankerFaceZ using your single Twitch user ID. Refreshed
+  every 12 hours plus a manual refresh button on the dashboard.
+- **Better Auth with four sign-in methods.** Email + password, username,
+  magic link, and passkey. Two-factor authentication built in. Sessions
+  share across `howlcast.tv` subdomains.
+- **Discord webhooks for go-live.** Two webhooks (public stream and private
+  stream) configured from the dashboard, fired automatically when streams
+  start and end.
+- **White-label ready.** Custom logo, platform name, footer attribution,
+  and bare-minimum Privacy Policy and Terms editor live in the broadcaster
+  dashboard. Drop in your own brand without touching code.
+- **Den-only layout.** One channel page, one streamer, one focused viewing
+  experience. No theatre mode, no editorial mode, no decision fatigue.
 
-> **Lost? Confused? Open [`START-HERE.md`](START-HERE.md).** It walks you through the 2 jobs ahead of you in order, with no decisions to make.
+## Getting Started
 
----
+Full docs live in [`docs/`](docs/). Start with
+[`START-HERE.md`](START-HERE.md) for the two-job onboarding flow, or
+[`PRE-FLIGHT.md`](PRE-FLIGHT.md) for the account-setup checklist.
 
-## What HowlCast is
+Quick start once accounts are wired:
 
-- Live streaming site for **one streamer** (you, single-tenant install)
-- **GetStream** runs the video + chat
-- **Cloudflare** runs everything else (Workers, D1, R2, KV)
-- **Login required** to watch
-- **Public OR Private** stream — toggle per stream
-- **Single permission flag** (`isInvited`) — gates chat posting + private-stream watching
-- **Two Discord webhooks** — public stream URL + private stream URL
-- **No mods** — broadcaster handles all moderation directly
-- **No subscribers, no tiers** — explicitly out of scope
-- **Live only** — no VODs, no recordings
-- **Dark only** — no light mode toggle
-- **White-labelable** — custom logo, custom platform name, custom footer
+1. Clone the repository and install dependencies with `pnpm install`.
+2. Copy `.env` values into `apps/server/.env`, `apps/web/.env`, and
+   `packages/infra/.env` per the manifests in
+   [`PRE-FLIGHT.md`](PRE-FLIGHT.md).
+3. Run `pnpm db:generate` to materialise the initial migrations.
+4. Run `pnpm dev` to boot both Workers locally.
+5. Open `http://localhost:3001` for the web app and
+   `http://localhost:3000/api/health` for the API health check.
 
-## The stack at a glance
+## Tech Stack
 
-| Layer | Pick |
-|---|---|
-| Scaffold | **Better-T Stack** (`create-better-t-stack@3.27+`) |
-| Frontend | Next.js 16 (App Router) |
-| Backend | Hono + tRPC v11 (separate Worker) |
-| DB | Cloudflare D1 + Drizzle ORM |
-| Storage | Cloudflare R2 (3 buckets) + KV + Images |
-| Auth | Better Auth ≥1.5 (username, 2FA TOTP, passkey, magic link) |
-| Streaming | GetStream Video + Chat SDKs |
-| UI | shadcn/ui + Tailwind v4 |
-| Hosting | Cloudflare Workers (web/api/docs all on `*.howlcast.tv`) |
-| Email | Resend (3k/mo free) |
+| Layer            | Technology                                  |
+| ---------------- | ------------------------------------------- |
+| Frontend         | Next.js 16, React 19, Tailwind CSS v4       |
+| UI primitives    | shadcn/ui, lucide-react                     |
+| Backend          | Hono on Cloudflare Workers                  |
+| API              | tRPC v11                                    |
+| Auth             | Better Auth 1.5 with Drizzle adapter        |
+| Database         | Cloudflare D1 (SQLite)                      |
+| ORM              | Drizzle                                     |
+| Object storage   | Cloudflare R2 (`howlcast-public`, `howlcast-isr`) |
+| Cache            | Cloudflare KV (`HOWLCAST_EMOTES`)           |
+| Live video and chat | GetStream                                |
+| Email            | Resend                                      |
+| Infrastructure   | Alchemy                                     |
+| Deploy target    | Cloudflare Workers                          |
+| Build tooling    | Turborepo, pnpm catalogs, Biome, Husky      |
+| Runtime          | Node 20+, pnpm 9+                           |
 
-## Where to look for what
+## Development
 
-| You need... | Read this |
-|---|---|
-| **Where do I start?** | [`START-HERE.md`](START-HERE.md) |
-| **What's IN, what's OUT (locked)** | [`DESIGN-DECISIONS.md`](DESIGN-DECISIONS.md) ★ |
-| **Final design mockups** | [`design-handoff/project/`](design-handoff/project/) ★ |
-| **Brand assets (Howl Arc · locked)** | [`assets/brand-assets.html`](assets/brand-assets.html) (open in browser) |
-| **Set up accounts/tokens** | [`PRE-FLIGHT.md`](PRE-FLIGHT.md) |
-| Where you are right now | [`PROGRESS.md`](PROGRESS.md) |
-| Claude Code instructions | [`CLAUDE.md`](CLAUDE.md) |
-| Architecture deep dive | [`docs/architecture.md`](docs/architecture.md) |
-| Build plan (7 phases) | [`docs/build-plan.md`](docs/build-plan.md) |
-| **Roles, isInvited, Discord webhooks** | [`docs/roles-and-notifications.md`](docs/roles-and-notifications.md) |
-| **Branding / white-label spec** | [`docs/branding-spec.md`](docs/branding-spec.md) |
-| GetStream integration | [`docs/integrations/getstream.md`](docs/integrations/getstream.md) |
-| Better Auth setup | [`docs/integrations/better-auth.md`](docs/integrations/better-auth.md) |
-| Emote pipeline | [`docs/integrations/emotes.md`](docs/integrations/emotes.md) |
-| Docs site (Phase 7) | [`docs/docs-site.md`](docs/docs-site.md) |
-| Open questions | [`docs/decisions.md`](docs/decisions.md) |
+### Prerequisites
 
----
+- Node.js 20 or newer
+- pnpm 9 or newer
+- Wrangler 4 or newer, authenticated against your Cloudflare account
+- A Cloudflare account on the Free plan (Paid is not required)
+- A GetStream account with API credentials
+- A Resend account with a verified sending domain
+- OBS Studio (or any RTMPS-capable encoder) for testing streams
 
-## Right now: 2 jobs in order
+### Setup
+
+1. Install dependencies.
+
+   ```bash
+   pnpm install
+   ```
+
+2. Generate the initial Drizzle migration from the auth schema.
+
+   ```bash
+   pnpm db:generate
+   ```
+
+3. Populate `apps/server/.env`, `apps/web/.env`, and `packages/infra/.env`
+   with values from your 1Password vault (see
+   [`PRE-FLIGHT.md`](PRE-FLIGHT.md)).
+
+4. Boot the dev environment.
+
+   ```bash
+   pnpm dev
+   ```
+
+5. Deploy to your Cloudflare account when you are ready.
+
+   ```bash
+   pnpm deploy
+   ```
+
+### Development Scripts
+
+- `pnpm dev` - Run both Workers under Alchemy with hot reload.
+- `pnpm dev:web` - Run the web Worker only.
+- `pnpm dev:server` - Run the API Worker only.
+- `pnpm build` - Build all workspaces via Turborepo.
+- `pnpm check-types` - Type-check every workspace.
+- `pnpm check` - Run Biome with autofix on the entire repository.
+- `pnpm db:generate` - Generate Drizzle migrations from the schema.
+- `pnpm db:push` - Push the Drizzle schema directly (skips migration files).
+- `pnpm deploy` - Provision and deploy all Cloudflare resources via Alchemy.
+- `pnpm destroy` - Tear down the Alchemy-managed Cloudflare resources.
+
+### Code Quality
+
+- Biome handles linting and formatting in a single pass.
+- Husky runs `lint-staged` on `pre-commit` so commits never land malformed code.
+- TypeScript is configured with `tsc -b` for incremental project references.
+- React Compiler is enabled on the web Worker for automatic memoisation.
+
+## Project Structure
 
 ```
-   Job 1: SETUP WORKSPACES  (~95-120 min) — Cloudflare, GetStream, etc + GitHub + Jira + Drive
-   Job 2: SCAFFOLD + BUILD  (Claude Code takes over)
+howlcast/
+├── apps/
+│   ├── web/                  # Next.js Worker - howlcast.tv
+│   └── server/               # Hono Worker - api.howlcast.tv
+├── packages/
+│   ├── api/                  # tRPC routers and context
+│   ├── auth/                 # Better Auth factory
+│   ├── config/               # Shared TypeScript and tooling config
+│   ├── db/                   # Drizzle schema, migrations, client factory
+│   ├── env/                  # Validated runtime env loaders
+│   ├── infra/                # Alchemy resource declarations
+│   └── ui/                   # shadcn components and globals.css tokens
+├── design-handoff/           # Locked HTML mockups and design tokens
+├── docs/                     # Architecture, build plan, integration guides
+├── assets/                   # Brand SVGs and logo variants
+├── CLAUDE.md                 # AI collaborator instructions
+├── DESIGN-DECISIONS.md       # Locked product and design decisions
+├── PRE-FLIGHT.md             # Pre-scaffold account setup checklist
+├── PROGRESS.md               # Phase-by-phase build progress
+└── START-HERE.md             # Top-level onboarding doc
 ```
 
-**Open [`START-HERE.md`](START-HERE.md). Everything else flows from there.**
+## License
+
+![GitHub license](https://img.shields.io/github/license/mrdemonwolf/howlcast.svg?style=for-the-badge&logo=github)
+
+## Contact
+
+- Discord: [Join my server](https://mrdwolf.net/discord)
+- Website: [mrdemonwolf.com](https://www.mrdemonwolf.com)
 
 ---
 
-## The story you're telling yourself
-
-You're not building Twitch. You're building a private den where you and your community gather around your stream. It's small, intentional, on-brand, and you own all of it. The UI is calm and dark. The cyan is rare and meaningful. The wolf is in the corners — present, never shouting.
-
-When in doubt, ask: **"Is this thing pulling toward Twitch's clutter or toward Linear's calm?"** Pick calm.
-
----
-
-*Made with care for the den.*
+Made with love by [MrDemonWolf, Inc.](https://www.mrdemonwolf.com)

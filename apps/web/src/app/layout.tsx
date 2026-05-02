@@ -20,10 +20,62 @@ const bricolage = Bricolage_Grotesque({
 	subsets: ["latin"],
 });
 
+const SITE_NAME = "HowlCast";
+const SITE_DESCRIPTION = "For the inner circle.";
+const SITE_URL = "https://howlcast.tv";
+
 export const metadata: Metadata = {
-	title: "HowlCast",
-	description: "Invite-only streams from MrDemonWolf.",
-	icons: { icon: "/logos/howlcast-favicon.svg" },
+	metadataBase: new URL(SITE_URL),
+	title: {
+		default: SITE_NAME,
+		template: "%s · HowlCast",
+	},
+	description: SITE_DESCRIPTION,
+	applicationName: SITE_NAME,
+	keywords: [
+		"livestream",
+		"invite-only",
+		"private stream",
+		"self-hosted",
+		"twitch alternative",
+		"mrdemonwolf",
+	],
+	authors: [{ name: "MrDemonWolf, Inc." }],
+	creator: "MrDemonWolf, Inc.",
+	publisher: "MrDemonWolf, Inc.",
+	icons: {
+		icon: [{ url: "/logos/howlcast-favicon.svg", type: "image/svg+xml" }],
+		shortcut: "/logos/howlcast-favicon.svg",
+		apple: "/logos/howlcast-mark-on-cyan.svg",
+	},
+	openGraph: {
+		type: "website",
+		url: SITE_URL,
+		siteName: SITE_NAME,
+		title: SITE_NAME,
+		description: SITE_DESCRIPTION,
+		images: [
+			{
+				url: "/logos/howlcast-mark-on-cyan.svg",
+				width: 512,
+				height: 512,
+				alt: "HowlCast",
+			},
+		],
+	},
+	twitter: {
+		card: "summary",
+		title: SITE_NAME,
+		description: SITE_DESCRIPTION,
+		images: ["/logos/howlcast-mark-on-cyan.svg"],
+	},
+	robots: {
+		index: true,
+		follow: true,
+	},
+	other: {
+		"theme-color": "#091533",
+	},
 };
 
 export default function RootLayout({

@@ -6,16 +6,16 @@
 
 /* HowlCast — dark only. No light mode. Tokens ported from design-handoff/project/shared.css. */
 :root {
-	/* Surfaces */
-	--bg: oklch(0.183 0.067 271);
-	--bg-2: oklch(0.225 0.062 269);
-	--bg-3: oklch(0.265 0.055 268);
-	--bg-4: oklch(0.305 0.05 268);
+	/* Surfaces — near-black with a slight blue lean */
+	--bg: oklch(0.11 0.02 268);
+	--bg-2: oklch(0.16 0.025 268);
+	--bg-3: oklch(0.21 0.03 268);
+	--bg-4: oklch(0.27 0.035 268);
 
-	/* Lines / dividers */
-	--line: oklch(1 0 0 / 0.08);
-	--line-2: oklch(1 0 0 / 0.14);
-	--line-3: oklch(1 0 0 / 0.22);
+	/* Lines / dividers — bumped for better field/border contrast on the darker bg */
+	--line: oklch(1 0 0 / 0.1);
+	--line-2: oklch(1 0 0 / 0.18);
+	--line-3: oklch(1 0 0 / 0.28);
 
 	/* Text */
 	--fg: oklch(0.97 0.01 240);
