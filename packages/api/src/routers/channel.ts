@@ -7,6 +7,7 @@ import { channelConfig, panels, profiles } from "@howlcast/db/schema";
 import { env } from "@howlcast/env/server";
 import { TRPCError } from "@trpc/server";
 import { asc, eq } from "drizzle-orm";
+import { z } from "zod";
 
 import { protectedProcedure, publicProcedure, router } from "../index";
 import { readEmoteMap, refreshEmotes } from "../lib/emotes";
@@ -100,6 +101,33 @@ export const channelRouter = router({
 
 		return { callId, channelCid };
 	}),
+
+	// Broadcaster-only. Updates the editable channel config fields (title,
+	// visibility). Used by the dashboard Live → Stream page. Title is
+	// nullable (clearing makes the player show "No stream title yet").
+	updateConfig: protectedProcedure
+		.input(
+			z.object({
+				title: z.string().max(140).nullable().optional(),
+				visibility: z.enum(["public", "invite_only"]).optional(),
+			}),
+		)
+		.mutation(async ({ ctx, input }) => {
+			const db = createDb();
+			const cfg = await db.select().from(channelConfig).where(eq(channelConfig.id, SITE_ID)).get();
+			if (!cfg) {
+				throw new TRPCError({ code: "NOT_FOUND", message: "Channel not initialized." });
+			}
+			if (ctx.session.user.id !== cfg.ownerId) {
+				throw new TRPCError({ code: "FORBIDDEN", message: "Broadcaster only." });
+			}
+			const patch: Partial<{ title: string | null; visibility: "public" | "invite_only" }> = {};
+			if (input.title !== undefined) patch.title = input.title;
+			if (input.visibility !== undefined) patch.visibility = input.visibility;
+			if (Object.keys(patch).length === 0) return { ok: true };
+			await db.update(channelConfig).set(patch).where(eq(channelConfig.id, SITE_ID));
+			return { ok: true };
+		}),
 
 	// Public emote map. Cached in KV; cron refreshes every 12h. Returns null
 	// shape on first boot before the cron has run; client treats it as empty.
