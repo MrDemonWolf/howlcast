@@ -1,12 +1,20 @@
 import alchemy from "alchemy";
 import { D1Database, KVNamespace, Nextjs, R2Bucket, Worker } from "alchemy/cloudflare";
+import { CloudflareStateStore } from "alchemy/state";
 import { config } from "dotenv";
 
 config({ path: "./.env" });
 config({ path: "../../apps/web/.env" });
 config({ path: "../../apps/server/.env" });
 
-const app = await alchemy("howlcast");
+// Local dev: file-based state store (default). CI: CloudflareStateStore so
+// deploys from GitHub Actions don't trip Alchemy's "no local state in CI"
+// guardrail. Backed by a Worker + Durable Object that Alchemy provisions
+// itself; needs ALCHEMY_STATE_TOKEN as a GH Actions secret (any value, just
+// has to match across deploys on this Cloudflare account).
+const app = await alchemy("howlcast", {
+	stateStore: process.env.CI ? (scope) => new CloudflareStateStore(scope) : undefined,
+});
 
 const db = await D1Database("database", {
 	name: "howlcast-db",
