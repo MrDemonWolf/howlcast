@@ -69,16 +69,17 @@
 
 ## Phase 3 — Channel & Streaming
 
-- [ ] Channel-related schema (profiles, channelConfig, panels) deployed
-- [ ] GetStream JWT signer (manual WebCrypto) tested
-- [ ] tRPC procedures: `stream.getViewerToken`, `getBroadcasterToken`, `getStreamCredentials`, `isLive`
-- [ ] Webhook receiver at `/api/webhooks/getstream` with HMAC verification
-- [ ] `/[username]` channel page renders
-- [ ] LIVE badge + viewer count overlay
-- [ ] Streamer info row with verified check
-- [ ] Panels grid below player
-- [ ] Index page with single channel card + login gate
-- [ ] OBS test: RTMPS push works, stream visible to viewer
+- [x] Channel-related schema (profiles, channelConfig, panels, invites, webhooks, userBans) shipped (3A)
+- [x] GetStream JWT signer (manual WebCrypto) — `packages/api/src/lib/stream.ts` (3B)
+- [x] tRPC procedures: `stream.getViewerToken`, `getBroadcasterToken`, `getStreamCredentials`, `isLive` (3B)
+- [x] Webhook receiver at `/api/webhooks/getstream` with HMAC verification (3B)
+- [x] Channel page **= home page** (single tenant, no `/[username]`); player + chat slots wired to tRPC (3C)
+- [x] LIVE badge + viewer chip (drives off `stream.isLive` polling) (3C)
+- [x] Streamer info row with verified check + public/private mode pill (3C)
+- [x] Panels grid below player (3C)
+- [x] Discord fanout on `call.live_started` / `call.ended` / `call.session_ended` (3D)
+- [ ] Real OBS test: RTMPS push works, stream visible to viewer (needs real STREAM_API_KEY/SECRET)
+- [ ] GetStream Video + Chat SDKs wired into player/chat slots (Phase 4)
 
 ## Phase 4 — Chat & Emotes
 

@@ -6,7 +6,7 @@
 
 ## Where we are
 
-**Phase 3 — Channel & Streaming.** Stage 3A (schema) just landed. Stage 3B (GetStream JWT signer + tRPC procedures) is the next code work. Mid-research: reading GetStream docs for current Auth + Webhooks API surface.
+**Phase 3 — Channel & Streaming.** All four sub-stages shipped: 3A (schema), 3B (GetStream signer + tRPC + webhook), 3C (channel page replaces `/`), 3D (Discord fanout). Phase 4 (chat + emotes, real GetStream SDKs in the player/chat slots) is next.
 
 **Live URLs:**
 - Web: <https://howlcast.mrdemonwolf.workers.dev>
@@ -46,6 +46,9 @@
 ## Recent commit history
 
 ```
+7871c6c phase 3d: discord webhook fanout on go-live/end
+580a995 phase 3c: channel page replaces / (single tenant)
+909b27d phase 3b: getstream jwt signer + trpc procedures + webhook receiver
 39939d1 phase 3a: channel schema (profiles, channelConfig, panels, invites, webhooks, userBans)
 08ab359 refactor: extract DisplayHeading + auth-toast helpers (audit dedupe)
 e71f85d phase 2: docs sweep (bun, mail.md, ci/cd notes, progress checkboxes)
