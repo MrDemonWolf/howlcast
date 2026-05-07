@@ -10,8 +10,7 @@
 - [ ] **Apply migrations to remote D1.** Migration 0005 (`stream_sessions`
       table + `rtmps_url` column) and 0004 (drop `allow_signups`) need to
       land in prod or `/dashboard/stats` will throw "no such table". Run:
-      `     bunx wrangler d1 migrations apply howlcast-db --remote
-    `
+      `    bunx wrangler d1 migrations apply howlcast-db --remote`
 - [ ] **Set up `legal@mrdemonwolf.com`** mailbox or forwarder.
       Both `/privacy` and `/terms` pages now reference it as the contact
       for data requests + account deletion. If the mailbox doesn't exist
