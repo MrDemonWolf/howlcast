@@ -5,7 +5,9 @@
 // Server). Icons from lucide; active route highlighted with a cyan bar.
 
 import {
+	Activity,
 	BellRing,
+	Image as ImageIcon,
 	Key,
 	LayoutGrid,
 	type LucideIcon,
@@ -13,6 +15,7 @@ import {
 	MessageSquare,
 	Server,
 	Settings,
+	Sliders,
 	Sparkles,
 	Tv,
 	UserCircle,
@@ -20,16 +23,18 @@ import {
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-type Item = { href: string; label: string; icon: LucideIcon };
+type Item = { href: string; label: string; icon: LucideIcon; soon?: boolean };
 type Section = { title: string; items: Item[] };
 
-// Only sections backed by real, shipped pages. Stats / Branding /
-// Privacy-TOS are Phase 6 polish — they'll be added back here when
-// the routes exist. Surfacing dead links is worse than no link.
+// `soon: true` items render as disabled with a "soon" pill so the roadmap
+// is visible without 404-ing on click. Drop the flag once the page ships.
 const SECTIONS: Section[] = [
 	{
 		title: "Live",
-		items: [{ href: "/dashboard", label: "Stream", icon: Tv }],
+		items: [
+			{ href: "/dashboard", label: "Stream", icon: Tv },
+			{ href: "/dashboard/stats", label: "Stats", icon: Activity, soon: true },
+		],
 	},
 	{
 		title: "Channel",
@@ -47,6 +52,8 @@ const SECTIONS: Section[] = [
 		items: [
 			{ href: "/dashboard/status", label: "Self-host status", icon: Server },
 			{ href: "/dashboard/account", label: "Account", icon: UserCircle },
+			{ href: "/dashboard/branding", label: "Branding", icon: ImageIcon, soon: true },
+			{ href: "/dashboard/legal", label: "Privacy / TOS", icon: Sliders, soon: true },
 		],
 	},
 ];
@@ -92,6 +99,22 @@ export default function Sidebar({
 								pathname === item.href ||
 								(item.href !== "/dashboard" && pathname.startsWith(item.href));
 							const Icon = item.icon;
+							if (item.soon) {
+								return (
+									<span
+										key={item.href}
+										aria-disabled="true"
+										className="flex cursor-not-allowed items-center gap-2.5 rounded-md px-2.5 py-2 font-medium text-fg-3 text-sm"
+										title="Coming soon"
+									>
+										<Icon className="h-3.5 w-3.5 flex-none text-fg-4" aria-hidden />
+										<span className="opacity-70">{item.label}</span>
+										<span className="ml-auto rounded bg-bg-2 px-1.5 py-0.5 font-mono text-[9px] text-fg-3 uppercase tracking-wider">
+											soon
+										</span>
+									</span>
+								);
+							}
 							return (
 								<Link
 									key={item.href}
