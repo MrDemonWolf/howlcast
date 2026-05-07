@@ -5,9 +5,7 @@
 // Server). Icons from lucide; active route highlighted with a cyan bar.
 
 import {
-	Activity,
 	BellRing,
-	Image as ImageIcon,
 	Key,
 	LayoutGrid,
 	type LucideIcon,
@@ -15,7 +13,6 @@ import {
 	MessageSquare,
 	Server,
 	Settings,
-	Sliders,
 	Sparkles,
 	Tv,
 	UserCircle,
@@ -26,13 +23,13 @@ import { usePathname } from "next/navigation";
 type Item = { href: string; label: string; icon: LucideIcon };
 type Section = { title: string; items: Item[] };
 
+// Only sections backed by real, shipped pages. Stats / Branding /
+// Privacy-TOS are Phase 6 polish — they'll be added back here when
+// the routes exist. Surfacing dead links is worse than no link.
 const SECTIONS: Section[] = [
 	{
 		title: "Live",
-		items: [
-			{ href: "/dashboard", label: "Stream", icon: Tv },
-			{ href: "/dashboard/stats", label: "Stats", icon: Activity },
-		],
+		items: [{ href: "/dashboard", label: "Stream", icon: Tv }],
 	},
 	{
 		title: "Channel",
@@ -50,8 +47,6 @@ const SECTIONS: Section[] = [
 		items: [
 			{ href: "/dashboard/status", label: "Self-host status", icon: Server },
 			{ href: "/dashboard/account", label: "Account", icon: UserCircle },
-			{ href: "/dashboard/branding", label: "Branding", icon: ImageIcon },
-			{ href: "/dashboard/legal", label: "Privacy / TOS", icon: Sliders },
 		],
 	},
 ];

@@ -62,7 +62,10 @@ app.post("/api/webhooks/getstream", async (c) => {
 	const db = createDb();
 	const now = new Date();
 
-	const isLiveEvent = event.type === "call.live_started";
+	// GetStream's RTMPS pushes can fire `call.session_started` instead of
+	// `call.live_started` depending on call config (backstage on/off,
+	// auto-go-live setting, etc.). Treat both as "we're live now".
+	const isLiveEvent = event.type === "call.live_started" || event.type === "call.session_started";
 	const isEndEvent = event.type === "call.session_ended" || event.type === "call.ended";
 
 	if (!isLiveEvent && !isEndEvent) return c.json({ ok: true });

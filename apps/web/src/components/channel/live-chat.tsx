@@ -48,23 +48,38 @@ export default function LiveChat({ apiKey, userId, token, channelCid, canPost }:
 		[emoteMap],
 	);
 
+	const [error, setError] = useState<string | null>(null);
+
 	// Connect / disconnect on mount. Reusing the singleton means a fast
-	// remount during dev doesn't open two sockets.
+	// remount during dev doesn't open two sockets. Guard against empty
+	// token / userId — connectUser throws a confusing "Both secret and
+	// user tokens are not set" if either is empty, which surfaces in the
+	// page if not handled.
 	useEffect(() => {
+		if (!apiKey || !userId || !token) {
+			setError("Stream credentials missing.");
+			return;
+		}
 		let cancelled = false;
+		setError(null);
 		client
 			.connectUser({ id: userId }, token)
 			.then(() => {
 				if (!cancelled) setReady(true);
 			})
-			.catch(() => {
-				/* surfaced via tRPC error path — ignore here */
+			.catch((err: unknown) => {
+				if (!cancelled) {
+					setError(err instanceof Error ? err.message : "Couldn't connect to chat.");
+				}
 			});
 		return () => {
 			cancelled = true;
-			client.disconnectUser();
+			// disconnectUser is async and may throw if a connect was in flight.
+			// Swallow — the singleton is shared and disconnect-during-connect is
+			// recoverable on the next mount.
+			client.disconnectUser().catch(() => {});
 		};
-	}, [client, userId, token]);
+	}, [client, apiKey, userId, token]);
 
 	const [type, id] = channelCid.split(":");
 	const channel = useMemo(
@@ -72,6 +87,14 @@ export default function LiveChat({ apiKey, userId, token, channelCid, canPost }:
 		[client, ready, type, id],
 	);
 
+	if (error) {
+		return (
+			<div className="flex flex-1 flex-col items-center justify-center gap-1 px-4 text-center text-muted-foreground text-xs">
+				<span className="font-mono uppercase tracking-wider">Chat unavailable</span>
+				<span className="text-fg-3">{error}</span>
+			</div>
+		);
+	}
 	if (!ready || !channel) {
 		return (
 			<div className="flex flex-1 items-center justify-center text-muted-foreground text-xs">
