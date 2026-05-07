@@ -47,6 +47,10 @@ export const server = await Worker("server", {
 	entrypoint: "src/index.ts",
 	compatibility: "node",
 	adopt: true,
+	// Custom domain — sibling subdomain of tv.mrdemonwolf.com so cookies
+	// can be set with Domain=.tv.mrdemonwolf.com and shared across both
+	// (web on tv, api on api.tv). Workers.dev URLs stay as fallback.
+	domains: [{ domainName: "api.tv.mrdemonwolf.com", adopt: true }],
 	bindings: {
 		DB: db,
 		PUBLIC_BUCKET: publicBucket,

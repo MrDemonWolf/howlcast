@@ -29,7 +29,9 @@ export function createAuth() {
 		trustedOrigins: [
 			env.CORS_ORIGIN,
 			"https://tv.mrdemonwolf.com",
+			"https://api.tv.mrdemonwolf.com",
 			"https://tv.mrdemonwolf.workers.dev",
+			"https://tv-api.mrdemonwolf.workers.dev",
 			"https://howlcast.tv",
 		],
 		emailAndPassword: {
@@ -43,6 +45,13 @@ export function createAuth() {
 				sameSite: "lax",
 				secure: true,
 				httpOnly: true,
+			},
+			// Cross-subdomain cookies on .tv.mrdemonwolf.com so the session
+			// cookie set by api.tv.* is read by tv.* (web). Scoped tight to
+			// tv.* — won't leak to other mrdemonwolf.com subdomains.
+			crossSubDomainCookies: {
+				enabled: true,
+				domain: "tv.mrdemonwolf.com",
 			},
 		},
 		plugins: [

@@ -57,9 +57,9 @@ jobs:
           ALCHEMY_PASSWORD: ${{ secrets.ALCHEMY_PASSWORD }}
           ALCHEMY_STATE_TOKEN: ${{ secrets.ALCHEMY_STATE_TOKEN }}
           BETTER_AUTH_SECRET: ${{ secrets.BETTER_AUTH_SECRET }}
-          BETTER_AUTH_URL: https://tv-api.mrdemonwolf.workers.dev
+          BETTER_AUTH_URL: https://api.tv.mrdemonwolf.com
           CORS_ORIGIN: https://tv.mrdemonwolf.com
-          NEXT_PUBLIC_SERVER_URL: https://tv-api.mrdemonwolf.workers.dev
+          NEXT_PUBLIC_SERVER_URL: https://api.tv.mrdemonwolf.com
           MAIL_FROM: ${{ vars.MAIL_FROM || 'HowlCast <invites@mail.howlcast.tv>' }}
           RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
           STREAM_API_KEY: ${{ secrets.STREAM_API_KEY }}
@@ -67,15 +67,30 @@ jobs:
           TWITCH_CLIENT_ID: ${{ secrets.TWITCH_CLIENT_ID }}
           TWITCH_CLIENT_SECRET: ${{ secrets.TWITCH_CLIENT_SECRET }}
 
-      - name: Smoke-test API health
+      - name: Smoke-test API health (workers.dev — always ready)
         run: |
           sleep 5
           HEALTH=$(curl -sf https://tv-api.mrdemonwolf.workers.dev/api/health || echo "FAILED")
-          echo "API health: $HEALTH"
+          echo "API health (workers.dev): $HEALTH"
           if [ "$HEALTH" != '{"ok":true}' ]; then
             echo "ERROR: API health check failed"
             exit 1
           fi
+
+      - name: Smoke-test API custom domain (with retry)
+        continue-on-error: true
+        run: |
+          for i in 1 2 3 4 5 6; do
+            HEALTH=$(curl -sf https://api.tv.mrdemonwolf.com/api/health || echo "FAILED")
+            if [ "$HEALTH" = '{"ok":true}' ]; then
+              echo "API custom domain healthy after ${i} attempt(s): $HEALTH"
+              exit 0
+            fi
+            echo "Attempt $i: api.tv.mrdemonwolf.com not ready (DNS/SSL warming)..."
+            sleep 15
+          done
+          echo "WARN: api.tv.mrdemonwolf.com not responding after 90s — first-deploy DNS propagation."
+          exit 0
 
       - name: Smoke-test web proxy (workers.dev)
         run: |

@@ -12,7 +12,11 @@ export default function StatusPage() {
 		<>
 			<HeaderStrip title="Self-host status" subtitle="Server · health and deployment" />
 			<section className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-				<StatusCard label="API worker" url="https://tv-api.mrdemonwolf.workers.dev/api/health" />
+				<StatusCard label="API (custom domain)" url="https://api.tv.mrdemonwolf.com/api/health" />
+				<StatusCard
+					label="API (workers.dev fallback)"
+					url="https://tv-api.mrdemonwolf.workers.dev/api/health"
+				/>
 				<StatusCard label="Web (custom domain)" url="https://tv.mrdemonwolf.com/api/health" />
 				<StatusCard
 					label="Web (workers.dev fallback)"
