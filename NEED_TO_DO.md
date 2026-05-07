@@ -9,6 +9,9 @@
 
 - [ ] Run `git push origin main` from your terminal
 - [ ] Watch CI go green at <https://github.com/MrDemonWolf/howlcast/actions>
+- [ ] Update GetStream Video webhook URL → `https://tv-api.mrdemonwolf.workers.dev/api/webhooks/getstream`
+- [ ] Delete orphan workers in Cloudflare dashboard: `howlcast` + `howlcast-api` (or run `bunx wrangler delete howlcast` / `bunx wrangler delete howlcast-api`)
+- [ ] Confirm `mrdemonwolf.com` zone is on Cloudflare DNS (required for `tv.mrdemonwolf.com` custom domain attach)
 - [ ] Done — webhook URL works after deploy finishes
 
 That's it. Everything else is optional or surfaces in the dashboard later.
@@ -21,7 +24,7 @@ That's it. Everything else is optional or surfaces in the dashboard later.
 
 - [ ] Go to <https://dev.twitch.tv/console/apps/create>
 - [ ] **Name:** `HowlCast`
-- [ ] **OAuth Redirect URL:** `https://howlcast.mrdemonwolf.workers.dev/auth/twitch/callback` _(placeholder — we use client_credentials grant, this URL is never hit)_
+- [ ] **OAuth Redirect URL:** `https://tv.mrdemonwolf.com/auth/twitch/callback` _(placeholder — we use client_credentials grant, this URL is never hit)_
 - [ ] **Category:** Application Integration
 - [ ] **Client Type:** Confidential
 - [ ] **Organization:** None

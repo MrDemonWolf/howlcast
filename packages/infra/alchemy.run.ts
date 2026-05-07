@@ -42,7 +42,7 @@ const emotesKv = await KVNamespace("emotes", {
 });
 
 export const server = await Worker("server", {
-	name: "howlcast-api",
+	name: "tv-api",
 	cwd: "../../apps/server",
 	entrypoint: "src/index.ts",
 	compatibility: "node",
@@ -76,9 +76,13 @@ export const server = await Worker("server", {
 });
 
 export const web = await Nextjs("web", {
-	name: "howlcast",
+	name: "tv",
 	cwd: "../../apps/web",
 	adopt: true,
+	// Custom domain attaches `tv.mrdemonwolf.com` to the web worker. Cookies
+	// stay first-party there; api stays on workers.dev and is reached via
+	// the same-origin /api/* rewrite in next.config.ts.
+	domains: [{ domainName: "tv.mrdemonwolf.com", adopt: true }],
 	bindings: {
 		NEXT_PUBLIC_SERVER_URL: server.url!,
 		DB: db,

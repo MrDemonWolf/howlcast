@@ -28,7 +28,8 @@ export function createAuth() {
 		}),
 		trustedOrigins: [
 			env.CORS_ORIGIN,
-			"https://howlcast.mrdemonwolf.workers.dev",
+			"https://tv.mrdemonwolf.com",
+			"https://tv.mrdemonwolf.workers.dev",
 			"https://howlcast.tv",
 		],
 		emailAndPassword: {

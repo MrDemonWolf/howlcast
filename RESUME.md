@@ -14,8 +14,8 @@ All 9 dashboard pages are live (Stream / Panels / Emotes / Invites / Stream key 
 
 **Live URLs:**
 
-- Web: <https://howlcast.mrdemonwolf.workers.dev>
-- API: <https://howlcast-api.mrdemonwolf.workers.dev>
+- Web: <https://tv.mrdemonwolf.com> (custom domain) + <https://tv.mrdemonwolf.workers.dev> (fallback)
+- API: <https://tv-api.mrdemonwolf.workers.dev>
 - Both `/api/health` return `{"ok":true}`. CI/Deploy via GH Actions, all secrets in place.
 
 **Repo:** <https://github.com/MrDemonWolf/howlcast> — public, default branch `main`. Pushed up through `be0eac2`. Branch protection enabled (no force-push, no deletion).

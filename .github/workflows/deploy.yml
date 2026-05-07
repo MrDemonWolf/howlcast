@@ -57,9 +57,9 @@ jobs:
           ALCHEMY_PASSWORD: ${{ secrets.ALCHEMY_PASSWORD }}
           ALCHEMY_STATE_TOKEN: ${{ secrets.ALCHEMY_STATE_TOKEN }}
           BETTER_AUTH_SECRET: ${{ secrets.BETTER_AUTH_SECRET }}
-          BETTER_AUTH_URL: https://howlcast-api.mrdemonwolf.workers.dev
-          CORS_ORIGIN: https://howlcast.mrdemonwolf.workers.dev
-          NEXT_PUBLIC_SERVER_URL: https://howlcast-api.mrdemonwolf.workers.dev
+          BETTER_AUTH_URL: https://tv-api.mrdemonwolf.workers.dev
+          CORS_ORIGIN: https://tv.mrdemonwolf.com
+          NEXT_PUBLIC_SERVER_URL: https://tv-api.mrdemonwolf.workers.dev
           MAIL_FROM: ${{ vars.MAIL_FROM || 'HowlCast <invites@mail.howlcast.tv>' }}
           RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
           STREAM_API_KEY: ${{ secrets.STREAM_API_KEY }}
@@ -70,7 +70,7 @@ jobs:
       - name: Smoke-test API health
         run: |
           sleep 5
-          HEALTH=$(curl -sf https://howlcast-api.mrdemonwolf.workers.dev/api/health || echo "FAILED")
+          HEALTH=$(curl -sf https://tv-api.mrdemonwolf.workers.dev/api/health || echo "FAILED")
           echo "API health: $HEALTH"
           if [ "$HEALTH" != '{"ok":true}' ]; then
             echo "ERROR: API health check failed"
@@ -79,7 +79,7 @@ jobs:
 
       - name: Smoke-test web proxy
         run: |
-          PROXIED=$(curl -sf https://howlcast.mrdemonwolf.workers.dev/api/health || echo "FAILED")
+          PROXIED=$(curl -sf https://tv.mrdemonwolf.com/api/health || echo "FAILED")
           echo "Web proxy health: $PROXIED"
           if [ "$PROXIED" != '{"ok":true}' ]; then
             echo "ERROR: Web /api/* proxy is broken"
