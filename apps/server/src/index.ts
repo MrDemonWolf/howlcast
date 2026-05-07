@@ -49,9 +49,6 @@ app.post("/api/webhooks/getstream", async (c) => {
 	const sig = c.req.header("x-signature") ?? "";
 	const raw = await c.req.text();
 
-	const ok = await verifyStreamWebhook(raw, sig, env.STREAM_API_SECRET);
-	if (!ok) return c.json({ error: "invalid signature" }, 401);
-
 	let event: { type?: string; call_cid?: string };
 	try {
 		event = JSON.parse(raw);
@@ -59,16 +56,22 @@ app.post("/api/webhooks/getstream", async (c) => {
 		return c.json({ error: "bad json" }, 400);
 	}
 
-	const db = createDb();
-	const now = new Date();
-
 	// GetStream's RTMPS pushes can fire `call.session_started` instead of
 	// `call.live_started` depending on call config (backstage on/off,
 	// auto-go-live setting, etc.). Treat both as "we're live now".
 	const isLiveEvent = event.type === "call.live_started" || event.type === "call.session_started";
 	const isEndEvent = event.type === "call.session_ended" || event.type === "call.ended";
 
+	// Acknowledge all events we don't act on (e.g. chat message.new) without
+	// HMAC verification — Chat and Video may use different signing schemes.
+	// HMAC is only enforced for events that trigger DB writes or Discord fanout.
 	if (!isLiveEvent && !isEndEvent) return c.json({ ok: true });
+
+	const ok = await verifyStreamWebhook(raw, sig, env.STREAM_API_SECRET);
+	if (!ok) return c.json({ error: "invalid signature" }, 401);
+
+	const db = createDb();
+	const now = new Date();
 
 	if (isLiveEvent) {
 		await db

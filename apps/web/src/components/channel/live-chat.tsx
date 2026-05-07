@@ -13,7 +13,15 @@ import "stream-chat-react/dist/css/index.css";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
 import { StreamChat } from "stream-chat";
-import { Channel, Chat, MessageComposer, MessageList, renderText, Window } from "stream-chat-react";
+import {
+	Channel,
+	Chat,
+	MessageComposer,
+	MessageList,
+	defaultAllowedTagNames,
+	renderText,
+	Window,
+} from "stream-chat-react";
 
 import { trpc } from "@/utils/trpc";
 import { emoteRehypePlugin, type EmoteRecord } from "./emote-renderer";
@@ -27,8 +35,12 @@ type Props = {
 };
 
 export default function LiveChat({ apiKey, userId, token, channelCid, canPost }: Props) {
-	const client = useMemo(() => StreamChat.getInstance(apiKey), [apiKey]);
-	const [ready, setReady] = useState(false);
+	// Canonical pattern per GetStream GH issue #1487:
+	// Store the connected client in state so React unmounts <Chat> BEFORE
+	// disconnectUser fires — prevents "Both secret and user tokens are not
+	// set" when the component remounts (Strict Mode, token re-fetch, etc.).
+	const [chatClient, setChatClient] = useState<StreamChat | null>(null);
+	const [error, setError] = useState<string | null>(null);
 
 	const emotes = useQuery(trpc.channel.getEmotes.queryOptions());
 	const emoteMap = useMemo(() => {
@@ -42,49 +54,48 @@ export default function LiveChat({ apiKey, userId, token, channelCid, canPost }:
 	const customRenderText: typeof renderText = useMemo(
 		() => (text, mentioned) =>
 			renderText(text, mentioned, {
+				// img must be explicitly allowed or the sanitizer strips emote tags
+				allowedTagNames: [...defaultAllowedTagNames, "img"],
 				// eslint-disable-next-line @typescript-eslint/no-explicit-any
 				getRehypePlugins: (defaults) => [emoteRehypePlugin(emoteMap), ...defaults] as any,
 			}),
 		[emoteMap],
 	);
 
-	const [error, setError] = useState<string | null>(null);
-
-	// Connect / disconnect on mount. Reusing the singleton means a fast
-	// remount during dev doesn't open two sockets. Guard against empty
-	// token / userId — connectUser throws a confusing "Both secret and
-	// user tokens are not set" if either is empty, which surfaces in the
-	// page if not handled.
 	useEffect(() => {
 		if (!apiKey || !userId || !token) {
 			setError("Stream credentials missing.");
 			return;
 		}
-		let cancelled = false;
+
 		setError(null);
+		const client = StreamChat.getInstance(apiKey);
+		let cancelled = false;
+
 		client
 			.connectUser({ id: userId }, token)
 			.then(() => {
-				if (!cancelled) setReady(true);
+				if (!cancelled) setChatClient(client);
 			})
 			.catch((err: unknown) => {
 				if (!cancelled) {
 					setError(err instanceof Error ? err.message : "Couldn't connect to chat.");
 				}
 			});
+
 		return () => {
 			cancelled = true;
-			// disconnectUser is async and may throw if a connect was in flight.
-			// Swallow — the singleton is shared and disconnect-during-connect is
-			// recoverable on the next mount.
+			// Null the client from state first — this unmounts <Chat> before
+			// disconnect fires, preventing children from reading a stale client.
+			setChatClient(null);
 			client.disconnectUser().catch(() => {});
 		};
-	}, [client, apiKey, userId, token]);
+	}, [apiKey, userId, token]);
 
 	const [type, id] = channelCid.split(":");
 	const channel = useMemo(
-		() => (ready && type && id ? client.channel(type, id) : null),
-		[client, ready, type, id],
+		() => (chatClient && type && id ? chatClient.channel(type, id) : null),
+		[chatClient, type, id],
 	);
 
 	if (error) {
@@ -95,7 +106,7 @@ export default function LiveChat({ apiKey, userId, token, channelCid, canPost }:
 			</div>
 		);
 	}
-	if (!ready || !channel) {
+	if (!chatClient || !channel) {
 		return (
 			<div className="flex flex-1 items-center justify-center text-muted-foreground text-xs">
 				Connecting…
@@ -104,7 +115,7 @@ export default function LiveChat({ apiKey, userId, token, channelCid, canPost }:
 	}
 
 	return (
-		<Chat client={client} theme="str-chat__theme-dark">
+		<Chat client={chatClient} theme="str-chat__theme-dark">
 			<Channel channel={channel}>
 				<Window>
 					<MessageList renderText={customRenderText} />

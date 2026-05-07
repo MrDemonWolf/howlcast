@@ -70,16 +70,36 @@ export const streamRouter = router({
 
 	// Token for an anonymous or signed-in viewer. Anonymous viewers get a
 	// stable but ephemeral guest id so the SDK has something to work with.
+	// Signed-in broadcasters receive role:"broadcaster" so GetStream doesn't
+	// reject the JWT as a role downgrade from their server-side user record.
 	getViewerToken: publicProcedure.query(async ({ ctx }) => {
 		if (!env.STREAM_API_KEY || !env.STREAM_API_SECRET) throw streamNotConfigured();
 
+		const isGuest = !ctx.session?.user.id;
 		const userId = ctx.session?.user.id ?? `guest-${crypto.randomUUID()}`;
+
+		let streamRole: string;
+		if (isGuest) {
+			streamRole = "anonymous";
+		} else {
+			// Check if the signed-in user is the broadcaster so we emit the correct
+			// role — GetStream rejects a JWT with role:"user" when the server-side
+			// user record already has role:"broadcaster".
+			const db = createDb();
+			const me = await db
+				.select({ role: profiles.role })
+				.from(profiles)
+				.where(eq(profiles.userId, ctx.session!.user.id))
+				.get();
+			streamRole = me?.role === "broadcaster" ? "broadcaster" : "user";
+		}
+
 		try {
 			const token = await signStreamUserToken(env.STREAM_API_SECRET, {
 				user_id: userId,
-				role: ctx.session?.user.id ? "user" : "anonymous",
+				role: streamRole,
 			});
-			return { apiKey: env.STREAM_API_KEY, token, userId };
+			return { apiKey: env.STREAM_API_KEY, token, userId, isGuest };
 		} catch (e) {
 			if (e instanceof StreamNotConfiguredError) throw streamNotConfigured();
 			throw e;

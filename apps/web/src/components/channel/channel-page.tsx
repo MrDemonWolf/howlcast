@@ -13,6 +13,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { BadgeCheck, Eye, Mail, MessageSquareOff, PawPrint, Settings } from "lucide-react";
 import dynamic from "next/dynamic";
+import { useCallback, useState } from "react";
 import { trpc } from "@/utils/trpc";
 
 const POLL_MS = 10_000;
@@ -51,6 +52,10 @@ export default function ChannelPage() {
 		retry: false,
 	});
 
+	// Viewer count bubbled up from inside <StreamCall> context via callback.
+	const [viewerCount, setViewerCount] = useState<number | null>(null);
+	const handleViewerCount = useCallback((n: number) => setViewerCount(n), []);
+
 	const isLive = !!live.data?.isLive;
 	const visibility = info.data?.visibility ?? "public";
 	const isPrivate = visibility === "invite_only";
@@ -59,6 +64,8 @@ export default function ChannelPage() {
 
 	const canMountStream =
 		!!viewerToken.data && !!credentials.data?.callId && !!credentials.data?.channelCid;
+	// isGuest comes from the server — true for unauthenticated visitors.
+	const isGuest = viewerToken.data?.isGuest ?? true;
 
 	return (
 		<main className="mx-auto w-full max-w-[1400px] px-4 py-6 lg:px-6">
@@ -66,6 +73,7 @@ export default function ChannelPage() {
 				<section className="flex flex-col gap-4">
 					<PlayerSlot
 						isLive={isLive}
+						viewerCount={viewerCount}
 						credentials={
 							canMountStream && isLive
 								? {
@@ -76,6 +84,7 @@ export default function ChannelPage() {
 									}
 								: null
 						}
+						onViewerCount={handleViewerCount}
 					/>
 
 					<StreamerInfo
@@ -98,9 +107,7 @@ export default function ChannelPage() {
 										userId: viewerToken.data!.userId,
 										token: viewerToken.data!.token,
 										channelCid: credentials.data!.channelCid!,
-										// canPost: signed-in users only. Phase 5 will read
-										// profiles.isInvited to gate posting more strictly.
-										canPost: !viewerToken.data!.userId.startsWith("guest-"),
+										canPost: !isGuest,
 									}
 								: null
 						}
@@ -118,11 +125,21 @@ type PlayerCreds = {
 	callId: string;
 };
 
-function PlayerSlot({ isLive, credentials }: { isLive: boolean; credentials: PlayerCreds | null }) {
+function PlayerSlot({
+	isLive,
+	credentials,
+	viewerCount,
+	onViewerCount,
+}: {
+	isLive: boolean;
+	credentials: PlayerCreds | null;
+	viewerCount: number | null;
+	onViewerCount: (n: number) => void;
+}) {
 	return (
 		<div className="relative aspect-video overflow-hidden rounded-lg border border-border bg-black">
 			{isLive && credentials ? (
-				<LivePlayer {...credentials} />
+				<LivePlayer {...credentials} onViewerCount={onViewerCount} />
 			) : (
 				<div className="absolute inset-0 flex items-center justify-center text-muted-foreground text-xs">
 					<span className="font-mono uppercase tracking-wider">
@@ -138,7 +155,7 @@ function PlayerSlot({ isLive, credentials }: { isLive: boolean; credentials: Pla
 					</span>
 					<span className="pointer-events-none absolute top-3 right-3 inline-flex items-center gap-1.5 rounded-md bg-black/60 px-2 py-1 text-[11px] text-white backdrop-blur">
 						<Eye className="h-3 w-3" aria-hidden="true" />
-						<span className="font-mono">—</span>
+						<span className="font-mono">{viewerCount ?? "—"}</span>
 					</span>
 				</>
 			) : null}
