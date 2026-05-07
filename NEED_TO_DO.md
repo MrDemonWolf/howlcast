@@ -5,14 +5,16 @@
 
 ---
 
-## 🚀 RIGHT NOW (5 min, unblocks live deploy)
+## 🚀 RIGHT NOW (unblocks Go Live)
 
-- [ ] Run `git push origin main` from your terminal
-- [ ] Watch CI go green at <https://github.com/MrDemonWolf/howlcast/actions>
-- [ ] Update GetStream Video webhook URL → `https://tv-api.mrdemonwolf.workers.dev/api/webhooks/getstream`
-- [ ] Delete orphan workers in Cloudflare dashboard: `howlcast` + `howlcast-api` (or run `bunx wrangler delete howlcast` / `bunx wrangler delete howlcast-api`)
-- [ ] Confirm `mrdemonwolf.com` zone is on Cloudflare DNS (required for `tv.mrdemonwolf.com` custom domain attach)
-- [ ] Done — webhook URL works after deploy finishes
+- [ ] **Update GetStream Video webhook URL** in GetStream dashboard:
+      `https://tv-api.mrdemonwolf.workers.dev/api/webhooks/getstream`
+      (Old `howlcast-api` URL is dead after the rename. Without this update,
+      RTMPS push doesn't trigger the LIVE badge — webhook never fires.)
+- [ ] **Test Go Live** after the webhook update: 1. Set up stream in dashboard (one click) 2. Copy RTMPS URL + key into OBS 3. Click Start Streaming in OBS 4. Click Go Live in dashboard 5. Verify LIVE badge appears on `tv.mrdemonwolf.com` homepage
+- [ ] Delete orphan workers in Cloudflare dashboard:
+      `howlcast` + `howlcast-api` (or `bunx wrangler delete howlcast` /
+      `bunx wrangler delete howlcast-api`)
 
 That's it. Everything else is optional or surfaces in the dashboard later.
 

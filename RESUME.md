@@ -6,17 +6,40 @@
 
 ## Where we are
 
-**Phase 5 — Broadcaster Dashboard. Fully shipped + deployed live.**
+**Phase 5 shipped. Domain rename + OBS fix shipped. Go Live verification pending.**
 
-All 9 dashboard pages are live (Stream / Panels / Emotes / Invites / Stream key / Notifications / Status / Account / Chat + popout), the first-run setup wizard creates the broadcaster account in one flow, /signup is gone (invite-only by design — viewers arrive via emailed magic links), and the login UI is single-form (email+password primary, magic + passkey secondary).
+All 9 dashboard pages live (Stream / Panels / Emotes / Invites / Stream key / Notifications / Status / Account / Chat + popout). First-run setup wizard creates the broadcaster account in one flow. /signup gone (invite-only). Login = single form.
 
-**Phase 6 (polish + viewer Account + Stats + branding + legal + OBS test) is the next phase.** Not started.
+**Recent (this session):**
+
+- Workers renamed: `howlcast` → `tv`, `howlcast-api` → `tv-api`
+- Custom domains: `tv.mrdemonwolf.com` (web) + `api.tv.mrdemonwolf.com` (api)
+- Cookie fix: `crossSubDomainCookies` on `tv.mrdemonwolf.com` — resolves the post-setup ERR_TOO_MANY_REDIRECTS
+- OBS fix: stream.provision now reads `ingress.rtmp.address` from GetStream + persists `channel_config.rtmps_url`. RtmpsCard reads from API instead of hardcoded URL
+- Stepped dashboard walkthrough: `<StreamWizard />` (unprovisioned → ready → live)
+- Migration 0005: `stream_sessions` table + `rtmps_url` column
+- Webhook handles both `call.live_started` and `call.session_started`
+- Sidebar cleaned: ghost links to Stats / Branding / Privacy/TOS removed (Phase 6 will add them back)
+
+**Phase 6 (polish + Stats + Branding + Legal + viewer Account + OBS hardening) is the next phase.** Stats schema + webhook integration done; tRPC router + page pending.
 
 **Live URLs:**
 
 - Web: <https://tv.mrdemonwolf.com> (custom domain) + <https://tv.mrdemonwolf.workers.dev> (fallback)
-- API: <https://tv-api.mrdemonwolf.workers.dev>
-- Both `/api/health` return `{"ok":true}`. CI/Deploy via GH Actions, all secrets in place.
+- API: <https://api.tv.mrdemonwolf.com> (custom domain) + <https://tv-api.mrdemonwolf.workers.dev> (fallback)
+- All `/api/health` return `{"ok":true}`. CI/Deploy via GH Actions, all secrets in place.
+
+**Outstanding issues from end of session:**
+
+1. **Go Live UI stuck at "Going live…"** — likely cause: GetStream webhook URL still points at dead `howlcast-api.mrdemonwolf.workers.dev` worker. User must update URL to `https://tv-api.mrdemonwolf.workers.dev/api/webhooks/getstream` in GetStream dashboard. NEED_TO_DO.md item.
+2. **Channel page chat error** when broadcaster is logged in — error now surfaced inline ("Chat unavailable: …") instead of crashing. Root cause TBD — may be cross-domain token timing or stream-chat SDK race condition. Investigate next session.
+3. **Wizard UX wolf/den motifs** — user requested "corp but furry" polish. Cosmetic, deferred.
+
+**Next session — planned:**
+
+- GetStream Video + Chat React SDK full audit (read all docs, compare to our channel-page / live-player / live-chat implementations)
+- Write structured rewrite plan in `docs/getstream-rewrite-plan.md`
+- Implement fixes once approved
 
 **Repo:** <https://github.com/MrDemonWolf/howlcast> — public, default branch `main`. Pushed up through `be0eac2`. Branch protection enabled (no force-push, no deletion).
 
