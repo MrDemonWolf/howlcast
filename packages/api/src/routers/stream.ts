@@ -10,6 +10,7 @@ import { eq } from "drizzle-orm";
 import { protectedProcedure, publicProcedure, router } from "../index";
 import {
 	createCall,
+	getCall,
 	goLive,
 	signAdminToken,
 	signStreamUserToken,
@@ -87,6 +88,8 @@ export const streamRouter = router({
 
 	// Broadcaster-only. Returns an admin-capable token plus the call/channel
 	// identifiers needed to drive the OBS push and dashboard go-live UI.
+	// Backfills `rtmpsUrl` from a fresh GetStream get-call if it's missing
+	// (older provisions before the column existed).
 	getBroadcasterToken: protectedProcedure.query(async ({ ctx }) => {
 		if (!env.STREAM_API_KEY || !env.STREAM_API_SECRET) throw streamNotConfigured();
 
@@ -109,6 +112,22 @@ export const streamRouter = router({
 			role: "broadcaster",
 		});
 		const adminToken = await signAdminToken(env.STREAM_API_SECRET);
+
+		// Backfill the canonical RTMPS URL on first read if a previous provision
+		// didn't capture it. Best-effort — if GetStream is down we just return null.
+		let rtmpsUrl = cfg?.rtmpsUrl ?? null;
+		if (!rtmpsUrl && cfg?.streamCallId) {
+			const callResp = await getCall(
+				env.STREAM_API_KEY,
+				env.STREAM_API_SECRET,
+				cfg.streamCallId,
+			).catch(() => null);
+			rtmpsUrl = callResp?.call?.ingress?.rtmp?.address ?? null;
+			if (rtmpsUrl) {
+				await db.update(channelConfig).set({ rtmpsUrl }).where(eq(channelConfig.id, SITE_ID));
+			}
+		}
+
 		return {
 			apiKey: env.STREAM_API_KEY,
 			userToken,
@@ -116,6 +135,7 @@ export const streamRouter = router({
 			userId: ctx.session.user.id,
 			callId: cfg?.streamCallId ?? null,
 			channelCid: cfg?.chatChannelCid ?? null,
+			rtmpsUrl,
 		};
 	}),
 
@@ -144,14 +164,22 @@ export const streamRouter = router({
 		const callId = ctx.session.user.id;
 		const channelCid = `livestream:${callId}`;
 
-		await createCall(env.STREAM_API_KEY, env.STREAM_API_SECRET, callId, ctx.session.user.id);
+		const callResp = await createCall(
+			env.STREAM_API_KEY,
+			env.STREAM_API_SECRET,
+			callId,
+			ctx.session.user.id,
+		);
+		// Pull the canonical RTMPS URL from the response so OBS gets the URL
+		// GetStream actually expects (varies by region/tier).
+		const rtmpsUrl = callResp?.call?.ingress?.rtmp?.address ?? null;
 
 		await db
 			.update(channelConfig)
-			.set({ streamCallId: callId, chatChannelCid: channelCid })
+			.set({ streamCallId: callId, chatChannelCid: channelCid, rtmpsUrl })
 			.where(eq(channelConfig.id, SITE_ID));
 
-		return { callId, channelCid };
+		return { callId, channelCid, rtmpsUrl };
 	}),
 
 	// Broadcaster-only "Go Live" — flips GetStream to live mode + starts HLS

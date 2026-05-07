@@ -11,7 +11,6 @@ import { z } from "zod";
 
 import { protectedProcedure, publicProcedure, router } from "../index";
 import { readEmoteMap, refreshEmotes } from "../lib/emotes";
-import { createCall } from "../lib/stream";
 
 const SITE_ID = "site";
 
@@ -62,44 +61,6 @@ export const channelRouter = router({
 			isLive,
 			liveStartedAt: startedAt ? startedAt.getTime() : null,
 		};
-	}),
-
-	// Broadcaster-only. Provisions the GetStream livestream call + chat
-	// channel and persists their identifiers on channelConfig. Idempotent —
-	// safe to call again to refresh metadata. The channel page mounts the
-	// real chat once `chatChannelCid` is set.
-	createCall: protectedProcedure.mutation(async ({ ctx }) => {
-		if (!env.STREAM_API_KEY || !env.STREAM_API_SECRET) {
-			throw new TRPCError({
-				code: "PRECONDITION_FAILED",
-				message: "Stream not configured. Set STREAM_API_KEY and STREAM_API_SECRET to enable.",
-			});
-		}
-
-		const db = createDb();
-		const cfg = await db.select().from(channelConfig).where(eq(channelConfig.id, SITE_ID)).get();
-		if (!cfg) {
-			throw new TRPCError({
-				code: "NOT_FOUND",
-				message: "Channel not initialized. Run setup first.",
-			});
-		}
-		if (ctx.session.user.id !== cfg.ownerId) {
-			throw new TRPCError({ code: "FORBIDDEN", message: "Broadcaster only." });
-		}
-
-		// Use the broadcaster id as the call id — single tenant, deterministic,
-		// and lets `livestream:<id>` be the matching chat channel cid.
-		const callId = cfg.ownerId;
-		await createCall(env.STREAM_API_KEY, env.STREAM_API_SECRET, callId, cfg.ownerId);
-
-		const channelCid = `livestream:${callId}`;
-		await db
-			.update(channelConfig)
-			.set({ streamCallId: callId, chatChannelCid: channelCid })
-			.where(eq(channelConfig.id, SITE_ID));
-
-		return { callId, channelCid };
 	}),
 
 	// Broadcaster-only. Updates the editable channel config fields (title,

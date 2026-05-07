@@ -84,6 +84,21 @@ async function streamRest(
 	});
 }
 
+// GetStream livestream call response shape — narrow on what we actually use.
+// `ingress.rtmp.address` is the canonical RTMPS server URL for OBS; format
+// varies by tier/region (e.g. `rtmps://...:443/livestream.{callId}`), so we
+// always read it from the API rather than guessing.
+export type StreamCallResponse = {
+	call?: {
+		id?: string;
+		ingress?: {
+			rtmp?: {
+				address?: string;
+			};
+		};
+	};
+};
+
 // Create the broadcaster's livestream call. Idempotent on GetStream side —
 // safe to call again to refresh metadata. Returns the parsed call payload
 // (includes ingress.rtmp.address, the OBS server URL).
@@ -92,7 +107,7 @@ export async function createCall(
 	apiSecret: string,
 	callId: string,
 	broadcasterId: string,
-) {
+): Promise<StreamCallResponse> {
 	const res = await streamRest(apiKey, apiSecret, `/video/call/livestream/${callId}`, {
 		method: "POST",
 		body: JSON.stringify({
@@ -104,7 +119,21 @@ export async function createCall(
 		}),
 	});
 	if (!res.ok) throw new Error(`createCall failed: ${res.status} ${await res.text()}`);
-	return res.json();
+	return (await res.json()) as StreamCallResponse;
+}
+
+// GET the existing call — used as a fallback to backfill ingress.rtmp.address
+// when an old provision didn't capture it. Idempotent and cheap.
+export async function getCall(
+	apiKey: string,
+	apiSecret: string,
+	callId: string,
+): Promise<StreamCallResponse | null> {
+	const res = await streamRest(apiKey, apiSecret, `/video/call/livestream/${callId}`, {
+		method: "GET",
+	});
+	if (!res.ok) return null;
+	return (await res.json()) as StreamCallResponse;
 }
 
 export async function goLive(apiKey: string, apiSecret: string, callId: string) {

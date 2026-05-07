@@ -12,10 +12,6 @@ import { toast } from "sonner";
 
 import { trpc } from "@/utils/trpc";
 
-// Same RTMPS endpoint GetStream returns in createCall responses; we hard-code
-// the stable host for OBS rather than round-tripping the call response.
-const RTMPS_BASE = "rtmps://livestream-ingress.stream-io-api.com:443/livestream";
-
 export default function RtmpsCard() {
 	const broadcaster = useQuery({
 		...trpc.stream.getBroadcasterToken.queryOptions(),
@@ -23,9 +19,10 @@ export default function RtmpsCard() {
 	});
 	const [revealed, setRevealed] = useState(false);
 
-	const rtmpsUrl = broadcaster.data?.callId
-		? `${RTMPS_BASE}/${broadcaster.data.callId}`
-		: RTMPS_BASE;
+	// Canonical URL comes from GetStream's `ingress.rtmp.address` field —
+	// captured at provision time and persisted on channelConfig. Falsy
+	// while the call hasn't been provisioned yet.
+	const rtmpsUrl = broadcaster.data?.rtmpsUrl ?? "";
 	const streamKey = broadcaster.data?.userToken ?? "";
 
 	async function copy(value: string, label: string) {
@@ -50,13 +47,14 @@ export default function RtmpsCard() {
 				</span>
 				<div className="flex items-center gap-2 rounded-md border border-border bg-bg-2 px-3 py-2">
 					<code className="min-w-0 flex-1 truncate font-mono text-foreground text-xs">
-						{rtmpsUrl}
+						{rtmpsUrl || "Not yet provisioned"}
 					</code>
 					<Button
 						type="button"
 						size="sm"
 						variant="ghost"
 						onClick={() => copy(rtmpsUrl, "Server URL")}
+						disabled={!rtmpsUrl}
 						aria-label="Copy server URL"
 					>
 						<Copy className="h-3.5 w-3.5" aria-hidden />

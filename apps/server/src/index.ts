@@ -6,9 +6,9 @@ import { verifyStreamWebhook } from "@howlcast/api/lib/stream";
 import { appRouter } from "@howlcast/api/routers/index";
 import { createAuth } from "@howlcast/auth";
 import { createDb } from "@howlcast/db";
-import { channelConfig, profiles } from "@howlcast/db/schema";
+import { channelConfig, profiles, streamSessions } from "@howlcast/db/schema";
 import { env } from "@howlcast/env/server";
-import { eq } from "drizzle-orm";
+import { desc, eq, isNull } from "drizzle-orm";
 import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { logger } from "hono/logger";
@@ -72,8 +72,33 @@ app.post("/api/webhooks/getstream", async (c) => {
 			.update(channelConfig)
 			.set({ liveStartedAt: now, liveEndedAt: null })
 			.where(eq(channelConfig.id, "site"));
+		// Open a new stream session row. callId is best-effort — the cid format
+		// is "type:id"; we only care about the id half for stats.
+		const callId = event.call_cid?.split(":")[1] ?? null;
+		await db.insert(streamSessions).values({
+			id: crypto.randomUUID(),
+			callId,
+			startedAt: now,
+		});
 	} else {
 		await db.update(channelConfig).set({ liveEndedAt: now }).where(eq(channelConfig.id, "site"));
+		// Close the most recent open session (endedAt IS NULL). Compute total
+		// minutes from startedAt → now. If no open row exists (e.g. a duplicate
+		// session_ended fires after call.ended), this is a no-op.
+		const open = await db
+			.select()
+			.from(streamSessions)
+			.where(isNull(streamSessions.endedAt))
+			.orderBy(desc(streamSessions.startedAt))
+			.limit(1)
+			.get();
+		if (open) {
+			const minutes = Math.max(0, Math.round((now.getTime() - open.startedAt.getTime()) / 60_000));
+			await db
+				.update(streamSessions)
+				.set({ endedAt: now, totalMinutes: minutes })
+				.where(eq(streamSessions.id, open.id));
+		}
 	}
 
 	// Discord fanout — best-effort, runs after the DB write so live state

@@ -55,6 +55,9 @@ export const channelConfig = sqliteTable("channel_config", {
 	// GetStream identifiers — set when the stream is created
 	streamCallId: text("stream_call_id"),
 	chatChannelCid: text("chat_channel_cid"),
+	// RTMPS ingress URL — captured from createCall response (ingress.rtmp.address)
+	// so OBS gets the canonical server URL the API actually expects, not a guess.
+	rtmpsUrl: text("rtmps_url"),
 	// Twitch identity — seed for emote pipeline + profile defaults (Phase 6 wizard)
 	broadcasterTwitchId: text("broadcaster_twitch_id"),
 	setupCompletedAt: integer("setup_completed_at", { mode: "timestamp_ms" }),
@@ -112,6 +115,22 @@ export const webhooks = sqliteTable("webhooks", {
 		.$onUpdate(() => /* @__PURE__ */ new Date())
 		.notNull(),
 });
+
+// Stream sessions — one row per live session, written by the GetStream
+// webhook handler on call.live_started (insert) + call.session_ended /
+// call.ended (update endedAt + totalMinutes). Powers Phase 6 stats.
+export const streamSessions = sqliteTable(
+	"stream_sessions",
+	{
+		id: text("id").primaryKey(),
+		callId: text("call_id"),
+		startedAt: integer("started_at", { mode: "timestamp_ms" }).notNull(),
+		endedAt: integer("ended_at", { mode: "timestamp_ms" }),
+		peakViewers: integer("peak_viewers").default(0).notNull(),
+		totalMinutes: integer("total_minutes").default(0).notNull(),
+	},
+	(t) => [index("stream_sessions_started_idx").on(t.startedAt)],
+);
 
 // Per-user bans — broadcaster handles all moderation directly via GetStream's
 // built-in tools, but a row here is the source of truth for re-banning if a
