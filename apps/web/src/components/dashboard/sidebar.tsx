@@ -33,7 +33,7 @@ const SECTIONS: Section[] = [
 		title: "Live",
 		items: [
 			{ href: "/dashboard", label: "Stream", icon: Tv },
-			{ href: "/dashboard/stats", label: "Stats", icon: Activity, soon: true },
+			{ href: "/dashboard/stats", label: "Stats", icon: Activity },
 		],
 	},
 	{

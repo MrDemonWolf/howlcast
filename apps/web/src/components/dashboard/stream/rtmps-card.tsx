@@ -10,6 +10,7 @@ import { Copy, Eye, EyeOff, Radio } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 
+import { useStreamerMode } from "@/lib/streamer-mode";
 import { trpc } from "@/utils/trpc";
 
 export default function RtmpsCard() {
@@ -18,12 +19,16 @@ export default function RtmpsCard() {
 		retry: false,
 	});
 	const [revealed, setRevealed] = useState(false);
+	const streamerMode = useStreamerMode();
 
 	// Canonical URL comes from GetStream's `ingress.rtmp.address` field —
 	// captured at provision time and persisted on channelConfig. Falsy
 	// while the call hasn't been provisioned yet.
 	const rtmpsUrl = broadcaster.data?.rtmpsUrl ?? "";
 	const streamKey = broadcaster.data?.userToken ?? "";
+	// Streamer Mode forces both fields to mask regardless of `revealed`.
+	const showRtmps = !streamerMode;
+	const showKey = revealed && !streamerMode;
 
 	async function copy(value: string, label: string) {
 		try {
@@ -47,14 +52,18 @@ export default function RtmpsCard() {
 				</span>
 				<div className="flex items-center gap-2 rounded-md border border-border bg-bg-2 px-3 py-2">
 					<code className="min-w-0 flex-1 truncate font-mono text-foreground text-xs">
-						{rtmpsUrl || "Not yet provisioned"}
+						{rtmpsUrl
+							? showRtmps
+								? rtmpsUrl
+								: "rtmps://" + "•".repeat(28)
+							: "Not yet provisioned"}
 					</code>
 					<Button
 						type="button"
 						size="sm"
 						variant="ghost"
 						onClick={() => copy(rtmpsUrl, "Server URL")}
-						disabled={!rtmpsUrl}
+						disabled={!rtmpsUrl || streamerMode}
 						aria-label="Copy server URL"
 					>
 						<Copy className="h-3.5 w-3.5" aria-hidden />
@@ -66,17 +75,17 @@ export default function RtmpsCard() {
 				<span className="font-mono text-[10px] text-fg-3 uppercase tracking-wider">Stream key</span>
 				<div className="flex items-center gap-2 rounded-md border border-border bg-bg-2 px-3 py-2">
 					<code className="min-w-0 flex-1 truncate font-mono text-foreground text-xs">
-						{streamKey ? (revealed ? streamKey : "•".repeat(40)) : "Not yet provisioned"}
+						{streamKey ? (showKey ? streamKey : "•".repeat(40)) : "Not yet provisioned"}
 					</code>
 					<Button
 						type="button"
 						size="sm"
 						variant="ghost"
 						onClick={() => setRevealed((v) => !v)}
-						disabled={!streamKey}
-						aria-label={revealed ? "Hide key" : "Reveal key"}
+						disabled={!streamKey || streamerMode}
+						aria-label={showKey ? "Hide key" : "Reveal key"}
 					>
-						{revealed ? (
+						{showKey ? (
 							<EyeOff className="h-3.5 w-3.5" aria-hidden />
 						) : (
 							<Eye className="h-3.5 w-3.5" aria-hidden />
@@ -87,7 +96,7 @@ export default function RtmpsCard() {
 						size="sm"
 						variant="ghost"
 						onClick={() => copy(streamKey, "Stream key")}
-						disabled={!streamKey}
+						disabled={!streamKey || streamerMode}
 						aria-label="Copy stream key"
 					>
 						<Copy className="h-3.5 w-3.5" aria-hidden />

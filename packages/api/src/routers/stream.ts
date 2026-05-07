@@ -3,10 +3,10 @@
 // dashboard exists; for now the broadcaster path is just `getBroadcasterToken`.
 
 import { createDb } from "@howlcast/db";
-import { channelConfig, profiles } from "@howlcast/db/schema";
+import { channelConfig, profiles, streamSessions } from "@howlcast/db/schema";
 import { env } from "@howlcast/env/server";
 import { TRPCError } from "@trpc/server";
-import { eq } from "drizzle-orm";
+import { desc, eq, gte } from "drizzle-orm";
 import { protectedProcedure, publicProcedure, router } from "../index";
 import {
 	createCall,
@@ -237,5 +237,74 @@ export const streamRouter = router({
 
 		await stopLive(env.STREAM_API_KEY, env.STREAM_API_SECRET, cfg.streamCallId);
 		return { ok: true };
+	}),
+
+	// Broadcaster-only stats. Aggregates the last 7 days of stream_sessions
+	// rows (written by the GetStream webhook on call.live_started /
+	// call.session_ended). Returns 3 top-line numbers + the session list.
+	getStats: protectedProcedure.query(async ({ ctx }) => {
+		const db = createDb();
+		const me = await db
+			.select({ role: profiles.role })
+			.from(profiles)
+			.where(eq(profiles.userId, ctx.session.user.id))
+			.get();
+		if (me?.role !== "broadcaster") {
+			throw new TRPCError({ code: "FORBIDDEN", message: "Broadcaster only." });
+		}
+
+		const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+		const rows = await db
+			.select()
+			.from(streamSessions)
+			.where(gte(streamSessions.startedAt, sevenDaysAgo))
+			.orderBy(desc(streamSessions.startedAt))
+			.all();
+
+		const totalMinutesLast7d = rows.reduce((sum, r) => sum + (r.totalMinutes ?? 0), 0);
+		const totalSessionsLast7d = rows.length;
+
+		// Streak: walk back from today; count consecutive days with at least one
+		// session that started on that day. Day boundaries are local UTC.
+		const sessionDays = new Set<string>();
+		for (const r of rows) {
+			sessionDays.add(r.startedAt.toISOString().slice(0, 10));
+		}
+		let currentStreak = 0;
+		const cursor = new Date();
+		for (let i = 0; i < 7; i++) {
+			const key = cursor.toISOString().slice(0, 10);
+			if (sessionDays.has(key)) {
+				currentStreak++;
+				cursor.setUTCDate(cursor.getUTCDate() - 1);
+			} else if (i === 0) {
+				// no session today — try yesterday but don't count today
+				cursor.setUTCDate(cursor.getUTCDate() - 1);
+			} else {
+				break;
+			}
+		}
+
+		// Look up the all-time first session for context (e.g. "streaming since…").
+		const firstEver = await db
+			.select({ startedAt: streamSessions.startedAt })
+			.from(streamSessions)
+			.orderBy(streamSessions.startedAt)
+			.limit(1)
+			.get();
+
+		return {
+			totalMinutesLast7d,
+			totalSessionsLast7d,
+			currentStreak,
+			firstSessionAt: firstEver?.startedAt?.getTime() ?? null,
+			sessions: rows.map((r) => ({
+				id: r.id,
+				startedAt: r.startedAt.getTime(),
+				endedAt: r.endedAt?.getTime() ?? null,
+				totalMinutes: r.totalMinutes ?? 0,
+				peakViewers: r.peakViewers ?? 0,
+			})),
+		};
 	}),
 });

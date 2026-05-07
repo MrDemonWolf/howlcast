@@ -114,6 +114,18 @@ export default function ChannelPage() {
 					/>
 				</aside>
 			</div>
+
+			<footer className="mt-10 flex flex-wrap items-center justify-between gap-3 border-border border-t pt-5 font-mono text-[10px] text-fg-4 uppercase tracking-wider">
+				<span>© MrDemonWolf, Inc.</span>
+				<div className="flex gap-4">
+					<a href="/privacy" className="hover:text-foreground">
+						Privacy
+					</a>
+					<a href="/terms" className="hover:text-foreground">
+						Terms
+					</a>
+				</div>
+			</footer>
 		</main>
 	);
 }

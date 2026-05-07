@@ -127,14 +127,14 @@
 - [x] Auto-deploy from `main`
 - [x] Sonner toasts for mutations (in use across all dashboard pages)
 - [x] Favicon + Apple touch icons (layout.tsx already configures these)
-- [ ] **Live → Stats** dashboard page (7-day analytics)
-- [ ] **Streamer Mode toggle** in dashboard header (mask key + redact notifications)
+- [x] **Live → Stats** dashboard page (7-day analytics)
+- [x] **Streamer Mode toggle** in dashboard header (mask key + redact notifications + RTMPS URL)
 - [ ] Viewer `/account` page (display name, pronouns, avatar, login, sessions)
 - [ ] White-label settings (logo, platform name, footer attribution) + rendering site-wide
-- [ ] PP / TOS WYSIWYG editor (Tiptap + rehype-sanitize) + `/privacy` + `/terms` routes
-- [ ] Error boundaries on every page
-- [ ] 404 page
-- [ ] Loading skeletons
+- [x] `/privacy` + `/terms` routes (static v1 — WYSIWYG editor still pending)
+- [x] Error boundaries (root + dashboard + global-error)
+- [x] 404 page
+- [x] Loading skeletons (root + dashboard)
 - [ ] OG images via `@vercel/og`
 - [ ] robots.txt + sitemap
 - [ ] Cloudflare Web Analytics snippet

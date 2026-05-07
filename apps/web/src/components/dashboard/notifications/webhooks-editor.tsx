@@ -11,6 +11,7 @@ import { BellRing } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
+import { maskWithPrefix, useStreamerMode } from "@/lib/streamer-mode";
 import { trpc } from "@/utils/trpc";
 
 type Hook = {
@@ -36,6 +37,7 @@ export default function WebhooksEditor() {
 
 function WebhookCard({ hook }: { hook: Hook }) {
 	const queryClient = useQueryClient();
+	const streamerMode = useStreamerMode();
 	const [url, setUrl] = useState(hook.url ?? "");
 	const [notifyOnLive, setNotifyOnLive] = useState(hook.notifyOnLive);
 	const [notifyOnEnd, setNotifyOnEnd] = useState(hook.notifyOnEnd);
@@ -74,13 +76,19 @@ function WebhookCard({ hook }: { hook: Hook }) {
 
 			<div className="flex flex-col gap-1.5">
 				<Label htmlFor={`wh-${hook.id}`}>Discord webhook URL</Label>
-				<Input
-					id={`wh-${hook.id}`}
-					value={url}
-					onChange={(e) => setUrl(e.target.value)}
-					type="url"
-					placeholder="https://discord.com/api/webhooks/…"
-				/>
+				{streamerMode && url ? (
+					<div className="flex h-9 items-center rounded-md border border-border bg-bg-2 px-3 font-mono text-fg-2 text-xs">
+						{maskWithPrefix(url, 32)}
+					</div>
+				) : (
+					<Input
+						id={`wh-${hook.id}`}
+						value={url}
+						onChange={(e) => setUrl(e.target.value)}
+						type="url"
+						placeholder="https://discord.com/api/webhooks/…"
+					/>
+				)}
 			</div>
 
 			<div className="flex flex-col gap-1.5">
