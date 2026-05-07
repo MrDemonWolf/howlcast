@@ -15,13 +15,14 @@ import {
 	MessageSquare,
 	Server,
 	Settings,
-	Sliders,
 	Sparkles,
 	Tv,
 	UserCircle,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+
+import { useWhiteLabel } from "@/lib/use-white-label";
 
 type Item = { href: string; label: string; icon: LucideIcon; soon?: boolean };
 type Section = { title: string; items: Item[] };
@@ -50,10 +51,9 @@ const SECTIONS: Section[] = [
 	{
 		title: "Server",
 		items: [
+			{ href: "/dashboard/branding", label: "Branding", icon: ImageIcon },
 			{ href: "/dashboard/status", label: "Self-host status", icon: Server },
 			{ href: "/dashboard/account", label: "Account", icon: UserCircle },
-			{ href: "/dashboard/branding", label: "Branding", icon: ImageIcon, soon: true },
-			{ href: "/dashboard/legal", label: "Privacy / TOS", icon: Sliders, soon: true },
 		],
 	},
 ];
@@ -66,13 +66,22 @@ export default function Sidebar({
 	verified: boolean;
 }) {
 	const pathname = usePathname();
+	const wl = useWhiteLabel();
 
 	return (
 		<aside className="sticky top-0 hidden h-svh w-60 flex-none flex-col gap-5 overflow-y-auto border-border border-r bg-bg p-4 lg:flex">
 			<div className="flex items-center gap-2.5 border-border border-b pb-3">
-				<div className="grid h-9 w-9 flex-none place-items-center rounded-md bg-cyan-soft font-display font-semibold text-fg uppercase">
-					{displayName.charAt(0)}
-				</div>
+				{wl.hasCustomLogo ? (
+					<img
+						src={wl.logoUrl}
+						alt={wl.platformName}
+						className="h-9 w-9 flex-none rounded-md object-contain"
+					/>
+				) : (
+					<div className="grid h-9 w-9 flex-none place-items-center rounded-md bg-cyan-soft font-display font-semibold text-fg uppercase">
+						{displayName.charAt(0)}
+					</div>
+				)}
 				<div className="flex min-w-0 flex-col leading-tight">
 					<span className="flex items-center gap-1 truncate font-semibold text-foreground text-sm">
 						{displayName}

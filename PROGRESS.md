@@ -129,12 +129,14 @@
 - [x] Favicon + Apple touch icons (layout.tsx already configures these)
 - [x] **Live → Stats** dashboard page (7-day analytics)
 - [x] **Streamer Mode toggle** in dashboard header (mask key + redact notifications + RTMPS URL)
-- [ ] Viewer `/account` page (display name, pronouns, avatar, login, sessions)
-- [ ] White-label settings (logo, platform name, footer attribution) + rendering site-wide
-- [x] `/privacy` + `/terms` routes (static v1 — WYSIWYG editor still pending)
+- [x] Viewer `/account` page (display name, pronouns, sessions, danger zone)
+- [x] White-label settings (logo, platform name, footer attribution) + rendering site-wide
+- [x] `/privacy` + `/terms` routes (DB-backed via Tiptap WYSIWYG in dashboard)
 - [x] Error boundaries (root + dashboard + global-error)
 - [x] 404 page
 - [x] Loading skeletons (root + dashboard)
+- [x] OG images (channel home, /privacy, /terms via next/og ImageResponse)
+- [x] robots.txt + sitemap.xml
 - [ ] OG images via `@vercel/og`
 - [ ] robots.txt + sitemap
 - [ ] Cloudflare Web Analytics snippet

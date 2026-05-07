@@ -14,6 +14,7 @@ import { useQuery } from "@tanstack/react-query";
 import { BadgeCheck, Eye, Mail, MessageSquareOff, PawPrint, Settings } from "lucide-react";
 import dynamic from "next/dynamic";
 import { useCallback, useState } from "react";
+import SiteFooter from "@/components/site-footer";
 import { trpc } from "@/utils/trpc";
 
 const POLL_MS = 10_000;
@@ -115,17 +116,7 @@ export default function ChannelPage() {
 				</aside>
 			</div>
 
-			<footer className="mt-10 flex flex-wrap items-center justify-between gap-3 border-border border-t pt-5 font-mono text-[10px] text-fg-4 uppercase tracking-wider">
-				<span>© MrDemonWolf, Inc.</span>
-				<div className="flex gap-4">
-					<a href="/privacy" className="hover:text-foreground">
-						Privacy
-					</a>
-					<a href="/terms" className="hover:text-foreground">
-						Terms
-					</a>
-				</div>
-			</footer>
+			<SiteFooter />
 		</main>
 	);
 }

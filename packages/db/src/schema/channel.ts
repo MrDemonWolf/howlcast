@@ -132,6 +132,38 @@ export const streamSessions = sqliteTable(
 	(t) => [index("stream_sessions_started_idx").on(t.startedAt)],
 );
 
+// White-label settings — single row, id='site'. Lets the broadcaster (or
+// anyone forking this) override the platform branding without touching code.
+// Logos live in R2 at `branding/logo-{hash}.{ext}` keyed by `customLogoKey`.
+export const whiteLabel = sqliteTable("white_label", {
+	id: text("id").primaryKey().default("site"),
+	customLogoKey: text("custom_logo_key"),
+	customPlatformName: text("custom_platform_name"),
+	footerAttribution: text("footer_attribution", {
+		enum: ["default", "custom", "off"],
+	})
+		.notNull()
+		.default("default"),
+	customFooterText: text("custom_footer_text"),
+	updatedAt: integer("updated_at", { mode: "timestamp_ms" })
+		.default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`)
+		.$onUpdate(() => /* @__PURE__ */ new Date())
+		.notNull(),
+});
+
+// Legal docs — two rows, ids = 'privacy' | 'terms'. Sanitized HTML written
+// from the Tiptap editor in /dashboard/branding. Public reads at /privacy
+// and /terms render this directly via dangerouslySetInnerHTML (sanitization
+// happens at write time, never at read).
+export const legalDocs = sqliteTable("legal_docs", {
+	id: text("id").primaryKey(),
+	bodyHtml: text("body_html").notNull(),
+	updatedAt: integer("updated_at", { mode: "timestamp_ms" })
+		.default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`)
+		.$onUpdate(() => /* @__PURE__ */ new Date())
+		.notNull(),
+});
+
 // Per-user bans — broadcaster handles all moderation directly via GetStream's
 // built-in tools, but a row here is the source of truth for re-banning if a
 // chat session resets.

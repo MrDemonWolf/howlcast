@@ -41,6 +41,61 @@ app.use(
 
 app.get("/api/health", (c) => c.json({ ok: true }));
 
+// Branding logo upload (broadcaster only). Multipart POST → R2.
+// Bypassing tRPC for this one route so the SDK can stream the body straight
+// to R2 without buffering. Returns the new key + public URL.
+const ALLOWED_LOGO_TYPES = new Map([
+	["image/svg+xml", "svg"],
+	["image/png", "png"],
+	["image/jpeg", "jpg"],
+]);
+const MAX_LOGO_BYTES = 1_000_000;
+
+app.post("/api/upload/logo", async (c) => {
+	const auth = createAuth();
+	const sess = await auth.api.getSession({ headers: c.req.raw.headers });
+	if (!sess?.user) return c.json({ error: "unauthenticated" }, 401);
+
+	const db = createDb();
+	const cfg = await db.select().from(channelConfig).where(eq(channelConfig.id, "site")).get();
+	if (!cfg || cfg.ownerId !== sess.user.id) {
+		return c.json({ error: "broadcaster only" }, 403);
+	}
+
+	const form = await c.req.formData();
+	const raw = form.get("file");
+	// Hono types FormDataEntryValue as `string | Blob | null` in some
+	// configs; the file we expect is a Blob (File extends Blob in Workers).
+	if (!raw || typeof raw === "string") return c.json({ error: "missing file" }, 400);
+	const file = raw as Blob & { type: string; size: number; name?: string };
+
+	const ext = ALLOWED_LOGO_TYPES.get(file.type);
+	if (!ext) return c.json({ error: "unsupported type" }, 415);
+	if (file.size > MAX_LOGO_BYTES) return c.json({ error: "file too large" }, 413);
+
+	const bytes = new Uint8Array(await file.arrayBuffer());
+	const digest = await crypto.subtle.digest("SHA-256", bytes);
+	const hash = Array.from(new Uint8Array(digest))
+		.slice(0, 8)
+		.map((b) => b.toString(16).padStart(2, "0"))
+		.join("");
+	const key = `branding/logo-${hash}.${ext}`;
+
+	await env.PUBLIC_BUCKET.put(key, bytes, {
+		httpMetadata: { contentType: file.type },
+	});
+
+	const { whiteLabel } = await import("@howlcast/db/schema");
+	const existing = await db.select().from(whiteLabel).where(eq(whiteLabel.id, "site")).get();
+	if (existing) {
+		await db.update(whiteLabel).set({ customLogoKey: key }).where(eq(whiteLabel.id, "site"));
+	} else {
+		await db.insert(whiteLabel).values({ id: "site", customLogoKey: key });
+	}
+
+	return c.json({ key });
+});
+
 // GetStream webhook receiver. GetStream signs Video webhooks with the app's
 // API Secret (no separate webhook secret) — verified via X-SIGNATURE header.
 // Updates channelConfig.liveStartedAt/liveEndedAt on call.live_started /

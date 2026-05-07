@@ -1,5 +1,7 @@
 import { protectedProcedure, publicProcedure, router } from "../index";
+import { accountRouter } from "./account";
 import { adminRouter } from "./admin";
+import { brandingRouter } from "./branding";
 import { channelRouter } from "./channel";
 import { setupRouter } from "./setup";
 import { streamRouter } from "./stream";
@@ -18,5 +20,7 @@ export const appRouter = router({
 	channel: channelRouter,
 	setup: setupRouter,
 	admin: adminRouter,
+	account: accountRouter,
+	branding: brandingRouter,
 });
 export type AppRouter = typeof appRouter;
