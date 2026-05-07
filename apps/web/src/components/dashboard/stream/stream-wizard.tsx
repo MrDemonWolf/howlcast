@@ -165,6 +165,24 @@ export default function StreamWizard() {
 					{goLive.isPending ? "Going live…" : "Go live"}
 				</Button>
 			</section>
+			{/* Escape hatch: if the GetStream webhook never fires (misconfigured URL,
+			    delivery failure), the wizard stays stuck on "ready" even though
+			    OBS may be pushing. Force-end calls stopLive on GetStream directly,
+			    which lets the broadcaster recover without contacting support. */}
+			<section className="flex items-center justify-between rounded-lg border border-border border-dashed bg-bg-2 px-4 py-3 text-muted-foreground text-xs">
+				<span>Stream stuck or pushing without a Live badge? Force-end the call on GetStream.</span>
+				<Button
+					type="button"
+					variant="ghost"
+					size="sm"
+					onClick={() => stopLive.mutate()}
+					disabled={busy}
+					className="text-fg-2 hover:text-foreground"
+				>
+					<Square className="mr-1.5 h-3 w-3" aria-hidden />
+					{stopLive.isPending ? "Ending…" : "Force end"}
+				</Button>
+			</section>
 			<div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
 				<RtmpsCard />
 				<TitleForm />
