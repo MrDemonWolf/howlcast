@@ -9,7 +9,10 @@
 			"default": "./src/*.ts"
 		}
 	},
-	"scripts": {},
+	"scripts": {
+		"test": "vitest run",
+		"check-types": "tsc --noEmit"
+	},
 	"dependencies": {
 		"@howlcast/auth": "workspace:*",
 		"@howlcast/db": "workspace:*",
@@ -27,7 +30,9 @@
 	},
 	"devDependencies": {
 		"@howlcast/config": "workspace:*",
+		"@libsql/client": "^0.17.3",
 		"hono": "catalog:",
-		"typescript": "catalog:"
+		"typescript": "catalog:",
+		"vitest": "^4.1.5"
 	}
 }

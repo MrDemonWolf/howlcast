@@ -68,15 +68,14 @@ Single page, three sections stacked. Match the dashboard's existing `.card` patt
 │ ○ Custom                                                 │
 │   [ Powered by Acme Co.____________________ ]          │
 │                                                          │
-│ ○ Off · requires HowlCast Pro license                   │
-│   No attribution shown. Available with paid license.   │
+│ ○ Off                                                    │
+│   No attribution shown.                                  │
 └──────────────────────────────────────────────────────────┘
 ```
 
 **Behavior:**
 
-- Three radio options
-- "Off" is gated behind a license check (TBD whether HowlCast Pro is a thing for v1 — see `docs/decisions.md` #11). For now, "Off" is selectable but shows a soft notice.
+- Three radio options, all freely selectable. HowlCast is 100% free with no Pro tier.
 - Custom field accepts plain text, max 80 chars
 - Live preview at bottom of page shows footer rendering
 
@@ -239,8 +238,6 @@ This prevents script injection, weird inline styles, image embeds, etc.
 
 ## Open questions for this spec
 
-- **#11 (decisions.md):** Should "Footer attribution: Off" require a paid HowlCast Pro license? Or always free?
-  - **My recommendation:** keep it free for v1. License gating is product-strategy work that's bigger than this spec. Mark "Off" as available now, license-gate later if you want.
 - **#12 (decisions.md):** Tiptap WYSIWYG vs full markdown?
   - **My recommendation:** Tiptap (locked here unless you object). Lighter, friendlier on mobile, no markdown learning curve for non-technical edits.
 

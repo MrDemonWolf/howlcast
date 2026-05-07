@@ -115,3 +115,51 @@ jobs:
           done
           echo "WARN: tv.mrdemonwolf.com not responding after 90s — likely first-deploy DNS propagation. Check manually."
           exit 0
+
+      - name: Smoke-test public tRPC endpoints
+        run: |
+          set -e
+          BASE=https://tv-api.mrdemonwolf.workers.dev
+
+          echo "→ branding.get"
+          BRANDING=$(curl -sfL "$BASE/api/trpc/branding.get")
+          echo "$BRANDING" | jq -e '.result.data.platformName | type == "string"' >/dev/null
+
+          echo "→ stream.isLive"
+          LIVE=$(curl -sfL "$BASE/api/trpc/stream.isLive")
+          echo "$LIVE" | jq -e '.result.data.isLive | type == "boolean"' >/dev/null
+
+          echo "→ branding.getLegal (privacy)"
+          PRIVACY=$(curl -sfL "$BASE/api/trpc/branding.getLegal?input=%7B%22id%22%3A%22privacy%22%7D")
+          echo "$PRIVACY" | jq -e '.result.data.bodyHtml | type == "string"' >/dev/null
+
+          echo "tRPC public endpoints OK"
+
+      - name: Smoke-test public web routes
+        run: |
+          set -e
+          BASE=https://tv.mrdemonwolf.workers.dev
+
+          for path in "/" "/privacy" "/terms" "/login" "/robots.txt" "/sitemap.xml"; do
+            CODE=$(curl -sL -o /dev/null -w '%{http_code}' "$BASE$path")
+            if [ "$CODE" != "200" ]; then
+              echo "ERROR: $path returned $CODE (expected 200)"
+              exit 1
+            fi
+            echo "  ✓ $path → 200"
+          done
+
+      - name: Smoke-test auth-gated routes redirect
+        run: |
+          set -e
+          BASE=https://tv.mrdemonwolf.workers.dev
+
+          for path in "/dashboard" "/account"; do
+            CODE=$(curl -sL -o /dev/null -w '%{http_code}' --max-redirs 0 "$BASE$path")
+            # Next.js redirect helpers return 307. Accept 302 for safety.
+            if [ "$CODE" != "307" ] && [ "$CODE" != "302" ]; then
+              echo "ERROR: $path returned $CODE (expected 307/302 redirect)"
+              exit 1
+            fi
+            echo "  ✓ $path → $CODE (redirect)"
+          done
