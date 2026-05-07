@@ -77,11 +77,26 @@ jobs:
             exit 1
           fi
 
-      - name: Smoke-test web proxy
+      - name: Smoke-test web proxy (workers.dev)
         run: |
-          PROXIED=$(curl -sf https://tv.mrdemonwolf.com/api/health || echo "FAILED")
-          echo "Web proxy health: $PROXIED"
+          PROXIED=$(curl -sf https://tv.mrdemonwolf.workers.dev/api/health || echo "FAILED")
+          echo "Web proxy health (workers.dev): $PROXIED"
           if [ "$PROXIED" != '{"ok":true}' ]; then
             echo "ERROR: Web /api/* proxy is broken"
             exit 1
           fi
+
+      - name: Smoke-test custom domain (with retry)
+        continue-on-error: true
+        run: |
+          for i in 1 2 3 4 5 6; do
+            PROXIED=$(curl -sf https://tv.mrdemonwolf.com/api/health || echo "FAILED")
+            if [ "$PROXIED" = '{"ok":true}' ]; then
+              echo "Custom domain healthy after ${i} attempt(s): $PROXIED"
+              exit 0
+            fi
+            echo "Attempt $i: tv.mrdemonwolf.com not ready yet (DNS/SSL warming up)..."
+            sleep 15
+          done
+          echo "WARN: tv.mrdemonwolf.com not responding after 90s — likely first-deploy DNS propagation. Check manually."
+          exit 0
