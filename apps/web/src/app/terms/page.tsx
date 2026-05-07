@@ -93,7 +93,7 @@ export default function TermsPage() {
 					<h2 className="mb-2 font-display font-semibold text-foreground text-lg">Termination</h2>
 					<p>
 						You can delete your account anytime by emailing{" "}
-						<span className="font-mono">privacy@mrdemonwolf.com</span>. We can suspend or terminate
+						<span className="font-mono">legal@mrdemonwolf.com</span>. We can suspend or terminate
 						accounts that violate these terms.
 					</p>
 				</section>

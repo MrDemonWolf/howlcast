@@ -5,18 +5,24 @@
 
 ---
 
-## 🚀 RIGHT NOW (unblocks Go Live)
+## 🚀 RIGHT NOW (unblocks launch)
 
-- [ ] **Update GetStream Video webhook URL** in GetStream dashboard:
-      `https://tv-api.mrdemonwolf.workers.dev/api/webhooks/getstream`
-      (Old `howlcast-api` URL is dead after the rename. Without this update,
-      RTMPS push doesn't trigger the LIVE badge — webhook never fires.)
-- [ ] **Test Go Live** after the webhook update: 1. Set up stream in dashboard (one click) 2. Copy RTMPS URL + key into OBS 3. Click Start Streaming in OBS 4. Click Go Live in dashboard 5. Verify LIVE badge appears on `tv.mrdemonwolf.com` homepage
+- [ ] **Apply migrations to remote D1.** Migration 0005 (`stream_sessions`
+      table + `rtmps_url` column) and 0004 (drop `allow_signups`) need to
+      land in prod or `/dashboard/stats` will throw "no such table". Run:
+      `     bunx wrangler d1 migrations apply howlcast-db --remote
+    `
+- [ ] **Set up `legal@mrdemonwolf.com`** mailbox or forwarder.
+      Both `/privacy` and `/terms` pages now reference it as the contact
+      for data requests + account deletion. If the mailbox doesn't exist
+      or doesn't forward to a real inbox, GDPR / CCPA requests go nowhere.
+- [ ] **Test Go Live** end-to-end: 1. Set up stream in dashboard (one click) 2. Copy RTMPS URL + key into OBS 3. Click Start Streaming in OBS 4. Click Go Live in dashboard 5. Verify LIVE badge appears on `tv.mrdemonwolf.com` homepage 6. Verify Discord webhook fires (public + private channels) 7. Verify chat works for both broadcaster + anonymous viewer 8. Verify Stats page shows the session after End
 - [ ] Delete orphan workers in Cloudflare dashboard:
       `howlcast` + `howlcast-api` (or `bunx wrangler delete howlcast` /
       `bunx wrangler delete howlcast-api`)
-
-That's it. Everything else is optional or surfaces in the dashboard later.
+- [x] **Update GetStream Video webhook URL** — DONE
+- [x] **GetStream Chat webhook 401 unblocking** — DONE (commit `c1a9003`,
+      handler now skips HMAC for non-`call.*` events)
 
 ---
 

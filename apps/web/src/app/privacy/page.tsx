@@ -25,7 +25,7 @@ export default function PrivacyPage() {
 					<h2 className="mb-2 font-display font-semibold text-foreground text-lg">Operator</h2>
 					<p>
 						HowlCast is operated by <strong className="text-foreground">MrDemonWolf, Inc.</strong>{" "}
-						("we", "us"). Contact: <span className="font-mono">privacy@mrdemonwolf.com</span>.
+						("we", "us"). Contact: <span className="font-mono">legal@mrdemonwolf.com</span>.
 					</p>
 				</section>
 
@@ -85,8 +85,8 @@ export default function PrivacyPage() {
 					<h2 className="mb-2 font-display font-semibold text-foreground text-lg">Your rights</h2>
 					<p>
 						You can request a copy of your data, correct it, or have it deleted by emailing{" "}
-						<span className="font-mono">privacy@mrdemonwolf.com</span>. Account deletion removes
-						your profile, sessions, and chat identity within 30 days.
+						<span className="font-mono">legal@mrdemonwolf.com</span>. Account deletion removes your
+						profile, sessions, and chat identity within 30 days.
 					</p>
 				</section>
 
