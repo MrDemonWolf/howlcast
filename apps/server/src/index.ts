@@ -109,6 +109,33 @@ app.post("/api/upload/logo", async (c) => {
 	return c.json({ key });
 });
 
+// Public-read for the active branding logo. Streams the bytes from R2 so
+// the web worker doesn't need a public R2 origin / custom bucket DNS.
+// Cache-Control covers the long tail; key changes whenever the broadcaster
+// re-uploads (hash-suffixed key + DB pointer flip).
+app.get("/api/branding/logo", async (c) => {
+	const { whiteLabel } = await import("@howlcast/db/schema");
+	const db = createDb();
+	const row = await db.select().from(whiteLabel).where(eq(whiteLabel.id, "site")).get();
+	const key = row?.customLogoKey;
+	if (!key) return c.json({ error: "no custom logo" }, 404);
+
+	const obj = await env.PUBLIC_BUCKET.get(key);
+	if (!obj) return c.json({ error: "missing object" }, 404);
+
+	const contentType =
+		obj.httpMetadata?.contentType ??
+		(key.endsWith(".svg") ? "image/svg+xml" : key.endsWith(".png") ? "image/png" : "image/jpeg");
+
+	return new Response(obj.body, {
+		headers: {
+			"Content-Type": contentType,
+			"Cache-Control": "public, max-age=300, s-maxage=86400",
+			ETag: `"${key}"`,
+		},
+	});
+});
+
 // GetStream webhook receiver. GetStream signs Video webhooks with the app's
 // API Secret (no separate webhook secret) — verified via X-SIGNATURE header.
 // Updates channelConfig.liveStartedAt/liveEndedAt on call.live_started /
