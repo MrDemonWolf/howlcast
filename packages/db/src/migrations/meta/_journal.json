@@ -50,6 +50,13 @@
       "when": 1778201000000,
       "tag": "0006_white_label_and_legal_docs",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "6",
+      "when": 1778540000000,
+      "tag": "0007_drop_user_bans_and_invite_indexes",
+      "breakpoints": true
     }
   ]
 }

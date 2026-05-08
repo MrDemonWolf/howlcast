@@ -40,6 +40,11 @@ export const profiles = sqliteTable(
 // `setupCompletedAt` flips when the first-run wizard finishes (Phase 6).
 // Phase 3 only touches: ownerId, title, visibility, liveStartedAt/EndedAt,
 // streamCallId, chatChannelCid, broadcasterTwitchId.
+//
+// FK note: ownerId has no `onDelete` clause. SQLite/D1 default is `no action`,
+// which functions like `restrict` — the broadcaster row can't be deleted while
+// channelConfig points at them. The runtime guard in account.deleteMe already
+// enforces this; the DB-side default backs it up.
 export const channelConfig = sqliteTable("channel_config", {
 	id: text("id").primaryKey().default("site"),
 	ownerId: text("owner_id")
@@ -86,20 +91,27 @@ export const panels = sqliteTable(
 
 // Invite codes. Accepting one always sets `profiles.isInvited = true`.
 // No tier preassignment — single permission flag.
-export const invites = sqliteTable("invites", {
-	code: text("code").primaryKey(),
-	createdBy: text("created_by")
-		.notNull()
-		.references(() => user.id),
-	usedBy: text("used_by").references(() => user.id),
-	usedAt: integer("used_at", { mode: "timestamp_ms" }),
-	expiresAt: integer("expires_at", { mode: "timestamp_ms" }),
-	maxUses: integer("max_uses").notNull().default(1),
-	useCount: integer("use_count").notNull().default(0),
-	createdAt: integer("created_at", { mode: "timestamp_ms" })
-		.default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`)
-		.notNull(),
-});
+export const invites = sqliteTable(
+	"invites",
+	{
+		code: text("code").primaryKey(),
+		createdBy: text("created_by")
+			.notNull()
+			.references(() => user.id),
+		usedBy: text("used_by").references(() => user.id),
+		usedAt: integer("used_at", { mode: "timestamp_ms" }),
+		expiresAt: integer("expires_at", { mode: "timestamp_ms" }),
+		maxUses: integer("max_uses").notNull().default(1),
+		useCount: integer("use_count").notNull().default(0),
+		createdAt: integer("created_at", { mode: "timestamp_ms" })
+			.default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`)
+			.notNull(),
+	},
+	(t) => [
+		index("invites_created_at_idx").on(t.createdAt),
+		index("invites_expires_at_idx").on(t.expiresAt),
+	],
+);
 
 // Discord webhooks — two rows, ids = 'public' | 'private'. Configured from
 // Dashboard → Channel → Notifications. Fired on stream.online / stream.offline.
@@ -164,17 +176,7 @@ export const legalDocs = sqliteTable("legal_docs", {
 		.notNull(),
 });
 
-// Per-user bans — broadcaster handles all moderation directly via GetStream's
-// built-in tools, but a row here is the source of truth for re-banning if a
-// chat session resets.
-export const userBans = sqliteTable("user_bans", {
-	userId: text("user_id")
-		.primaryKey()
-		.references(() => user.id, { onDelete: "cascade" }),
-	reason: text("reason"),
-	bannedBy: text("banned_by")
-		.notNull()
-		.references(() => user.id),
-	bannedAt: integer("banned_at", { mode: "timestamp_ms" }).notNull(),
-	expiresAt: integer("expires_at", { mode: "timestamp_ms" }),
-});
+// userBans was here pre-Phase-6. Dropped for launch since the broadcaster
+// handles moderation directly via GetStream's built-in tools and no router
+// reads or writes the row. Will reintroduce if/when we ship a per-DB-row ban
+// audit + automated re-ban on chat reconnect (post-launch).
