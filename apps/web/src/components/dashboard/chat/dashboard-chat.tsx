@@ -6,6 +6,7 @@
 // source or a docked second window.
 
 import { Button } from "@howlcast/ui/components/button";
+import { Card } from "@howlcast/ui/components/card";
 import { useQuery } from "@tanstack/react-query";
 import { ExternalLink } from "lucide-react";
 import dynamic from "next/dynamic";
@@ -52,7 +53,7 @@ export default function DashboardChat({ popoutOnly = false }: { popoutOnly?: boo
 				</div>
 			) : null}
 
-			<div className="flex flex-1 flex-col overflow-hidden rounded-lg border border-border bg-card">
+			<Card className="flex-1 gap-0 py-0">
 				{ready ? (
 					<LiveChat
 						apiKey={broadcaster.data!.apiKey}
@@ -68,7 +69,7 @@ export default function DashboardChat({ popoutOnly = false }: { popoutOnly?: boo
 							: "Provision the stream first to enable chat."}
 					</div>
 				)}
-			</div>
+			</Card>
 		</div>
 	);
 }

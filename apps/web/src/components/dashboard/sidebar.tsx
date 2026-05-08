@@ -83,10 +83,7 @@ export default function Sidebar({ displayName, verified: _verified }: SidebarPro
 								height={20}
 								className="h-5 w-5"
 							/>
-							<span
-								className="font-display font-bold text-base"
-								style={{ letterSpacing: "-0.02em" }}
-							>
+							<span className="font-display font-bold text-base tracking-[-0.02em]">
 								{wl.platformName}
 							</span>
 						</>
@@ -110,19 +107,17 @@ export default function Sidebar({ displayName, verified: _verified }: SidebarPro
 									<Link
 										key={item.href}
 										href={item.href as never}
-										className="group relative flex items-center gap-2.5 rounded-md px-2.5 py-1.5 font-medium text-[13px] transition"
-										style={{
-											background: active ? "var(--bg-3)" : "transparent",
-											color: active ? "var(--fg)" : "var(--fg-3)",
-											fontWeight: active ? 500 : 400,
-										}}
+										className={`group relative flex items-center gap-2.5 rounded-md px-2.5 py-1.5 text-[13px] transition ${
+											active
+												? "bg-[var(--bg-3)] font-medium text-[var(--fg)]"
+												: "font-normal text-[var(--fg-3)]"
+										}`}
 										aria-current={active ? "page" : undefined}
 									>
 										{active && (
 											<span
 												aria-hidden
-												className="-translate-y-1/2 absolute top-1/2 left-[-12px] h-1 w-1 rounded-full"
-												style={{ background: "var(--cyan)" }}
+												className="-translate-y-1/2 absolute top-1/2 left-[-12px] h-1 w-1 rounded-full bg-[var(--cyan)]"
 											/>
 										)}
 										<Icon size={15} aria-hidden />
@@ -142,9 +137,7 @@ export default function Sidebar({ displayName, verified: _verified }: SidebarPro
 				<Avatar size={28} name={displayName || "WL"} hue={250} />
 				<div className="min-w-0 flex-1">
 					<div className="truncate font-medium text-[12px] leading-tight">{displayName}</div>
-					<div className="text-[11px]" style={{ color: "var(--fg-4)" }}>
-						Broadcaster · Owner
-					</div>
+					<div className="text-[11px] text-[var(--fg-4)]">Broadcaster · Owner</div>
 				</div>
 			</div>
 		</aside>

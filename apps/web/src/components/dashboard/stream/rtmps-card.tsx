@@ -5,6 +5,7 @@
 // toggle + Copy buttons. The URL is the GetStream RTMPS ingress.
 
 import { Button } from "@howlcast/ui/components/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@howlcast/ui/components/card";
 import { useQuery } from "@tanstack/react-query";
 import { Copy, Eye, EyeOff, Radio } from "lucide-react";
 import { useState } from "react";
@@ -40,72 +41,75 @@ export default function RtmpsCard() {
 	}
 
 	return (
-		<section className="flex flex-col gap-4 rounded-lg border border-border bg-card p-5">
-			<header className="flex items-center gap-2 border-border border-b pb-3">
+		<Card>
+			<CardHeader className="flex flex-row items-center gap-2 border-b pb-3">
 				<Radio className="h-4 w-4 text-cyan" aria-hidden />
-				<h2 className="font-display font-semibold text-foreground">OBS connection</h2>
-			</header>
-
-			<div className="flex flex-col gap-1.5">
-				<span className="font-mono text-[10px] text-fg-3 uppercase tracking-wider">
-					Server (RTMPS)
-				</span>
-				<div className="flex items-center gap-2 rounded-md border border-border bg-bg-2 px-3 py-2">
-					<code className="min-w-0 flex-1 truncate font-mono text-foreground text-xs">
-						{rtmpsUrl
-							? showRtmps
-								? rtmpsUrl
-								: "rtmps://" + "•".repeat(28)
-							: "Not yet provisioned"}
-					</code>
-					<Button
-						type="button"
-						size="sm"
-						variant="ghost"
-						onClick={() => copy(rtmpsUrl, "Server URL")}
-						disabled={!rtmpsUrl || streamerMode}
-						aria-label="Copy server URL"
-					>
-						<Copy className="h-3.5 w-3.5" aria-hidden />
-					</Button>
+				<CardTitle className="font-display font-semibold text-foreground">OBS connection</CardTitle>
+			</CardHeader>
+			<CardContent className="flex flex-col gap-4">
+				<div className="flex flex-col gap-1.5">
+					<span className="font-mono text-[10px] text-fg-3 uppercase tracking-wider">
+						Server (RTMPS)
+					</span>
+					<div className="flex items-center gap-2 rounded-md border border-border bg-bg-2 px-3 py-2">
+						<code className="min-w-0 flex-1 truncate font-mono text-foreground text-xs">
+							{rtmpsUrl
+								? showRtmps
+									? rtmpsUrl
+									: "rtmps://" + "•".repeat(28)
+								: "Not yet provisioned"}
+						</code>
+						<Button
+							type="button"
+							size="sm"
+							variant="ghost"
+							onClick={() => copy(rtmpsUrl, "Server URL")}
+							disabled={!rtmpsUrl || streamerMode}
+							aria-label="Copy server URL"
+						>
+							<Copy className="h-3.5 w-3.5" aria-hidden />
+						</Button>
+					</div>
 				</div>
-			</div>
 
-			<div className="flex flex-col gap-1.5">
-				<span className="font-mono text-[10px] text-fg-3 uppercase tracking-wider">Stream key</span>
-				<div className="flex items-center gap-2 rounded-md border border-border bg-bg-2 px-3 py-2">
-					<code className="min-w-0 flex-1 truncate font-mono text-foreground text-xs">
-						{streamKey ? (showKey ? streamKey : "•".repeat(40)) : "Not yet provisioned"}
-					</code>
-					<Button
-						type="button"
-						size="sm"
-						variant="ghost"
-						onClick={() => setRevealed((v) => !v)}
-						disabled={!streamKey || streamerMode}
-						aria-label={showKey ? "Hide key" : "Reveal key"}
-					>
-						{showKey ? (
-							<EyeOff className="h-3.5 w-3.5" aria-hidden />
-						) : (
-							<Eye className="h-3.5 w-3.5" aria-hidden />
-						)}
-					</Button>
-					<Button
-						type="button"
-						size="sm"
-						variant="ghost"
-						onClick={() => copy(streamKey, "Stream key")}
-						disabled={!streamKey || streamerMode}
-						aria-label="Copy stream key"
-					>
-						<Copy className="h-3.5 w-3.5" aria-hidden />
-					</Button>
+				<div className="flex flex-col gap-1.5">
+					<span className="font-mono text-[10px] text-fg-3 uppercase tracking-wider">
+						Stream key
+					</span>
+					<div className="flex items-center gap-2 rounded-md border border-border bg-bg-2 px-3 py-2">
+						<code className="min-w-0 flex-1 truncate font-mono text-foreground text-xs">
+							{streamKey ? (showKey ? streamKey : "•".repeat(40)) : "Not yet provisioned"}
+						</code>
+						<Button
+							type="button"
+							size="sm"
+							variant="ghost"
+							onClick={() => setRevealed((v) => !v)}
+							disabled={!streamKey || streamerMode}
+							aria-label={showKey ? "Hide key" : "Reveal key"}
+						>
+							{showKey ? (
+								<EyeOff className="h-3.5 w-3.5" aria-hidden />
+							) : (
+								<Eye className="h-3.5 w-3.5" aria-hidden />
+							)}
+						</Button>
+						<Button
+							type="button"
+							size="sm"
+							variant="ghost"
+							onClick={() => copy(streamKey, "Stream key")}
+							disabled={!streamKey || streamerMode}
+							aria-label="Copy stream key"
+						>
+							<Copy className="h-3.5 w-3.5" aria-hidden />
+						</Button>
+					</div>
+					<p className="text-muted-foreground text-xs">
+						Paste these into OBS Studio → Settings → Stream. Use service "Custom", not Twitch.
+					</p>
 				</div>
-				<p className="text-muted-foreground text-xs">
-					Paste these into OBS Studio → Settings → Stream. Use service "Custom", not Twitch.
-				</p>
-			</div>
-		</section>
+			</CardContent>
+		</Card>
 	);
 }

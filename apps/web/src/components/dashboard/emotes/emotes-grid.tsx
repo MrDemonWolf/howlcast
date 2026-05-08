@@ -57,7 +57,7 @@ export default function EmotesGrid() {
 			</div>
 
 			{emotes.length === 0 ? (
-				<div className="rounded-lg border border-border border-dashed bg-card p-8 text-center text-muted-foreground text-sm">
+				<div className="rounded-[var(--radius-lg)] border border-border border-dashed bg-card p-8 text-center text-muted-foreground text-sm">
 					No emotes yet. Connect 7TV / BTTV / FFZ for your Twitch channel to see them here.
 				</div>
 			) : (

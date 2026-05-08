@@ -5,6 +5,7 @@
 // outstanding invites + revoke. No SQL or env vars to manage.
 
 import { Button } from "@howlcast/ui/components/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@howlcast/ui/components/card";
 import { Input } from "@howlcast/ui/components/input";
 import { Label } from "@howlcast/ui/components/label";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -51,37 +52,41 @@ export default function InvitesPanel() {
 
 	return (
 		<div className="flex flex-col gap-6">
-			<section className="flex flex-col gap-3 rounded-lg border border-border bg-card p-5">
-				<header className="flex items-center gap-2 border-border border-b pb-3">
+			<Card>
+				<CardHeader className="flex flex-row items-center gap-2 border-b pb-3">
 					<Mail className="h-4 w-4 text-cyan" aria-hidden />
-					<h2 className="font-display font-semibold text-foreground">Send an invite</h2>
-				</header>
-				<form onSubmit={submit} className="flex flex-col gap-3 sm:flex-row sm:items-end">
-					<div className="flex flex-1 flex-col gap-1.5">
-						<Label htmlFor="inv-email">Email address</Label>
-						<Input
-							id="inv-email"
-							type="email"
-							value={email}
-							onChange={(e) => setEmail(e.target.value)}
-							placeholder="friend@example.com"
-							required
-						/>
-					</div>
-					<Button type="submit" disabled={create.isPending}>
-						{create.isPending ? "Sending…" : "Send invite"}
-					</Button>
-				</form>
-				<p className="text-muted-foreground text-xs">
-					They'll get a magic-link email. Click it to create their viewer account with chat access.
-					Links expire in 30 days.
-				</p>
-			</section>
+					<CardTitle className="font-display font-semibold text-foreground">
+						Send an invite
+					</CardTitle>
+				</CardHeader>
+				<CardContent className="flex flex-col gap-3">
+					<form onSubmit={submit} className="flex flex-col gap-3 sm:flex-row sm:items-end">
+						<div className="flex flex-1 flex-col gap-1.5">
+							<Label htmlFor="inv-email">Email address</Label>
+							<Input
+								id="inv-email"
+								type="email"
+								value={email}
+								onChange={(e) => setEmail(e.target.value)}
+								placeholder="friend@example.com"
+								required
+							/>
+						</div>
+						<Button type="submit" disabled={create.isPending}>
+							{create.isPending ? "Sending…" : "Send invite"}
+						</Button>
+					</form>
+					<p className="text-muted-foreground text-xs">
+						They'll get a magic-link email. Click it to create their viewer account with chat
+						access. Links expire in 30 days.
+					</p>
+				</CardContent>
+			</Card>
 
 			<section className="flex flex-col gap-3">
 				<h2 className="font-display font-semibold text-foreground">Outstanding invites</h2>
 				{invites.length === 0 ? (
-					<div className="rounded-lg border border-border border-dashed bg-card p-6 text-center text-muted-foreground text-sm">
+					<div className="rounded-[var(--radius-lg)] border border-border border-dashed bg-card p-6 text-center text-muted-foreground text-sm">
 						No invites sent yet.
 					</div>
 				) : (
@@ -89,7 +94,7 @@ export default function InvitesPanel() {
 						{invites.map((i) => (
 							<li
 								key={i.code}
-								className="flex items-center gap-3 rounded-lg border border-border bg-card p-3"
+								className="flex items-center gap-3 rounded-[var(--radius-lg)] border border-border bg-card p-3"
 							>
 								<div className="min-w-0 flex-1">
 									<div className="font-mono text-foreground text-xs">{i.code.slice(0, 8)}…</div>

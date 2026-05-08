@@ -4,6 +4,7 @@
 // (pages-dashboard.jsx → DashboardOverview): four stat tiles up top, then
 // the existing stream wizard sits below for the actual go-live flow.
 
+import { Card } from "@howlcast/ui/components/card";
 import { Eyebrow } from "@howlcast/ui/components/eyebrow";
 import { Sparkline } from "@howlcast/ui/components/sparkline";
 import { useQuery } from "@tanstack/react-query";
@@ -19,26 +20,16 @@ interface StatTileProps {
 
 function StatTile({ label, value, hint, chart }: StatTileProps) {
 	return (
-		<div
-			className="flex flex-col gap-2 rounded-[var(--radius-lg)] border p-[18px]"
-			style={{ background: "var(--bg-2)", borderColor: "var(--line)" }}
-		>
+		<Card className="gap-2 px-[18px] py-[18px] bg-[var(--bg-2)] border-[var(--line)]">
 			<Eyebrow>{label}</Eyebrow>
 			<div className="flex items-end justify-between gap-3">
-				<div
-					className="font-display font-bold"
-					style={{ fontSize: 28, letterSpacing: "-0.022em", lineHeight: 1 }}
-				>
+				<div className="font-display font-bold text-[28px] tracking-[-0.022em] leading-none">
 					{value}
 				</div>
 				{chart && chart.length > 1 && <Sparkline points={chart} width={92} height={28} fill />}
 			</div>
-			{hint && (
-				<div className="text-xs" style={{ color: "var(--fg-3)" }}>
-					{hint}
-				</div>
-			)}
-		</div>
+			{hint && <div className="text-xs text-[var(--fg-3)]">{hint}</div>}
+		</Card>
 	);
 }
 

@@ -5,6 +5,7 @@
 // Visibility toggle was removed when public mode was retired — every
 // den is invite-only by design.
 
+import { Card, CardContent, CardHeader, CardTitle } from "@howlcast/ui/components/card";
 import { Input } from "@howlcast/ui/components/input";
 import { Label } from "@howlcast/ui/components/label";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -41,13 +42,12 @@ export default function TitleForm() {
 	}
 
 	return (
-		<section className="flex flex-col gap-4 rounded-lg border border-border bg-card p-5">
-			<header className="flex items-center gap-2 border-border border-b pb-3">
+		<Card>
+			<CardHeader className="flex flex-row items-center gap-2 border-b pb-3">
 				<Pencil className="h-4 w-4 text-cyan" aria-hidden />
-				<h2 className="font-display font-semibold text-foreground">Stream details</h2>
-			</header>
-
-			<div className="flex flex-col gap-1.5">
+				<CardTitle className="font-display font-semibold text-foreground">Stream details</CardTitle>
+			</CardHeader>
+			<CardContent className="flex flex-col gap-1.5">
 				<Label htmlFor="dl-title">Title</Label>
 				<Input
 					id="dl-title"
@@ -58,7 +58,7 @@ export default function TitleForm() {
 					placeholder="What's the stream about?"
 				/>
 				<p className="text-muted-foreground text-xs">Saves automatically on blur.</p>
-			</div>
-		</section>
+			</CardContent>
+		</Card>
 	);
 }

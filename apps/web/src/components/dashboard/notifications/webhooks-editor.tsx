@@ -4,6 +4,7 @@
 // toggles + lastFiredAt + lastError display.
 
 import { Button } from "@howlcast/ui/components/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@howlcast/ui/components/card";
 import { Input } from "@howlcast/ui/components/input";
 import { Label } from "@howlcast/ui/components/label";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -68,62 +69,65 @@ function WebhookCard({ hook }: { hook: Hook }) {
 	}
 
 	return (
-		<section className="flex flex-col gap-3 rounded-lg border border-border bg-card p-5">
-			<header className="flex items-center gap-2 border-border border-b pb-3">
+		<Card>
+			<CardHeader className="flex flex-row items-center gap-2 border-b pb-3">
 				<BellRing className="h-4 w-4 text-cyan" aria-hidden />
-				<h2 className="font-display font-semibold text-foreground capitalize">{hook.id} channel</h2>
-			</header>
+				<CardTitle className="font-display font-semibold text-foreground capitalize">
+					{hook.id} channel
+				</CardTitle>
+			</CardHeader>
+			<CardContent className="flex flex-col gap-3">
+				<div className="flex flex-col gap-1.5">
+					<Label htmlFor={`wh-${hook.id}`}>Discord webhook URL</Label>
+					{streamerMode && url ? (
+						<div className="flex h-9 items-center rounded-md border border-border bg-bg-2 px-3 font-mono text-fg-2 text-xs">
+							{maskWithPrefix(url, 32)}
+						</div>
+					) : (
+						<Input
+							id={`wh-${hook.id}`}
+							value={url}
+							onChange={(e) => setUrl(e.target.value)}
+							type="url"
+							placeholder="https://discord.com/api/webhooks/…"
+						/>
+					)}
+				</div>
 
-			<div className="flex flex-col gap-1.5">
-				<Label htmlFor={`wh-${hook.id}`}>Discord webhook URL</Label>
-				{streamerMode && url ? (
-					<div className="flex h-9 items-center rounded-md border border-border bg-bg-2 px-3 font-mono text-fg-2 text-xs">
-						{maskWithPrefix(url, 32)}
-					</div>
-				) : (
-					<Input
-						id={`wh-${hook.id}`}
-						value={url}
-						onChange={(e) => setUrl(e.target.value)}
-						type="url"
-						placeholder="https://discord.com/api/webhooks/…"
-					/>
-				)}
-			</div>
+				<div className="flex flex-col gap-1.5">
+					<label className="flex items-center gap-2 text-foreground text-sm">
+						<input
+							type="checkbox"
+							checked={notifyOnLive}
+							onChange={(e) => setNotifyOnLive(e.target.checked)}
+						/>
+						Notify when live starts
+					</label>
+					<label className="flex items-center gap-2 text-foreground text-sm">
+						<input
+							type="checkbox"
+							checked={notifyOnEnd}
+							onChange={(e) => setNotifyOnEnd(e.target.checked)}
+						/>
+						Notify when stream ends
+					</label>
+				</div>
 
-			<div className="flex flex-col gap-1.5">
-				<label className="flex items-center gap-2 text-foreground text-sm">
-					<input
-						type="checkbox"
-						checked={notifyOnLive}
-						onChange={(e) => setNotifyOnLive(e.target.checked)}
-					/>
-					Notify when live starts
-				</label>
-				<label className="flex items-center gap-2 text-foreground text-sm">
-					<input
-						type="checkbox"
-						checked={notifyOnEnd}
-						onChange={(e) => setNotifyOnEnd(e.target.checked)}
-					/>
-					Notify when stream ends
-				</label>
-			</div>
+				{hook.lastFiredAt ? (
+					<p className="text-muted-foreground text-xs">
+						Last fired: {new Date(hook.lastFiredAt).toLocaleString()}
+					</p>
+				) : null}
+				{hook.lastError ? (
+					<p className="rounded-md border-l-2 border-destructive bg-destructive/10 px-3 py-2 text-destructive text-xs">
+						Last error: {hook.lastError}
+					</p>
+				) : null}
 
-			{hook.lastFiredAt ? (
-				<p className="text-muted-foreground text-xs">
-					Last fired: {new Date(hook.lastFiredAt).toLocaleString()}
-				</p>
-			) : null}
-			{hook.lastError ? (
-				<p className="rounded-md border-l-2 border-destructive bg-destructive/10 px-3 py-2 text-destructive text-xs">
-					Last error: {hook.lastError}
-				</p>
-			) : null}
-
-			<Button type="button" onClick={commit} disabled={save.isPending} className="self-start">
-				{save.isPending ? "Saving…" : "Save"}
-			</Button>
-		</section>
+				<Button type="button" onClick={commit} disabled={save.isPending} className="self-start">
+					{save.isPending ? "Saving…" : "Save"}
+				</Button>
+			</CardContent>
+		</Card>
 	);
 }

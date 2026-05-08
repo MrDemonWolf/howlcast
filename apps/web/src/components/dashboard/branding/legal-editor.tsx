@@ -6,6 +6,7 @@
 // before it ever hits the DB.
 
 import { Button } from "@howlcast/ui/components/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@howlcast/ui/components/card";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { EditorContent, useEditor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
@@ -33,23 +34,26 @@ export default function LegalEditor() {
 	const [activeId, setActiveId] = useState<LegalId>("privacy");
 
 	return (
-		<section className="flex flex-col gap-3 rounded-lg border border-border bg-card p-5">
-			<header className="flex items-center gap-2 border-border border-b pb-3">
+		<Card>
+			<CardHeader className="flex flex-row items-center gap-2 border-b pb-3">
 				<FileText className="h-4 w-4 text-cyan" aria-hidden />
-				<h2 className="font-display font-semibold text-foreground">Privacy &amp; Terms</h2>
-			</header>
+				<CardTitle className="font-display font-semibold text-foreground">
+					Privacy &amp; Terms
+				</CardTitle>
+			</CardHeader>
+			<CardContent className="flex flex-col gap-3">
+				<div className="flex gap-1 rounded-md bg-bg-2 p-1 text-sm">
+					<TabButton active={activeId === "privacy"} onClick={() => setActiveId("privacy")}>
+						Privacy Policy
+					</TabButton>
+					<TabButton active={activeId === "terms"} onClick={() => setActiveId("terms")}>
+						Terms of Service
+					</TabButton>
+				</div>
 
-			<div className="flex gap-1 rounded-md bg-bg-2 p-1 text-sm">
-				<TabButton active={activeId === "privacy"} onClick={() => setActiveId("privacy")}>
-					Privacy Policy
-				</TabButton>
-				<TabButton active={activeId === "terms"} onClick={() => setActiveId("terms")}>
-					Terms of Service
-				</TabButton>
-			</div>
-
-			<EditorPanel id={activeId} />
-		</section>
+				<EditorPanel id={activeId} />
+			</CardContent>
+		</Card>
 	);
 }
 

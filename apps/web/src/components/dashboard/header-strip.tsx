@@ -42,54 +42,25 @@ export default function HeaderStrip({
 		<header className="mb-7 flex flex-wrap items-end justify-between gap-4">
 			<div className="min-w-0">
 				{eyebrow && <Eyebrow className="mb-2 block">{eyebrow}</Eyebrow>}
-				<h1
-					className="font-display font-bold"
-					style={{
-						fontSize: 32,
-						margin: 0,
-						letterSpacing: "-0.025em",
-						lineHeight: 1.05,
-					}}
-				>
+				<h1 className="m-0 font-display font-bold text-[32px] tracking-[-0.025em] leading-[1.05]">
 					{title}
 				</h1>
-				{subtitle && (
-					<div className="mt-1.5 text-sm" style={{ color: "var(--fg-3)" }}>
-						{subtitle}
-					</div>
-				)}
+				{subtitle && <div className="mt-1.5 text-sm text-[var(--fg-3)]">{subtitle}</div>}
 			</div>
 			<div className="flex items-center gap-2">
 				{showOnAir &&
 					(isLive ? (
 						<LivePill>ON AIR</LivePill>
 					) : (
-						<span
-							className="inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px]"
-							style={{
-								borderColor: "var(--line)",
-								background: "var(--bg-2)",
-								color: "var(--fg-3)",
-								fontFamily: "var(--font-mono)",
-								letterSpacing: "0.08em",
-							}}
-						>
-							<span
-								className="block h-1.5 w-1.5 rounded-full"
-								style={{ background: "var(--fg-4)" }}
-							/>
+						<span className="inline-flex items-center gap-1.5 rounded-full border border-[var(--line)] bg-[var(--bg-2)] px-2.5 py-1 font-mono text-[11px] text-[var(--fg-3)] tracking-[0.08em]">
+							<span className="block h-1.5 w-1.5 rounded-full bg-[var(--fg-4)]" />
 							OFF AIR
 						</span>
 					))}
 				{right}
 				<Link
 					href="/"
-					className="inline-flex items-center gap-1.5 rounded-[var(--radius-sm)] border px-3 py-1.5 text-sm transition"
-					style={{
-						borderColor: "var(--line)",
-						background: "var(--bg-2)",
-						color: "var(--fg-2)",
-					}}
+					className="inline-flex items-center gap-1.5 rounded-[var(--radius-sm)] border border-[var(--line)] bg-[var(--bg-2)] px-3 py-1.5 text-sm text-[var(--fg-2)] transition"
 				>
 					<ExternalLink size={14} aria-hidden />
 					View channel

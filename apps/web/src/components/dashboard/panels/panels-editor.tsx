@@ -87,7 +87,7 @@ export default function PanelsEditor() {
 			</div>
 
 			{panels.length === 0 ? (
-				<div className="rounded-lg border border-border border-dashed bg-card p-8 text-center text-muted-foreground text-sm">
+				<div className="rounded-[var(--radius-lg)] border border-border border-dashed bg-card p-8 text-center text-muted-foreground text-sm">
 					No panels yet. Add one to get started.
 				</div>
 			) : (
@@ -95,7 +95,7 @@ export default function PanelsEditor() {
 					{panels.map((p, idx) => (
 						<li
 							key={p.id}
-							className="flex items-center gap-3 rounded-lg border border-border bg-card p-3"
+							className="flex items-center gap-3 rounded-[var(--radius-lg)] border border-border bg-card p-3"
 						>
 							<div className="flex flex-none flex-col">
 								<button
