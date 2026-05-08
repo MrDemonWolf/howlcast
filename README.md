@@ -57,23 +57,23 @@ Quick start once accounts are wired:
 
 ## Tech Stack
 
-| Layer               | Technology                                        |
-| ------------------- | ------------------------------------------------- |
-| Frontend            | Next.js 16, React 19, Tailwind CSS v4             |
-| UI primitives       | shadcn/ui, lucide-react                           |
-| Backend             | Hono on Cloudflare Workers                        |
-| API                 | tRPC v11                                          |
-| Auth                | Better Auth 1.5 with Drizzle adapter              |
-| Database            | Cloudflare D1 (SQLite)                            |
-| ORM                 | Drizzle                                           |
-| Object storage      | Cloudflare R2 (`howlcast-public`, `howlcast-isr`) |
-| Cache               | Cloudflare KV (`HOWLCAST_EMOTES`)                 |
-| Live video and chat | GetStream                                         |
-| Email               | Resend                                            |
-| Infrastructure      | Alchemy                                           |
-| Deploy target       | Cloudflare Workers                                |
-| Build tooling       | Turborepo, bun + Turborepo catalogs, Biome, Husky |
-| Runtime             | Node 20+, bun 1.3+                                |
+| Layer               | Technology                                                   |
+| ------------------- | ------------------------------------------------------------ |
+| Frontend            | Next.js 16, React 19, Tailwind CSS v4                        |
+| UI primitives       | shadcn/ui, lucide-react                                      |
+| Backend             | Hono on Cloudflare Workers                                   |
+| API                 | tRPC v11                                                     |
+| Auth                | Better Auth 1.5 with Drizzle adapter                         |
+| Database            | Cloudflare D1 (SQLite)                                       |
+| ORM                 | Drizzle                                                      |
+| Object storage      | Cloudflare R2 (`howlcast-public`, `howlcast-isr`)            |
+| Cache               | Cloudflare KV (`HOWLCAST_EMOTES`)                            |
+| Live video and chat | GetStream                                                    |
+| Email               | Resend                                                       |
+| Infrastructure      | Alchemy                                                      |
+| Deploy target       | Cloudflare Workers                                           |
+| Build tooling       | Turborepo, bun + Turborepo catalogs, ESLint, Prettier, Husky |
+| Runtime             | Node 20+, bun 1.3+                                           |
 
 ## Development
 
@@ -127,7 +127,11 @@ Quick start once accounts are wired:
 - `bun run dev:mail:logs` - Tail the mailpit container logs.
 - `bun run build` - Build all workspaces via Turborepo.
 - `bun run check-types` - Type-check every workspace.
-- `bun run check` - Run Biome with autofix on the entire repository.
+- `bun run check` - Run ESLint and Prettier format check across the repo.
+- `bun run lint` - Run ESLint only.
+- `bun run lint:fix` - Run ESLint with autofix.
+- `bun run format` - Format all files with Prettier.
+- `bun run test` - Run tests across all workspaces via Turborepo.
 - `bun run db:generate` - Generate Drizzle migrations from the schema.
 - `bun run db:push` - Push the Drizzle schema directly (skips migration files).
 - `bun run deploy` - Provision and deploy all Cloudflare resources via Alchemy.
@@ -147,7 +151,8 @@ HowlCast uses three email transports, chosen automatically:
 
 ### Code Quality
 
-- Biome handles linting and formatting in a single pass.
+- ESLint handles linting; Prettier handles formatting. Both run together
+  via `lint-staged` on pre-commit.
 - Husky runs `lint-staged` on `pre-commit` so commits never land malformed code.
 - TypeScript is configured with `tsc -b` for incremental project references.
 - React Compiler is enabled on the web Worker for automatic memoisation.
@@ -166,6 +171,7 @@ howlcast/
 │   ├── db/                   # Drizzle schema, migrations, client factory
 │   ├── env/                  # Validated runtime env loaders
 │   ├── infra/                # Alchemy resource declarations
+│   ├── mail/                 # Email transport (Resend / SMTP / console)
 │   └── ui/                   # shadcn components and globals.css tokens
 ├── design-handoff/           # Locked HTML mockups and design tokens
 ├── docs/                     # Architecture, build plan, integration guides
@@ -174,6 +180,7 @@ howlcast/
 ├── DESIGN-DECISIONS.md       # Locked product and design decisions
 ├── PRE-FLIGHT.md             # Pre-scaffold account setup checklist
 ├── PROGRESS.md               # Phase-by-phase build progress
+├── RESUME.md                 # Session resume context for Claude Code
 └── START-HERE.md             # Top-level onboarding doc
 ```
 
