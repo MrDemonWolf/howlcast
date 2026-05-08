@@ -2,8 +2,8 @@
 
 > Update this as you go. Claude Code will read it to know where you are.
 
-**Last updated:** 2026-05-08 (Phase 7 docs site shipped)
-**Current phase:** Phase 7 docs site live on GitHub Pages — Phase 6 OBS hard test + ops runbook still pending
+**Last updated:** 2026-05-08 (Phase 7 + ops runbook shipped)
+**Current phase:** Phase 6 — only the hard live OBS test remains (Nathanial-side). Phase 7 docs site ready to deploy on first GH Pages enable.
 
 ---
 
@@ -153,7 +153,7 @@
 - [x] **Own analytics** — viewer + chat tracking via GetStream webhooks; per-session detail page (`/dashboard/stats/[id]`) with viewer-line + chat/min bar charts; migration 0009 (`chat_message_count`, `stream_viewer_snapshots`, `stream_chat_minutes`); 1-min cron sampler with 7-day prune
 - [ ] Cross-browser tested (Safari, Chrome, Firefox, mobile)
 - [ ] **Hard live OBS test** — RTMPS push, webhook fires, Discord fanout fires, channel page goes live
-- [ ] Operations runbook written (`docs/operations.md`)
+- [x] Operations runbook written ([`docs/operations.md`](docs/operations.md))
 
 ## Phase 7 — Docs Site
 

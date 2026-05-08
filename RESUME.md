@@ -6,13 +6,14 @@
 
 ## Where we are
 
-**Phase 7 docs site shipped. Phase 6 OBS hard test + ops runbook still pending (only Nathanial-side blockers).**
+**Phase 7 docs + ops runbook shipped. Only Phase 6 OBS hard test remains.** End-to-end ready for full live test.
 
 All Phase 5 surface holds (9 dashboard pages, setup wizard, invite-only auth, two-domain workers + custom DNS). Phase 6 polish is now ~80% done — Stats, Streamer Mode, viewer `/account`, white-label, Tiptap legal, error boundaries, 404, loading skeletons, OG images, robots/sitemap all shipped earlier in the phase. Recent work concentrated on internal consolidation (audit findings, helper dedupe, brand-hex centralization, public-mode removal) and a structural UI refactor (layout token scale → shadcn primitives → layout shells → page migrations → Card sweep).
 
 **Recent (latest commits, newest first):**
 
-- _pending_ phase 7: fumadocs site + github pages deploy
+- _pending_ docs: write operations runbook
+- `9dc825e` phase 7: fumadocs site + github pages deploy
 - `d9b2958` chore: add root-level d1 migration scripts
 - `5a22de7` docs: correct webhook URL to tv-api.mrdemonwolf.workers.dev; mark 0009 applied
 - `72d7918` phase 6: own analytics — viewer + chat tracking via GetStream webhooks
@@ -42,7 +43,7 @@ All Phase 5 surface holds (9 dashboard pages, setup wizard, invite-only auth, tw
 
 1. **Hard live OBS test** — push real RTMPS, verify webhook fires, Discord fanout fires, channel page flips to LIVE, Stats page records the session (incl. peak viewers + chat count + per-session line/bar charts). Only Nathanial can do.
 2. **Cross-browser sweep** — Safari, Chrome, Firefox, iOS, Android. Looking for layout regressions in the new shells + Card surfaces + Stats charts.
-3. **Operations runbook** (`docs/operations.md`) — deploy / rollback / D1 migrate / GetStream rotation.
+3. ✅ **Operations runbook** ([`docs/operations.md`](docs/operations.md)) — DONE
 
 **Replaced:** Cloudflare Web Analytics dropped — own analytics via GetStream webhooks shipped instead. Per-session detail page at `/dashboard/stats/[id]` with viewer-line + chat-msgs/min charts. 1-minute cron sampler keeps a baseline series + prunes snapshots > 7 days.
 
@@ -174,7 +175,7 @@ be0eac2 docs: phase 5 sweep — progress, resume, need_to_do
 
 1. **Hard live OBS test** — real RTMPS push, verify webhook fires, Discord fanout fires, channel page goes live, Stats records the session (peak viewers, chat count, per-minute chat bars).
 2. **Cross-browser sweep** — Safari, Chrome, Firefox, iOS, Android. Watch for regressions in the new shells + Card surfaces + Stats charts.
-3. **Operations runbook** (`docs/operations.md`) — deploy / rollback / D1 migrate / GetStream rotation / Resend rotation.
+3. ✅ **Operations runbook** ([`docs/operations.md`](docs/operations.md)) — DONE
 
 **Already done in Phase 6** (don't relitigate): Stats + own analytics, Streamer Mode, viewer `/account`, white-label, Tiptap legal editor, error boundaries, 404, loading skeletons, OG images, robots+sitemap, code-audit pass, brand-hex centralization, API helper dedupe, public-mode removal, layout token scale, shadcn primitives, layout shells, page migrations, Card sweep, inline-style cleanup, branding logo via Next.js route.
 
