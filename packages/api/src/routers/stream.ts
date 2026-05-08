@@ -79,8 +79,13 @@ export const streamRouter = router({
 		const userId = ctx.session?.user.id ?? `guest-${crypto.randomUUID()}`;
 
 		let streamRole: string;
+		let callCids: string[] | undefined;
 		if (isGuest) {
 			streamRole = "anonymous";
+			// Anonymous Video tokens MUST include `call_cids` — GetStream rejects
+			// the WS handshake otherwise. Scope to the single livestream call.
+			const cfg = await loadConfig();
+			if (cfg?.streamCallId) callCids = [`livestream:${cfg.streamCallId}`];
 		} else {
 			// Check if the signed-in user is the broadcaster so we emit the correct
 			// role — GetStream rejects a JWT with role:"user" when the server-side
@@ -98,6 +103,7 @@ export const streamRouter = router({
 			const token = await signStreamUserToken(env.STREAM_API_SECRET, {
 				user_id: userId,
 				role: streamRole,
+				...(callCids ? { call_cids: callCids } : {}),
 			});
 			return { apiKey: env.STREAM_API_KEY, token, userId, isGuest };
 		} catch (e) {

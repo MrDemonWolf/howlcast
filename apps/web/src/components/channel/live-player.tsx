@@ -21,34 +21,41 @@ type Props = {
 	userId: string;
 	token: string;
 	callId: string;
+	isGuest?: boolean;
 	onViewerCount?: (count: number) => void;
 };
 
-export default function LivePlayer({ apiKey, userId, token, callId, onViewerCount }: Props) {
-	// Canonical pattern: useState+useEffect so disconnectUser fires on unmount.
-	// useMemo doesn't guarantee cleanup — old WebSocket leaks on hot reload and
-	// navigation. In dev React Strict Mode double-invokes, creating two clients.
+export default function LivePlayer({
+	apiKey,
+	userId,
+	token,
+	callId,
+	isGuest = false,
+	onViewerCount,
+}: Props) {
 	const [client, setClient] = useState<StreamVideoClient>();
 	const [call, setCall] = useState<Call>();
 
 	useEffect(() => {
-		const c = new StreamVideoClient({ apiKey, user: { id: userId }, token });
+		// Anonymous viewers use the SDK's anonymous user shape — the JWT carries
+		// `call_cids` scoping which call they may watch (signed server-side).
+		const c = isGuest
+			? new StreamVideoClient({ apiKey, user: { type: "anonymous" }, token })
+			: new StreamVideoClient({ apiKey, user: { id: userId }, token });
 		setClient(c);
 		return () => {
 			c.disconnectUser().catch(() => {});
 			setClient(undefined);
 		};
-	}, [apiKey, userId, token]);
+	}, [apiKey, userId, token, isGuest]);
 
 	useEffect(() => {
 		if (!client) return;
+		// Create the call object for hook context; LivestreamPlayer joins
+		// internally so we don't call c.join() ourselves.
 		const c = client.call("livestream", callId);
 		setCall(c);
-		// join() is required for the SDK to populate call state and for
-		// LivestreamPlayer to receive the WebRTC stream.
-		c.join().catch((e) => console.error("LivePlayer: failed to join call", e));
 		return () => {
-			c.leave().catch(() => {});
 			setCall(undefined);
 		};
 	}, [client, callId]);

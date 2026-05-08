@@ -1,12 +1,15 @@
 "use client";
 
-// Real GetStream Chat dock. Lazy-loaded from channel-page.tsx (200KB SDK).
-// Same JWT signs both Video and Chat per the integration doc — we receive
-// the token from `stream.getViewerToken` upstream.
+// GetStream Chat dock. Two mount paths:
 //
-// In invite-only mode, anonymous viewers get a read-only experience: they
-// can watch but not post. The `canPost` flag is computed upstream from
-// `profiles.isInvited` — false for guests, true for invited members.
+// 1. Authenticated viewers / broadcaster — use `useCreateChatClient` from
+//    stream-chat-react. Hook owns the connect/disconnect lifecycle, returns
+//    null until WS is up. Per-component instance (no singleton sharing
+//    between channel-page and dashboard-chat).
+//
+// 2. Anonymous viewers — use a dedicated hook that calls
+//    `connectAnonymousUser`. Anon connections don't count toward MAU and
+//    livestream channel type allows anon read by default.
 
 import "stream-chat-react/dist/css/index.css";
 
@@ -16,17 +19,18 @@ import { StreamChat } from "stream-chat";
 import {
 	Channel,
 	Chat,
+	defaultAllowedTagNames,
 	MessageComposer,
 	MessageList,
-	defaultAllowedTagNames,
 	renderText,
+	useCreateChatClient,
 	Window,
 } from "stream-chat-react";
 
 import { trpc } from "@/utils/trpc";
 import { emoteRehypePlugin, type EmoteRecord } from "./emote-renderer";
 
-type Props = {
+type AuthedProps = {
 	apiKey: string;
 	userId: string;
 	token: string;
@@ -34,14 +38,76 @@ type Props = {
 	canPost: boolean;
 };
 
-export default function LiveChat({ apiKey, userId, token, channelCid, canPost }: Props) {
-	// Canonical pattern per GetStream GH issue #1487:
-	// Store the connected client in state so React unmounts <Chat> BEFORE
-	// disconnectUser fires — prevents "Both secret and user tokens are not
-	// set" when the component remounts (Strict Mode, token re-fetch, etc.).
-	const [chatClient, setChatClient] = useState<StreamChat | null>(null);
+type AnonProps = {
+	apiKey: string;
+	channelCid: string;
+};
+
+type Props = (AuthedProps & { kind?: "user" }) | (AnonProps & { kind: "anonymous" });
+
+export default function LiveChat(props: Props) {
+	if (props.kind === "anonymous") {
+		return <AnonLiveChat apiKey={props.apiKey} channelCid={props.channelCid} />;
+	}
+	return (
+		<AuthedLiveChat
+			apiKey={props.apiKey}
+			userId={props.userId}
+			token={props.token}
+			channelCid={props.channelCid}
+			canPost={props.canPost}
+		/>
+	);
+}
+
+function AuthedLiveChat({ apiKey, userId, token, channelCid, canPost }: AuthedProps) {
+	const client = useCreateChatClient({
+		apiKey,
+		tokenOrProvider: token,
+		userData: { id: userId },
+	});
+	return <ChatBody client={client} channelCid={channelCid} canPost={canPost} />;
+}
+
+function AnonLiveChat({ apiKey, channelCid }: AnonProps) {
+	const [client, setClient] = useState<StreamChat | null>(null);
 	const [error, setError] = useState<string | null>(null);
 
+	useEffect(() => {
+		const c = new StreamChat(apiKey);
+		let cancelled = false;
+		const promise = c.connectAnonymousUser();
+		// connectAnonymousUser returns undefined on the server; in the browser it
+		// resolves to a ConnectAPIResponse — guard either way.
+		Promise.resolve(promise)
+			.then(() => {
+				if (!cancelled) setClient(c);
+			})
+			.catch((err: unknown) => {
+				if (!cancelled) {
+					setError(err instanceof Error ? err.message : "Couldn't connect to chat.");
+				}
+			});
+		return () => {
+			cancelled = true;
+			setClient(null);
+			c.disconnectUser().catch(() => {});
+		};
+	}, [apiKey]);
+
+	if (error) return <ChatError message={error} />;
+	return <ChatBody client={client} channelCid={channelCid} canPost={false} />;
+}
+
+function ChatBody({
+	client,
+	channelCid,
+	canPost,
+}: {
+	client: StreamChat | null;
+	channelCid: string;
+	canPost: boolean;
+}) {
 	const emotes = useQuery(trpc.channel.getEmotes.queryOptions());
 	const emoteMap = useMemo(() => {
 		const m = new Map<string, EmoteRecord>();
@@ -54,7 +120,7 @@ export default function LiveChat({ apiKey, userId, token, channelCid, canPost }:
 	const customRenderText: typeof renderText = useMemo(
 		() => (text, mentioned) =>
 			renderText(text, mentioned, {
-				// img must be explicitly allowed or the sanitizer strips emote tags
+				// img must be explicitly allowed or sanitizer strips emote tags
 				allowedTagNames: [...defaultAllowedTagNames, "img"],
 				// eslint-disable-next-line @typescript-eslint/no-explicit-any
 				getRehypePlugins: (defaults) => [emoteRehypePlugin(emoteMap), ...defaults] as any,
@@ -62,51 +128,13 @@ export default function LiveChat({ apiKey, userId, token, channelCid, canPost }:
 		[emoteMap],
 	);
 
-	useEffect(() => {
-		if (!apiKey || !userId || !token) {
-			setError("Stream credentials missing.");
-			return;
-		}
-
-		setError(null);
-		const client = StreamChat.getInstance(apiKey);
-		let cancelled = false;
-
-		client
-			.connectUser({ id: userId }, token)
-			.then(() => {
-				if (!cancelled) setChatClient(client);
-			})
-			.catch((err: unknown) => {
-				if (!cancelled) {
-					setError(err instanceof Error ? err.message : "Couldn't connect to chat.");
-				}
-			});
-
-		return () => {
-			cancelled = true;
-			// Null the client from state first — this unmounts <Chat> before
-			// disconnect fires, preventing children from reading a stale client.
-			setChatClient(null);
-			client.disconnectUser().catch(() => {});
-		};
-	}, [apiKey, userId, token]);
-
 	const [type, id] = channelCid.split(":");
 	const channel = useMemo(
-		() => (chatClient && type && id ? chatClient.channel(type, id) : null),
-		[chatClient, type, id],
+		() => (client && type && id ? client.channel(type, id) : null),
+		[client, type, id],
 	);
 
-	if (error) {
-		return (
-			<div className="flex flex-1 flex-col items-center justify-center gap-1 px-4 text-center text-muted-foreground text-xs">
-				<span className="font-mono uppercase tracking-wider">Chat unavailable</span>
-				<span className="text-fg-3">{error}</span>
-			</div>
-		);
-	}
-	if (!chatClient || !channel) {
+	if (!client || !channel) {
 		return (
 			<div className="flex flex-1 items-center justify-center text-muted-foreground text-xs">
 				Connecting…
@@ -115,7 +143,7 @@ export default function LiveChat({ apiKey, userId, token, channelCid, canPost }:
 	}
 
 	return (
-		<Chat client={chatClient} theme="str-chat__theme-dark">
+		<Chat client={client} theme="str-chat__theme-dark">
 			<Channel channel={channel}>
 				<Window>
 					<MessageList renderText={customRenderText} />
@@ -123,5 +151,14 @@ export default function LiveChat({ apiKey, userId, token, channelCid, canPost }:
 				</Window>
 			</Channel>
 		</Chat>
+	);
+}
+
+function ChatError({ message }: { message: string }) {
+	return (
+		<div className="flex flex-1 flex-col items-center justify-center gap-1 px-4 text-center text-muted-foreground text-xs">
+			<span className="font-mono uppercase tracking-wider">Chat unavailable</span>
+			<span className="text-fg-3">{message}</span>
+		</div>
 	);
 }

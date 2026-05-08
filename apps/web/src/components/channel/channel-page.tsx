@@ -61,13 +61,22 @@ export default function ChannelPage() {
 	});
 	const panelsQuery = useQuery(trpc.channel.getPanels.queryOptions());
 
+	// Stream credentials — only requested when GetStream is configured.
+	// `getViewerToken` will throw PRECONDITION_FAILED if keys are empty,
+	// caught by the query and surfaced via react-query's error handler.
+	// staleTime: Infinity + no refocus refetch keeps the SDK clients from
+	// remounting on tab focus, which used to trigger connect/disconnect races.
 	const credentials = useQuery({
 		...trpc.stream.getStreamCredentials.queryOptions(),
 		retry: false,
+		refetchOnWindowFocus: false,
+		staleTime: Infinity,
 	});
 	const viewerToken = useQuery({
 		...trpc.stream.getViewerToken.queryOptions(),
 		retry: false,
+		refetchOnWindowFocus: false,
+		staleTime: Infinity,
 	});
 
 	const [viewerCount, setViewerCount] = useState<number | null>(null);
@@ -112,6 +121,7 @@ export default function ChannelPage() {
 										userId: viewerToken.data!.userId,
 										token: viewerToken.data!.token,
 										callId: credentials.data!.callId!,
+										isGuest,
 									}
 								: null
 						}
@@ -136,13 +146,21 @@ export default function ChannelPage() {
 						isPrivate={isPrivate}
 						credentials={
 							canMountStream
-								? {
-										apiKey: viewerToken.data!.apiKey,
-										userId: viewerToken.data!.userId,
-										token: viewerToken.data!.token,
-										channelCid: credentials.data!.channelCid!,
-										canPost: !isGuest,
-									}
+								? isGuest
+									? {
+											kind: "anonymous" as const,
+											apiKey: viewerToken.data!.apiKey,
+											channelCid: credentials.data!.channelCid!,
+											canPost: false as const,
+										}
+									: {
+											kind: "user" as const,
+											apiKey: viewerToken.data!.apiKey,
+											userId: viewerToken.data!.userId,
+											token: viewerToken.data!.token,
+											channelCid: credentials.data!.channelCid!,
+											canPost: true,
+										}
 								: null
 						}
 					/>
@@ -158,6 +176,7 @@ type PlayerCreds = {
 	userId: string;
 	token: string;
 	callId: string;
+	isGuest: boolean;
 };
 
 function PlayerSurface({
@@ -318,13 +337,21 @@ function PanelCard({ panel }: { panel: Panel }) {
 	return inner;
 }
 
-type ChatCreds = {
-	apiKey: string;
-	userId: string;
-	token: string;
-	channelCid: string;
-	canPost: boolean;
-};
+type ChatCreds =
+	| {
+			kind: "anonymous";
+			apiKey: string;
+			channelCid: string;
+			canPost: false;
+	  }
+	| {
+			kind: "user";
+			apiKey: string;
+			userId: string;
+			token: string;
+			channelCid: string;
+			canPost: boolean;
+	  };
 
 function ChatDock({
 	isPrivate,
@@ -366,7 +393,22 @@ function ChatDock({
 
 			<div className="relative flex-1 overflow-hidden">
 				{credentials ? (
-					<LiveChat {...credentials} />
+					credentials.kind === "anonymous" ? (
+						<LiveChat
+							kind="anonymous"
+							apiKey={credentials.apiKey}
+							channelCid={credentials.channelCid}
+						/>
+					) : (
+						<LiveChat
+							kind="user"
+							apiKey={credentials.apiKey}
+							userId={credentials.userId}
+							token={credentials.token}
+							channelCid={credentials.channelCid}
+							canPost={credentials.canPost}
+						/>
+					)
 				) : (
 					<div
 						className="flex h-full items-center justify-center px-6 text-center text-xs"

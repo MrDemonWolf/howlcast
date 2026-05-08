@@ -1,138 +1,256 @@
 # GetStream Frontend Rewrite — Audit Findings
 
-> Produced: 2026-05-06. Full audit of `live-player.tsx`, `live-chat.tsx`, and `channel-page.tsx` against current GetStream React Video SDK and Chat SDK docs.
+> Round 1: 2026-05-06 — found 4 P1/P2 issues, all shipped (commit `c1a9003`).
+> **Round 2: 2026-05-07** — re-audit against full Video + Chat docs. New findings below.
 
 ---
 
-## FILE: `apps/web/src/components/channel/live-player.tsx`
+## Round 1 — historical (closed)
 
-### [P1-CRITICAL] No `call.join()` — viewer never connects to stream
+The first audit shipped in `c1a9003`:
 
-```
-current:  const call = useMemo(() => client.call("livestream", callId), [client, callId]);
-          // call is created but join() is never called
+| File                                               | Change                                                                 |
+| -------------------------------------------------- | ---------------------------------------------------------------------- |
+| `packages/api/src/routers/stream.ts`               | `getViewerToken` emits correct role + `isGuest` flag                   |
+| `apps/web/src/components/channel/live-player.tsx`  | `useState+useEffect` for client, `call.join()`, viewer count via hooks |
+| `apps/web/src/components/channel/live-chat.tsx`    | `setState(null)` disconnect ordering, `allowedTagNames` includes `img` |
+| `apps/web/src/components/channel/channel-page.tsx` | `canPost` uses `isGuest` flag                                          |
 
-canonical: useEffect(() => {
-             const c = client.call("livestream", callId);
-             setCall(c);
-             c.join().catch(console.error);
-             return () => { c.leave().catch(console.error); };
-           }, [client, callId]);
-```
-
-- Source: https://getstream.io/video/docs/react/tutorials/livestream
-- Diff size: medium
-- User-facing: Player renders but never receives the stream. `LivestreamPlayer` relies on call state from `join()`.
-
-### [P1-CRITICAL] `useMemo` for StreamVideoClient — no cleanup, leaks WebSocket
-
-```
-current:  const client = useMemo(() => new StreamVideoClient(...), [...]);
-
-canonical: const [client, setClient] = useState<StreamVideoClient>();
-           useEffect(() => {
-             const c = new StreamVideoClient({ apiKey, user: { id: userId }, token });
-             setClient(c);
-             return () => { c.disconnectUser(); setClient(undefined); };
-           }, [apiKey, userId, token]);
-```
-
-- Source: https://getstream.io/video/docs/react/guides/client-auth/
-- Diff size: medium
-- User-facing: Old WebSocket never closed on unmount. Stacked connections in dev (React Strict Mode double-invokes). Token changes create new client without disconnecting old one.
-
-### [P2] Viewer count hardcoded `—`
-
-```
-current:  <span className="font-mono">—</span>
-
-canonical: const { useParticipantCount } = useCallStateHooks();
-           const count = useParticipantCount();
-           // must render inside <StreamCall> context
-```
-
-- Source: https://getstream.io/video/docs/react/tutorials/livestream
-- Diff size: trivial
-- User-facing: Live viewer count always shows `—`.
-
-### [P3] Static token — no auto-refresh
-
-- Current token string is fetched once; expires after 1h TTL → player silently fails for long sessions.
-- Fix: pass `tokenProvider` async function to `StreamVideoClient` instead of static `token`.
-- Diff size: medium. Deferred to follow-up.
+These are all verified present in the current source. Full round-1 detail preserved in commit message + git history.
 
 ---
 
-## FILE: `apps/web/src/components/channel/live-chat.tsx`
+## Round 2 — open findings (re-audit, this is the diff plan)
 
-### [P1-CRITICAL] Race condition on disconnect → "Both secret and user tokens are not set"
+### SDK pin currency
 
-```
-current cleanup: cancelled = true; client.disconnectUser().catch(()=>{})
-                 // setReady never flipped false; <Chat> still renders during disconnect
+| Package                      | Pin       | Notes                                                                         |
+| ---------------------------- | --------- | ----------------------------------------------------------------------------- |
+| `@stream-io/video-react-sdk` | `^1.36.0` | Stable. No breaking moves.                                                    |
+| `stream-chat`                | `^9.43.0` | `connectAnonymousUser` + `setGuestUser` both present.                         |
+| `stream-chat-react`          | `^14.0.1` | `useCreateChatClient` is the canonical mount hook (v11+). We're not using it. |
 
-canonical:       setChatClient(null);      // unmount <Chat> FIRST
-                 client.disconnectUser();  // then disconnect safely
-```
-
-- Source: https://github.com/GetStream/stream-chat-react/issues/1487
-- Diff size: small
-- User-facing: Root cause of the "Both secret and user tokens are not set" error the broadcaster sees on the homepage. Triggered by React Strict Mode double-mount, token re-fetch, or navigation.
-
-### [P2] `allowedTagNames` missing `img` — emotes stripped by sanitizer
-
-```
-current:  renderText(text, mentioned, {
-            getRehypePlugins: (defaults) => [...],
-          })
-
-canonical: renderText(text, mentioned, {
-            allowedTagNames: [...defaultAllowedTagNames, "img"],
-            getRehypePlugins: (defaults) => [...],
-          })
-```
-
-- Diff size: trivial
-- User-facing: Custom emotes (`FeelsGoodMan`, etc.) silently stripped. Users type emote name, nothing renders.
-
-### [P2] Broadcaster gets `role:"user"` JWT → chat role collision
-
-```
-current:  getViewerToken always emits role:"user" for any signed-in user
-          broadcaster's GetStream identity was registered as role:"broadcaster"
-          SDK rejects the downgrade → chat init fails for broadcaster on /
-
-fix:      in getViewerToken, check profile.role from DB
-          emit role:"broadcaster" if broadcaster, else role:"user"
-```
-
-- Source: `packages/api/src/routers/stream.ts:76-86`
-- Diff size: small
-- User-facing: Broadcaster viewing the channel page gets chat error. Hypothesis #3 from original rewrite plan — confirmed.
-
-### [P3] Guest UUID regenerated every page load
-
-- `guest-${crypto.randomUUID()}` creates a new GetStream user record on every anonymous load.
-- Fix: use `connectAnonymousUser()` (no MAU impact) or persist guest ID in localStorage.
-- Deferred — low blast radius now, important before public launch.
-
-### [P3] `canPost` check is a fragile string prefix
-
-```
-current:  canPost: !viewerToken.data!.userId.startsWith("guest-")
-fix:      add isGuest: boolean to getViewerToken return shape
-```
-
-- Diff size: trivial
-- User-facing: None currently; future usernames starting with "guest-" would be locked out.
+No upgrade required. Pattern fixes only.
 
 ---
 
-## Changes Made (this session)
+### 2.1 `live-player.tsx` — drop `<StreamCall>` + manual `join()`
 
-| File                                               | Change                                                       |
-| -------------------------------------------------- | ------------------------------------------------------------ |
-| `packages/api/src/routers/stream.ts`               | `getViewerToken` emits correct role + `isGuest` flag         |
-| `apps/web/src/components/channel/live-player.tsx`  | `useState+useEffect` for client, `call.join()`, viewer count |
-| `apps/web/src/components/channel/live-chat.tsx`    | `setState(null)` disconnect fix, `allowedTagNames` img       |
-| `apps/web/src/components/channel/channel-page.tsx` | `canPost` uses `isGuest`                                     |
+**Current**
+
+```tsx
+const c = client.call("livestream", callId);
+c.join();
+return (
+	<StreamVideo client={client}>
+		<StreamCall call={c}>
+			<LivestreamView /* uses useParticipantCount */ />
+		</StreamCall>
+	</StreamVideo>
+);
+```
+
+**Canonical** ([livestream tutorial](https://getstream.io/video/docs/react/tutorials/livestream/))
+
+```tsx
+return (
+	<StreamVideo client={client}>
+		<LivestreamPlayer callType="livestream" callId={callId} />
+	</StreamVideo>
+);
+```
+
+`<LivestreamPlayer>` is a self-contained component. It internally creates the call, joins it, and tears down on unmount. Wrapping it in `<StreamCall>` and calling `client.call().join()` ourselves means:
+
+- Two call objects exist (the one we created, the one the player creates).
+- Cleanup ordering between our `c.leave()` and the player's internal teardown is racy in Strict Mode.
+
+**Open question** before implementing: where does `useParticipantCount` resolve when there's no explicit `<StreamCall>`? Two options:
+
+- (A) Drop the inner `<StreamCall>`, query `client.state.calls` reactively for the count.
+- (B) Keep `<StreamCall>` but drop the manual `c.join()` — let LivestreamPlayer be the join authority. This keeps the hook context intact with one fewer race.
+
+**Recommendation:** Option B — minimal diff, preserves the viewer count UX.
+
+**Diff size:** small
+**User-facing effect:** lower mount-race risk, especially in dev Strict Mode and on focus-driven re-renders.
+
+---
+
+### 2.2 `live-player.tsx` + `stream.ts` — anonymous tokens need `call_cids`
+
+**Current:** `signStreamUserToken` emits `{ user_id, role, iat, exp }`. For `role: "anonymous"`, this is incomplete.
+
+**Canonical** ([Client & Authentication § Anonymous users](https://getstream.io/video/docs/react/guides/client-auth/#anonymous-users)) — anonymous Video tokens MUST include `call_cids`:
+
+```json
+{
+	"iss": "@stream-io/dashboard",
+	"user_id": "!anon",
+	"role": "viewer",
+	"call_cids": ["livestream:<callId>"]
+}
+```
+
+Without this claim, anon viewers can't open a WebSocket against the call. Also the user shape on the client should be `{ type: "anonymous" }` — not `{ id: "guest-<uuid>" }`.
+
+**Files:**
+
+- [packages/api/src/lib/stream.ts](../packages/api/src/lib/stream.ts) — extend signer to accept optional `call_cids: string[]`.
+- [packages/api/src/routers/stream.ts:75-107](../packages/api/src/routers/stream.ts) — `getViewerToken`: when `isGuest`, look up `cfg.streamCallId` and pass `call_cids: [\`livestream:\${cfg.streamCallId}\`]`. Also return a flag so the frontend knows to use `{ type: "anonymous" }`.
+- [apps/web/src/components/channel/live-player.tsx](../apps/web/src/components/channel/live-player.tsx) — when guest, pass `user: { type: "anonymous" }` to `StreamVideoClient`.
+
+**Diff size:** medium
+**User-facing effect:** anonymous viewers actually connect to the live stream WebSocket once `STREAM_API_KEY/SECRET` are exercised in real prod traffic. Today they may silently fail.
+
+---
+
+### 2.3 `live-chat.tsx` — switch to `useCreateChatClient`
+
+**Current:** `StreamChat.getInstance(apiKey)` (process-global singleton) + manual `connectUser` / `disconnectUser` with a `cancelled` flag and "null state then disconnect" cleanup ordering.
+
+**Canonical** ([Getting Started](https://getstream.io/chat/docs/sdk/react/basics/getting_started/)):
+
+```tsx
+import { useCreateChatClient } from "stream-chat-react";
+
+const client = useCreateChatClient({
+	apiKey,
+	tokenOrProvider: token, // string OR async () => string
+	userData: { id: userId },
+});
+
+if (!client) return <div>Loading…</div>;
+return <Chat client={client}>...</Chat>;
+```
+
+The hook owns the connect / disconnect lifecycle and returns `null` until the WebSocket is up — no `cancelled` flag, no manual disconnect, no singleton.
+
+**Why this matters here, beyond cleanliness:** the singleton is shared between `channel-page` (LiveChat) and `dashboard-chat.tsx` (LiveChat in OBS popout). If a broadcaster has both surfaces open in different tabs, `connectUser` from one tab disconnects the other. Per-component instances kill the conflict.
+
+**Diff size:** medium
+**User-facing effect:** broadcaster can keep `/dashboard/chat` open in tab 1 and `/` in tab 2 without the chat dropping on either side.
+
+---
+
+### 2.4 `live-chat.tsx` — anonymous viewers should `connectAnonymousUser`
+
+**Current:** anonymous viewers receive a server-signed JWT and call regular `connectUser`. This consumes a chat user slot per viewer.
+
+**Canonical** ([Authless Users § Anonymous Users](https://getstream.io/chat/docs/react/authless_users/)):
+
+```tsx
+await client.connectAnonymousUser();
+```
+
+> Anonymous users are not counted toward your MAU number and only have an impact on the number of concurrent connected clients.
+
+For the `livestream` channel type, anonymous read works by default — exactly what we want for the public landing surface.
+
+**Implementation:** `useCreateChatClient` doesn't take an "anonymous" flag directly. Two paths:
+
+- (A) Build a small `useAnonymousChatClient` hook that mirrors `useCreateChatClient` but calls `connectAnonymousUser` instead of `connectUser`.
+- (B) Branch in `LiveChat`: render one of two inner subcomponents based on `props.token` being null/undefined. Each subcomponent uses its own hook variant.
+
+**Recommendation:** Option B — explicit branch keeps lifecycle simple.
+
+**Diff size:** medium
+**User-facing effect:** anonymous viewers stop counting against MAU. This is a billing fix that becomes material as traffic grows.
+
+---
+
+### 2.5 `channel-page.tsx` — stop refetch on focus for token queries
+
+**Current:** `viewerToken` and `getStreamCredentials` queries set `retry: false` only. React-Query default `refetchOnWindowFocus: true` applies → each tab focus may return a fresh token reference → SDK clients see new prop → useEffect re-runs → `disconnectUser` then `connectUser` race.
+
+**Fix:**
+
+```ts
+useQuery({
+	...trpc.stream.getViewerToken.queryOptions(),
+	retry: false,
+	refetchOnWindowFocus: false,
+	staleTime: Infinity, // until the JWT actually expires
+});
+```
+
+Long-term goal is a `tokenProvider` function passed to the SDK so refresh happens at token-expiry boundaries, not at react-query refetch boundaries — but that's a follow-up after the lifecycle rewrite settles.
+
+**Diff size:** trivial
+**User-facing effect:** stops the tab-focus reconnect storm.
+
+---
+
+### 2.6 `live-chat.tsx` props — make `token`/`userId` optional for anon path
+
+After 2.4, the anon branch doesn't need `token` or `userId`. Update prop type:
+
+```ts
+type Props =
+	| { kind: "anonymous"; apiKey: string; channelCid: string; canPost: false }
+	| {
+			kind: "user";
+			apiKey: string;
+			userId: string;
+			token: string;
+			channelCid: string;
+			canPost: boolean;
+	  };
+```
+
+…or simpler: keep `userId`/`token` as optional and branch internally on their presence.
+
+**Callers updated:**
+
+- `channel-page.tsx` — pass anon shape when `viewerToken.data?.isGuest`.
+- `dashboard/chat/dashboard-chat.tsx` — always passes `kind: "user"` (broadcaster).
+
+**Diff size:** trivial
+**User-facing effect:** none directly; supports 2.4.
+
+---
+
+### 2.7 (verification only) `livestream` channel-type permission grants
+
+[User Permissions § Channel-Type Permissions](https://getstream.io/chat/docs/react/channel_permission_policies/) — built-in `livestream` type grants `anonymous` role `read-channel` by default. We never override this. Verification step before shipping 2.4: confirm in the GetStream dashboard that the channel-type permission matrix has not been edited.
+
+**Diff size:** none (verification step)
+
+---
+
+## 3. Out of scope
+
+- Panels grid, emotes pipeline backend, mailer, invites, dashboard streaming UI surface.
+- Phase 6 white-label / legal pages.
+- Astro Starlight docs site (Phase 7).
+- Recording / VOD (explicit product no per `CLAUDE.md`).
+- **Backstage mode** ([Joining § Backstage setup](https://getstream.io/video/docs/react/guides/joining-and-creating-calls/#backstage-setup)) — would change operator UX. Defer to a separate decision in `docs/decisions.md`.
+- **Webhook events catalogue refresh** — the canonical webhooks doc URL 404s; existing handler covers the events we care about. Revisit when stats grow.
+
+---
+
+## 4. Numbered diff plan (this is the approval gate)
+
+Order is by safe-to-ship dependency, not impact:
+
+1. [`packages/api/src/lib/stream.ts`](../packages/api/src/lib/stream.ts) — extend `signStreamUserToken` with optional `call_cids`. _Reason:_ §2.2.
+2. [`packages/api/src/routers/stream.ts`](../packages/api/src/routers/stream.ts) — `getViewerToken` populates `call_cids` for guests. _Reason:_ §2.2.
+3. [`apps/web/src/components/channel/live-player.tsx`](../apps/web/src/components/channel/live-player.tsx) — drop manual `c.join()`; pass `user: { type: "anonymous" }` for guests. Keep inner `<StreamCall>` for hook context (Option B in §2.1). _Reason:_ §2.1, §2.2.
+4. [`apps/web/src/components/channel/live-chat.tsx`](../apps/web/src/components/channel/live-chat.tsx) — replace singleton+manual lifecycle with `useCreateChatClient`. Add anon branch using `connectAnonymousUser`. _Reason:_ §2.3, §2.4.
+5. [`apps/web/src/components/channel/channel-page.tsx`](../apps/web/src/components/channel/channel-page.tsx) — query options `staleTime: Infinity`, `refetchOnWindowFocus: false`. Update LiveChat caller for new prop shape. _Reason:_ §2.5, §2.6.
+6. [`apps/web/src/components/dashboard/chat/dashboard-chat.tsx`](../apps/web/src/components/dashboard/chat/dashboard-chat.tsx) — update LiveChat caller for new prop shape. _Reason:_ §2.6.
+7. **(verify)** GetStream dashboard → `livestream` channel type permissions matrix unchanged. _Reason:_ §2.7.
+
+Estimated implementation time: 2–3 hours including `bun run check-types` + manual e2e.
+
+---
+
+## 5. Verification plan post-implementation
+
+1. `bun run check-types` clean.
+2. Anon viewer (incognito) loads `/` while live → sees player + read-only chat. No console errors.
+3. Invited viewer signs in → composer appears, can post.
+4. Broadcaster signs in → no "tokens not set" error class.
+5. Broadcaster opens `/dashboard/chat` in 2nd tab → both surfaces stay connected.
+6. Tab away from `/` 30s, tab back → no new WS handshake in DevTools Network panel.
+7. `call.live_started` webhook still flips `liveStartedAt`; Discord webhooks still fan out.
