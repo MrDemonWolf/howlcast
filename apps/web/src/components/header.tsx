@@ -6,6 +6,7 @@
 // "Sign in" (signed out).
 
 import { BrandMark } from "@howlcast/ui/components/brand-mark";
+import Image from "next/image";
 import Link from "next/link";
 
 import { useWhiteLabel } from "@/lib/use-white-label";
@@ -21,15 +22,14 @@ export default function Header() {
 		>
 			<Link href="/" className="flex items-center gap-2.5" aria-label="Home">
 				{wl.hasCustomLogo ? (
-					/* Custom uploaded logo — bypass next/image to avoid registering
-					   every R2 host in remote patterns. */
 					<>
-						<img
+						<Image
 							src={wl.logoUrl}
 							alt={wl.platformName}
 							width={22}
 							height={22}
 							className="h-[22px] w-[22px]"
+							priority
 						/>
 						<span
 							className="font-display font-bold"

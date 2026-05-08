@@ -4,16 +4,17 @@
 // viewers see the customized logo + platform name. Cached for 5 minutes
 // since branding rarely changes per session.
 //
-// Custom logos stream through the server worker at /api/branding/logo so
-// we don't need a public R2 origin. The key is appended as a cache-buster
-// so a re-upload invalidates the browser cache automatically.
+// Custom logos stream through a Next.js route at /branding/logo so
+// next/image can optimize same-origin without crossing workers. The key
+// is appended as a cache-buster so a re-upload invalidates the browser
+// cache automatically.
 
 import { useQuery } from "@tanstack/react-query";
 
 import { trpc } from "@/utils/trpc";
 
 const STALE_MS = 5 * 60 * 1000;
-const LOGO_PROXY_PATH = "/api/branding/logo";
+const LOGO_PROXY_PATH = "/branding/logo";
 
 export type WhiteLabel = {
 	logoUrl: string;
