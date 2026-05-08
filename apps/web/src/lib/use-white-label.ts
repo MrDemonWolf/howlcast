@@ -4,12 +4,13 @@
 // viewers see the customized logo + platform name. Cached for 5 minutes
 // since branding rarely changes per session.
 
+import { env } from "@howlcast/env/web";
 import { useQuery } from "@tanstack/react-query";
 
 import { trpc } from "@/utils/trpc";
 
 const STALE_MS = 5 * 60 * 1000;
-const PUBLIC_BUCKET_BASE = process.env.NEXT_PUBLIC_PUBLIC_BUCKET_URL ?? "https://pub.howlcast.tv";
+const PUBLIC_BUCKET_BASE = env.NEXT_PUBLIC_PUBLIC_BUCKET_URL;
 
 export type WhiteLabel = {
 	logoUrl: string;
