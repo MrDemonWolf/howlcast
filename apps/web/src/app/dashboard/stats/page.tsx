@@ -20,7 +20,11 @@ export default function StatsPage() {
 
 	return (
 		<>
-			<HeaderStrip title="Stats" subtitle="Live · last 7 days" />
+			<HeaderStrip
+				title="Stats"
+				subtitle="The last 7 days of streams, viewers, and chat."
+				eyebrow="STREAM"
+			/>
 
 			<section className="grid grid-cols-1 gap-4 md:grid-cols-3">
 				<StatCard

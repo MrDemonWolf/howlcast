@@ -1,76 +1,97 @@
 "use client";
 
-// Dashboard top header strip. Visible only inside /dashboard. Shows the
-// on-air status pill (drives off `stream.isLive`), title, and right-side
-// actions (Streamer Mode toggle, View channel link).
+// Dashboard top header strip — used by every /dashboard sub-page. Matches
+// design v2 prototype's PageHeader: large display title, optional subtitle,
+// and a right-hand cluster (LIVE/Off-air pill + "View channel"). The
+// sidebar owns the Streamer Mode toggle now.
 
+import { Eyebrow } from "@howlcast/ui/components/eyebrow";
+import { LivePill } from "@howlcast/ui/components/live-pill";
 import { useQuery } from "@tanstack/react-query";
-import { Eye, EyeOff, ExternalLink } from "lucide-react";
+import { ExternalLink } from "lucide-react";
 import Link from "next/link";
+import type { ReactNode } from "react";
 
-import { setStreamerMode, useStreamerMode } from "@/lib/streamer-mode";
 import { trpc } from "@/utils/trpc";
 
 const POLL_MS = 10_000;
 
-export default function HeaderStrip({ title, subtitle }: { title: string; subtitle?: string }) {
+interface HeaderStripProps {
+	title: string;
+	subtitle?: string;
+	eyebrow?: string;
+	right?: ReactNode;
+	showOnAir?: boolean;
+}
+
+export default function HeaderStrip({
+	title,
+	subtitle,
+	eyebrow,
+	right,
+	showOnAir = true,
+}: HeaderStripProps) {
 	const live = useQuery({
 		...trpc.stream.isLive.queryOptions(),
 		refetchInterval: POLL_MS,
+		enabled: showOnAir,
 	});
 	const isLive = !!live.data?.isLive;
-	const streamerMode = useStreamerMode();
 
 	return (
-		<header className="flex flex-wrap items-end justify-between gap-6 border-border border-b pb-5">
+		<header className="mb-7 flex flex-wrap items-end justify-between gap-4">
 			<div className="min-w-0">
-				<h1 className="font-display font-semibold text-3xl text-foreground leading-tight tracking-tight">
+				{eyebrow && <Eyebrow className="mb-2 block">{eyebrow}</Eyebrow>}
+				<h1
+					className="font-display font-bold"
+					style={{
+						fontSize: 32,
+						margin: 0,
+						letterSpacing: "-0.025em",
+						lineHeight: 1.05,
+					}}
+				>
 					{title}
 				</h1>
-				{subtitle ? (
-					<p className="mt-1.5 font-mono text-muted-foreground text-xs tracking-wider">
+				{subtitle && (
+					<div className="mt-1.5 text-sm" style={{ color: "var(--fg-3)" }}>
 						{subtitle}
-					</p>
-				) : null}
+					</div>
+				)}
 			</div>
 			<div className="flex items-center gap-2">
-				<span
-					className={`inline-flex items-center gap-1.5 rounded-md border px-2.5 py-1 font-mono text-[10px] uppercase tracking-wider ${
-						isLive
-							? "border-[oklch(0.65_0.24_25_/_0.5)] bg-[oklch(0.65_0.24_25_/_0.18)] text-live"
-							: "border-border bg-bg-2 text-fg-3"
-					}`}
-				>
-					<span
-						className={`block h-1.5 w-1.5 rounded-full ${isLive ? "bg-live animate-pulse" : "bg-fg-4"}`}
-					/>
-					{isLive ? "On Air" : "Off Air"}
-				</span>
-				<button
-					type="button"
-					onClick={() => setStreamerMode(!streamerMode)}
-					title={
-						streamerMode ? "Streamer Mode on (secrets hidden)" : "Hide secrets for screen share"
-					}
-					aria-pressed={streamerMode}
-					className={`inline-flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-sm transition ${
-						streamerMode
-							? "border-cyan-soft bg-cyan-glow text-cyan"
-							: "border-border bg-bg-2 text-fg-2 hover:bg-bg-3 hover:text-foreground"
-					}`}
-				>
-					{streamerMode ? (
-						<EyeOff className="h-3.5 w-3.5" aria-hidden />
+				{showOnAir &&
+					(isLive ? (
+						<LivePill>ON AIR</LivePill>
 					) : (
-						<Eye className="h-3.5 w-3.5" aria-hidden />
-					)}
-					Streamer Mode
-				</button>
+						<span
+							className="inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px]"
+							style={{
+								borderColor: "var(--line)",
+								background: "var(--bg-2)",
+								color: "var(--fg-3)",
+								fontFamily: "var(--font-mono)",
+								letterSpacing: "0.08em",
+							}}
+						>
+							<span
+								className="block h-1.5 w-1.5 rounded-full"
+								style={{ background: "var(--fg-4)" }}
+							/>
+							OFF AIR
+						</span>
+					))}
+				{right}
 				<Link
 					href="/"
-					className="inline-flex items-center gap-1.5 rounded-md border border-border bg-bg-2 px-3 py-1.5 text-fg-2 text-sm hover:bg-bg-3 hover:text-foreground"
+					className="inline-flex items-center gap-1.5 rounded-[var(--radius-sm)] border px-3 py-1.5 text-sm transition"
+					style={{
+						borderColor: "var(--line)",
+						background: "var(--bg-2)",
+						color: "var(--fg-2)",
+					}}
 				>
-					<ExternalLink className="h-3.5 w-3.5" aria-hidden />
+					<ExternalLink size={14} aria-hidden />
 					View channel
 				</Link>
 			</div>

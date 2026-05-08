@@ -8,7 +8,11 @@ export const metadata = { title: "Account · HowlCast" };
 export default function AccountPage() {
 	return (
 		<>
-			<HeaderStrip title="Account" subtitle="Server · broadcaster profile + security" />
+			<HeaderStrip
+				title="Account"
+				subtitle="Your broadcaster profile and security settings."
+				eyebrow="SETTINGS"
+			/>
 			<ProfileForm />
 			<section className="rounded-lg border border-border bg-card p-5 text-muted-foreground text-sm">
 				<p className="font-medium text-foreground">Security</p>

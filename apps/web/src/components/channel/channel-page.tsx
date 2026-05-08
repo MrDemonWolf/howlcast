@@ -1,21 +1,37 @@
 "use client";
 
-// The channel page IS the home page (`/`). Single broadcaster, single tenant —
-// no /[username] route. Layout matches design-handoff/project/HowlCast.html
-// at the structural level: player card on left column, streamer info row
-// directly below, panels grid, chat dock on the right (340-360px).
+// The channel page IS the home page (`/`). Single-tenant — no /[username]
+// route. Layout matches design-handoff/howcast-v2/project (the Den): a
+// `1fr 360px` grid on desktop with the player surface + meta row + 6-panel
+// grid in the left column and the chat dock on the right.
+//
+// Visibility:
+//   - public           → anyone watches; chat open to invited members.
+//   - invite_only      → signed-in viewers see the Den; signed-out viewers
+//                        see <PrivateGate>.
 //
 // The Player + Chat slots are filled by lazy-loaded GetStream SDK
 // components — 200KB+ minified. Loading them dynamically means anonymous
-// viewers landing while offline don't pay the cost. The LIVE badge,
-// viewer chip, mode pill, and panels grid all drive off real tRPC data.
+// viewers landing while offline don't pay the cost.
 
+import { Avatar } from "@howlcast/ui/components/avatar";
+import { Button } from "@howlcast/ui/components/button";
+import { Eyebrow } from "@howlcast/ui/components/eyebrow";
+import { LivePill } from "@howlcast/ui/components/live-pill";
+import { PinnedMessage } from "@howlcast/ui/components/pinned-message";
+import { Verified } from "@howlcast/ui/components/verified";
+import { ViewerChip } from "@howlcast/ui/components/viewer-chip";
 import { useQuery } from "@tanstack/react-query";
-import { BadgeCheck, Eye, Mail, MessageSquareOff, PawPrint, Settings } from "lucide-react";
+import { Bell, ExternalLink, MoreHorizontal, Settings, Share2 } from "lucide-react";
 import dynamic from "next/dynamic";
 import { useCallback, useState } from "react";
+
+import { authClient } from "@/lib/auth-client";
 import SiteFooter from "@/components/site-footer";
 import { trpc } from "@/utils/trpc";
+
+import { OfflineBanner } from "./offline-banner";
+import { PrivateGate } from "./private-gate";
 
 const POLL_MS = 10_000;
 
@@ -27,13 +43,17 @@ const LivePlayer = dynamic(() => import("./live-player"), {
 const LiveChat = dynamic(() => import("./live-chat"), {
 	ssr: false,
 	loading: () => (
-		<div className="flex flex-1 items-center justify-center text-muted-foreground text-xs">
+		<div
+			className="flex flex-1 items-center justify-center text-xs"
+			style={{ color: "var(--fg-3)" }}
+		>
 			Loading chat…
 		</div>
 	),
 });
 
 export default function ChannelPage() {
+	const session = authClient.useSession();
 	const info = useQuery(trpc.channel.getInfo.queryOptions());
 	const live = useQuery({
 		...trpc.stream.isLive.queryOptions(),
@@ -41,9 +61,6 @@ export default function ChannelPage() {
 	});
 	const panelsQuery = useQuery(trpc.channel.getPanels.queryOptions());
 
-	// Stream credentials — only requested when GetStream is configured.
-	// `getViewerToken` will throw PRECONDITION_FAILED if keys are empty,
-	// caught by the query and surfaced via react-query's error handler.
 	const credentials = useQuery({
 		...trpc.stream.getStreamCredentials.queryOptions(),
 		retry: false,
@@ -53,7 +70,6 @@ export default function ChannelPage() {
 		retry: false,
 	});
 
-	// Viewer count bubbled up from inside <StreamCall> context via callback.
 	const [viewerCount, setViewerCount] = useState<number | null>(null);
 	const handleViewerCount = useCallback((n: number) => setViewerCount(n), []);
 
@@ -62,19 +78,33 @@ export default function ChannelPage() {
 	const isPrivate = visibility === "invite_only";
 	const broadcaster = info.data?.broadcaster ?? null;
 	const title = info.data?.title ?? null;
+	const isSignedIn = !!session.data?.user;
+
+	// Gate: invite-only + not signed in → PrivateGate. Public stream is open
+	// to anyone — they can watch even when signed-out (chat posting still
+	// requires invite via canPost flag).
+	if (isPrivate && !isSignedIn && !session.isPending) {
+		return (
+			<PrivateGate
+				displayName={broadcaster?.displayName ?? null}
+				avatarUrl={null}
+				isLive={isLive}
+			/>
+		);
+	}
 
 	const canMountStream =
 		!!viewerToken.data && !!credentials.data?.callId && !!credentials.data?.channelCid;
-	// isGuest comes from the server — true for unauthenticated visitors.
 	const isGuest = viewerToken.data?.isGuest ?? true;
 
 	return (
-		<main className="mx-auto w-full max-w-[1400px] px-4 py-6 lg:px-6">
-			<div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_360px]">
-				<section className="flex flex-col gap-4">
-					<PlayerSlot
+		<div className="flex min-h-svh flex-col">
+			<main className="grid flex-1 grid-cols-1 lg:grid-cols-[minmax(0,1fr)_360px] lg:gap-0">
+				<section className="scroll-y px-4 py-6 lg:px-6">
+					<PlayerSurface
 						isLive={isLive}
 						viewerCount={viewerCount}
+						displayName={broadcaster?.displayName ?? null}
 						credentials={
 							canMountStream && isLive
 								? {
@@ -92,13 +122,16 @@ export default function ChannelPage() {
 						displayName={broadcaster?.displayName ?? "HowlCast"}
 						verified={broadcaster?.verified ?? false}
 						title={title}
-						isPrivate={isPrivate}
+						isLive={isLive}
 					/>
 
 					<PanelsGrid panels={panelsQuery.data ?? []} />
 				</section>
 
-				<aside className="lg:sticky lg:top-6 lg:self-start">
+				<aside
+					className="lg:sticky lg:top-0 lg:h-svh"
+					style={{ borderLeft: "1px solid var(--line)" }}
+				>
 					<ChatDock
 						isPrivate={isPrivate}
 						credentials={
@@ -114,10 +147,9 @@ export default function ChannelPage() {
 						}
 					/>
 				</aside>
-			</div>
-
+			</main>
 			<SiteFooter />
-		</main>
+		</div>
 	);
 }
 
@@ -128,40 +160,48 @@ type PlayerCreds = {
 	callId: string;
 };
 
-function PlayerSlot({
+function PlayerSurface({
 	isLive,
 	credentials,
 	viewerCount,
+	displayName,
 	onViewerCount,
 }: {
 	isLive: boolean;
 	credentials: PlayerCreds | null;
 	viewerCount: number | null;
+	displayName: string | null;
 	onViewerCount: (n: number) => void;
 }) {
 	return (
-		<div className="relative aspect-video overflow-hidden rounded-lg border border-border bg-black">
+		<div className="player-surface" data-slot="player-surface">
 			{isLive && credentials ? (
-				<LivePlayer {...credentials} onViewerCount={onViewerCount} />
-			) : (
-				<div className="absolute inset-0 flex items-center justify-center text-muted-foreground text-xs">
-					<span className="font-mono uppercase tracking-wider">
-						{isLive ? "connecting…" : "offline"}
-					</span>
-				</div>
-			)}
-			{isLive ? (
 				<>
-					<span className="pointer-events-none absolute top-3 left-3 inline-flex items-center gap-1.5 rounded-md bg-[var(--live)] px-2 py-1 font-mono text-[10px] text-white uppercase tracking-wider">
-						<i className="block h-1.5 w-1.5 animate-pulse rounded-full bg-white" />
-						Live
-					</span>
-					<span className="pointer-events-none absolute top-3 right-3 inline-flex items-center gap-1.5 rounded-md bg-black/60 px-2 py-1 text-[11px] text-white backdrop-blur">
-						<Eye className="h-3 w-3" aria-hidden="true" />
-						<span className="font-mono">{viewerCount ?? "—"}</span>
-					</span>
+					<LivePlayer {...credentials} onViewerCount={onViewerCount} />
+					<div className="pointer-events-none absolute top-3.5 left-3.5 flex gap-2">
+						<LivePill />
+					</div>
+					<div className="pointer-events-none absolute top-3.5 right-3.5 flex gap-2">
+						<ViewerChip count={viewerCount ?? 0} />
+					</div>
 				</>
-			) : null}
+			) : isLive ? (
+				/* Live but credentials still loading — minimal placeholder. */
+				<div
+					className="absolute inset-0 flex items-center justify-center"
+					style={{
+						color: "var(--fg-4)",
+						fontFamily: "var(--font-mono)",
+						fontSize: 11,
+						letterSpacing: "0.08em",
+						textTransform: "uppercase",
+					}}
+				>
+					connecting…
+				</div>
+			) : (
+				<OfflineBanner displayName={displayName} />
+			)}
 		</div>
 	);
 }
@@ -170,48 +210,56 @@ function StreamerInfo({
 	displayName,
 	verified,
 	title,
-	isPrivate,
+	isLive,
 }: {
 	displayName: string;
 	verified: boolean;
 	title: string | null;
-	isPrivate: boolean;
+	isLive: boolean;
 }) {
 	return (
-		<div className="flex items-start gap-3 rounded-lg border border-border bg-card p-4">
-			<div className="grid h-12 w-12 flex-none place-items-center rounded-full bg-cyan-soft font-display font-semibold text-fg text-lg uppercase">
-				{displayName.charAt(0)}
-			</div>
+		<div className="mt-4 flex items-start gap-4">
+			<Avatar size={56} name={displayName} hue={252} halo live={isLive} />
 			<div className="min-w-0 flex-1">
-				<div className="flex items-center gap-1.5">
-					<h1 className="truncate font-display font-semibold text-foreground text-lg">
+				<div className="flex items-center gap-2">
+					<div
+						className="font-display font-bold"
+						style={{
+							fontSize: 22,
+							letterSpacing: "-0.022em",
+						}}
+					>
 						{displayName}
-					</h1>
-					{verified ? (
-						<BadgeCheck className="h-4 w-4 flex-none text-cyan" aria-label="verified" />
-					) : null}
+					</div>
+					{verified && <Verified />}
 				</div>
-				<p className="mt-0.5 truncate text-muted-foreground text-sm">
+				<div className="mt-1 truncate text-sm" style={{ color: "var(--fg-2)" }}>
 					{title ?? "No stream title yet."}
-				</p>
+				</div>
+				{/* Tags are part of the design but DESIGN-DECISIONS removes them.
+				    Render any title-derived metadata only — keep this slot for
+				    future feature expansion. */}
+				<TagRow />
 			</div>
-			<ModePill isPrivate={isPrivate} />
+			<div className="flex gap-1">
+				<Button variant="ghost" size="icon" aria-label="Share" title="Share">
+					<Share2 aria-hidden />
+				</Button>
+				<Button variant="ghost" size="icon" aria-label="Notifications" title="Notifications">
+					<Bell aria-hidden />
+				</Button>
+				<Button variant="ghost" size="icon" aria-label="More" title="More">
+					<MoreHorizontal aria-hidden />
+				</Button>
+			</div>
 		</div>
 	);
 }
 
-function ModePill({ isPrivate }: { isPrivate: boolean }) {
-	const cls = isPrivate
-		? "border-[oklch(0.6_0.16_290_/_0.5)] bg-[oklch(0.4_0.12_290_/_0.22)] text-[oklch(0.82_0.14_295)]"
-		: "border-[oklch(0.78_0.17_162_/_0.4)] bg-[oklch(0.4_0.13_162_/_0.18)] text-success";
-	return (
-		<span
-			className={`hidden flex-none items-center gap-1.5 rounded-md border px-2 py-1 font-mono text-[10px] uppercase tracking-wider sm:inline-flex ${cls}`}
-		>
-			<PawPrint className="h-3 w-3" aria-hidden="true" />
-			{isPrivate ? "Private · invite-only" : "Public · open watch"}
-		</span>
-	);
+function TagRow() {
+	// Single-tenant, no discovery — render zero generic tags. Kept as a
+	// component so future "Now playing"-type pills slot in cleanly.
+	return null;
 }
 
 type Panel = {
@@ -226,7 +274,7 @@ type Panel = {
 function PanelsGrid({ panels }: { panels: Panel[] }) {
 	if (panels.length === 0) return null;
 	return (
-		<div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+		<div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
 			{panels.map((p) => (
 				<PanelCard key={p.id} panel={p} />
 			))}
@@ -236,15 +284,28 @@ function PanelsGrid({ panels }: { panels: Panel[] }) {
 
 function PanelCard({ panel }: { panel: Panel }) {
 	const inner = (
-		<article className="flex h-full flex-col rounded-lg border border-border bg-card p-4 transition hover:border-line-3">
-			{panel.title ? (
-				<h2 className="font-display font-semibold text-foreground text-sm">{panel.title}</h2>
-			) : null}
-			{panel.body ? (
-				<p className="mt-1.5 line-clamp-6 whitespace-pre-line text-muted-foreground text-sm">
+		<article
+			className="flex h-full flex-col rounded-[var(--radius-lg)] border bg-[var(--bg-2)] p-[18px] transition hover:-translate-y-px"
+			style={{ borderColor: "var(--line)" }}
+		>
+			{panel.title && <Eyebrow className="mb-2.5">{panel.title}</Eyebrow>}
+			{panel.body && (
+				<p
+					className="m-0 line-clamp-6 whitespace-pre-line text-[13.5px] leading-relaxed"
+					style={{ color: "var(--fg-2)" }}
+				>
 					{panel.body}
 				</p>
-			) : null}
+			)}
+			{panel.linkUrl && (
+				<span
+					className="mt-3 inline-flex items-center gap-1 text-xs"
+					style={{ color: "var(--cyan)" }}
+				>
+					<ExternalLink size={12} aria-hidden />
+					Open link
+				</span>
+			)}
 		</article>
 	);
 	if (panel.linkUrl) {
@@ -273,45 +334,71 @@ function ChatDock({
 	credentials: ChatCreds | null;
 }) {
 	return (
-		<div className="flex h-[640px] flex-col rounded-lg border border-border bg-card">
-			<header className="flex items-center justify-between border-border border-b px-4 py-3">
-				<span className="font-medium text-foreground text-sm">Stream chat</span>
-				<button
-					type="button"
-					aria-label="Chat settings"
-					className="text-muted-foreground hover:text-foreground"
-				>
-					<Settings className="h-4 w-4" />
-				</button>
-			</header>
+		<div
+			className="flex h-full min-h-[600px] flex-col"
+			style={{ background: "var(--bg)" }}
+			data-slot="chat-dock"
+		>
+			<div
+				className="flex h-11 items-center justify-between px-3.5"
+				style={{ borderBottom: "1px solid var(--line)" }}
+			>
+				<Eyebrow>CHAT</Eyebrow>
+				<div className="flex gap-1">
+					<Button variant="ghost" size="icon-sm" title="Settings" aria-label="Chat settings">
+						<Settings aria-hidden />
+					</Button>
+					<a
+						href="/popout/chat"
+						target="_blank"
+						rel="noopener noreferrer"
+						aria-label="Pop chat into its own window"
+						title="Pop out"
+					>
+						<Button variant="ghost" size="icon-sm" tabIndex={-1}>
+							<ExternalLink aria-hidden />
+						</Button>
+					</a>
+				</div>
+			</div>
 
-			{credentials ? (
-				<div className="flex flex-1 flex-col overflow-hidden">
+			<PinnedMessage>Be useful or be silent. No spoilers without /spoiler.</PinnedMessage>
+
+			<div className="relative flex-1 overflow-hidden">
+				{credentials ? (
 					<LiveChat {...credentials} />
-				</div>
-			) : (
-				<div className="flex flex-1 items-center justify-center px-6 text-center">
-					<div className="flex flex-col items-center gap-2 text-muted-foreground">
-						<MessageSquareOff className="h-6 w-6" aria-hidden="true" />
-						<p className="text-sm">Chat unavailable until the broadcaster goes live.</p>
+				) : (
+					<div
+						className="flex h-full items-center justify-center px-6 text-center text-xs"
+						style={{ color: "var(--fg-3)" }}
+					>
+						Chat opens when {isPrivate ? "the den" : "the broadcaster"} is live.
 					</div>
-				</div>
-			)}
+				)}
+				{credentials && !credentials.canPost && <LockedComposerOverlay />}
+			</div>
+		</div>
+	);
+}
 
-			{isPrivate && !credentials?.canPost ? (
-				<div className="border-border border-t p-3">
-					<div className="flex items-start gap-3 rounded-md border border-cyan-soft bg-cyan-glow p-3">
-						<Mail className="mt-0.5 h-4 w-4 flex-none text-cyan" />
-						<div className="min-w-0">
-							<p className="font-medium text-foreground text-sm">Chat is invite-only.</p>
-							<p className="mt-0.5 text-muted-foreground text-xs">
-								Watching is open to anyone. Posting is for the den — the broadcaster sends invites
-								by email.
-							</p>
-						</div>
-					</div>
-				</div>
-			) : null}
+function LockedComposerOverlay() {
+	return (
+		<div
+			className="pointer-events-none absolute inset-x-0 bottom-0 flex items-center justify-center px-4 pt-12 pb-4"
+			style={{
+				background:
+					"linear-gradient(180deg, transparent, color-mix(in oklab, var(--bg) 80%, transparent) 40%, var(--bg))",
+				backdropFilter: "blur(2px)",
+			}}
+		>
+			<div className="pointer-events-auto flex flex-col items-center gap-1.5 text-center">
+				<a href="/login">
+					<Button size="sm">Sign in to chat</Button>
+				</a>
+				<span className="text-[11px]" style={{ color: "var(--fg-4)" }}>
+					Watching is open. Posting is for the den.
+				</span>
+			</div>
 		</div>
 	);
 }

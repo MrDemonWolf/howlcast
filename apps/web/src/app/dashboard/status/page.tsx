@@ -10,7 +10,11 @@ export const metadata = { title: "Self-host status · HowlCast" };
 export default function StatusPage() {
 	return (
 		<>
-			<HeaderStrip title="Self-host status" subtitle="Server · health and deployment" />
+			<HeaderStrip
+				title="Status"
+				subtitle="Health and deployment of the workers behind your channel."
+				eyebrow="STREAM"
+			/>
 			<section className="grid grid-cols-1 gap-4 lg:grid-cols-2">
 				<StatusCard label="API (custom domain)" url="https://api.tv.mrdemonwolf.com/api/health" />
 				<StatusCard

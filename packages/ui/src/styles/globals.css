@@ -34,6 +34,10 @@
 	--warning: oklch(0.85 0.16 84);
 	--destructive: oklch(0.7 0.2 25);
 
+	/* CTA + chip — design v2 additions */
+	--cta-fg: #091533;
+	--chip-bg: rgba(0, 0, 0, 0.55);
+
 	/* Radii */
 	--radius: 10px;
 	--radius-sm: 6px;
@@ -232,4 +236,281 @@
 		font-size: 0.8125rem;
 		color: oklch(0.85 0.16 70);
 	}
+}
+
+/* =====================================================================
+   HowlCast utility classes — ported from Claude Design v2 prototype
+   (design-handoff/howcast-v2/project/styles.css). These are not Tailwind
+   utilities; they are component-level helpers used by HowlCast atoms.
+   ===================================================================== */
+
+/* Eyebrow label */
+.eyebrow {
+	font-family: var(--font-mono);
+	font-size: 10px;
+	letter-spacing: 0.07em;
+	text-transform: uppercase;
+	color: var(--fg-3);
+}
+
+/* LIVE pill */
+.live-pill {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	height: 24px;
+	padding: 0 10px;
+	background: var(--live);
+	color: white;
+	border-radius: 999px;
+	font-family: var(--font-mono);
+	font-size: 11px;
+	font-weight: 600;
+	letter-spacing: 0.08em;
+}
+.live-dot {
+	width: 7px;
+	height: 7px;
+	border-radius: 999px;
+	background: white;
+	animation: hc-live-pulse 2.4s ease-in-out infinite;
+}
+@keyframes hc-live-pulse {
+	0%,
+	100% {
+		opacity: 1;
+		transform: scale(1);
+	}
+	50% {
+		opacity: 0.4;
+		transform: scale(0.85);
+	}
+}
+
+/* Viewer chip — overlays on top of player */
+.viewer-chip {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	height: 24px;
+	padding: 0 10px;
+	background: var(--chip-bg);
+	backdrop-filter: blur(8px);
+	-webkit-backdrop-filter: blur(8px);
+	color: white;
+	border-radius: 999px;
+	font-family: var(--font-mono);
+	font-size: 11px;
+}
+
+/* Tag pill */
+.tag-pill {
+	display: inline-flex;
+	align-items: center;
+	height: 22px;
+	padding: 0 10px;
+	background: var(--bg-3);
+	border: 1px solid var(--line);
+	border-radius: 999px;
+	color: var(--fg-2);
+	font-size: 12px;
+}
+
+/* Verified mark */
+.verified {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 16px;
+	height: 16px;
+	border-radius: 999px;
+	background: var(--cyan);
+	color: var(--cta-fg);
+}
+
+/* Avatar — gradient initials with optional halo + live corner dot */
+.hc-avatar {
+	position: relative;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	border-radius: 999px;
+	background: linear-gradient(135deg, oklch(0.65 0.16 250), oklch(0.45 0.18 268));
+	color: white;
+	font-weight: 600;
+	flex-shrink: 0;
+}
+.hc-avatar.halo {
+	box-shadow: 0 0 0 3px var(--cyan-soft);
+}
+.hc-avatar .live-dot-corner {
+	position: absolute;
+	bottom: -2px;
+	right: -2px;
+	width: 12px;
+	height: 12px;
+	border-radius: 999px;
+	background: var(--live);
+	border: 2px solid var(--bg);
+}
+
+/* Status pill — generic state pill (pending/accepted/expired/error) */
+.status-pill {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	height: 22px;
+	padding: 0 10px;
+	border-radius: 999px;
+	font-family: var(--font-mono);
+	font-size: 11px;
+	letter-spacing: 0.04em;
+}
+.status-pill::before {
+	content: "";
+	width: 6px;
+	height: 6px;
+	border-radius: 999px;
+	background: currentColor;
+}
+.status-pending {
+	color: var(--warning);
+	background: color-mix(in oklab, var(--warning) 14%, transparent);
+}
+.status-accepted {
+	color: var(--success);
+	background: color-mix(in oklab, var(--success) 14%, transparent);
+}
+.status-expired {
+	color: var(--fg-4);
+	background: color-mix(in oklab, var(--fg-4) 14%, transparent);
+}
+.status-error {
+	color: var(--destructive);
+	background: color-mix(in oklab, var(--destructive) 14%, transparent);
+}
+
+/* Player surface — empty/placeholder bg used by LivePlayer */
+.player-surface {
+	position: relative;
+	aspect-ratio: 16 / 9;
+	background:
+		radial-gradient(ellipse at 30% 40%, var(--cyan-soft) 0%, transparent 55%),
+		radial-gradient(
+			ellipse at 80% 80%,
+			color-mix(in oklab, var(--cyan-soft) 50%, transparent) 0%,
+			transparent 60%
+		),
+		var(--bg-2);
+	border-radius: var(--radius-lg);
+	overflow: hidden;
+}
+
+/* Stripe drop placeholder (avatar upload, panel media, etc.) */
+.stripe-placeholder {
+	background: repeating-linear-gradient(45deg, var(--bg-3) 0 12px, var(--bg-2) 12px 24px);
+	border: 1px dashed var(--line-2);
+	border-radius: var(--radius);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	color: var(--fg-4);
+	font-family: var(--font-mono);
+	font-size: 11px;
+	letter-spacing: 0.06em;
+	text-transform: uppercase;
+}
+
+/* Skeleton shimmer */
+.skel {
+	background: linear-gradient(90deg, var(--bg-2) 0%, var(--bg-3) 50%, var(--bg-2) 100%);
+	background-size: 200% 100%;
+	animation: hc-skel-shimmer 1.4s linear infinite;
+	border-radius: var(--radius-sm);
+}
+@keyframes hc-skel-shimmer {
+	0% {
+		background-position: 200% 0;
+	}
+	100% {
+		background-position: -200% 0;
+	}
+}
+
+/* Cyan underline accent for legal h2 */
+.legal-h2 {
+	position: relative;
+	padding-top: 12px;
+}
+.legal-h2::before {
+	content: "";
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 32px;
+	height: 2px;
+	background: var(--cyan);
+}
+
+/* Stagger fade-in */
+@keyframes hc-fade-up {
+	from {
+		opacity: 0;
+		transform: translateY(6px);
+	}
+	to {
+		opacity: 1;
+		transform: none;
+	}
+}
+.fade-up {
+	animation: hc-fade-up 320ms ease both;
+}
+
+/* Emote square placeholder (chat) */
+.emote-sq {
+	width: 22px;
+	height: 22px;
+	border-radius: 4px;
+	background: linear-gradient(135deg, var(--cyan-soft), var(--cyan));
+	display: inline-block;
+	vertical-align: -5px;
+}
+
+/* Subtle scrollbar */
+.scroll-y {
+	overflow-y: auto;
+	scrollbar-width: thin;
+	scrollbar-color: var(--line-3) transparent;
+}
+.scroll-y::-webkit-scrollbar {
+	width: 8px;
+}
+.scroll-y::-webkit-scrollbar-thumb {
+	background: var(--line-2);
+	border-radius: 4px;
+}
+.scroll-y::-webkit-scrollbar-thumb:hover {
+	background: var(--line-3);
+}
+
+/* Sparkline svg accent */
+.spark {
+	color: var(--cyan);
+}
+
+/* Pinned chat strip */
+.pinned-strip {
+	border-left: 2px solid var(--cyan);
+	background: linear-gradient(
+		90deg,
+		color-mix(in oklab, var(--cyan-soft) 40%, transparent),
+		transparent
+	);
+	padding: 10px 12px;
+	font-size: 12px;
+	color: var(--fg-2);
+	display: flex;
+	gap: 8px;
+	align-items: flex-start;
 }
