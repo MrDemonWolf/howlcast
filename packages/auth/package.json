@@ -9,7 +9,9 @@
 			"default": "./src/*.ts"
 		}
 	},
-	"scripts": {},
+	"scripts": {
+		"check-types": "tsc --noEmit"
+	},
 	"dependencies": {
 		"@better-auth/passkey": "^1.6.9",
 		"@howlcast/db": "workspace:*",
@@ -21,6 +23,7 @@
 	},
 	"devDependencies": {
 		"@howlcast/config": "workspace:*",
+		"@simplewebauthn/server": "^13.3.0",
 		"typescript": "catalog:"
 	}
 }

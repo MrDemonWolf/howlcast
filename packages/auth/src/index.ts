@@ -1,4 +1,7 @@
 import { passkey } from "@better-auth/passkey";
+// Force a type reference to @simplewebauthn/server so the inferred
+// passkey-plugin types stay portable across packages.
+import type {} from "@simplewebauthn/server";
 import { createDb } from "@howlcast/db";
 import * as schema from "@howlcast/db/schema/auth";
 import { env } from "@howlcast/env/server";

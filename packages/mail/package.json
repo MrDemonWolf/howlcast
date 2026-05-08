@@ -8,14 +8,19 @@
 		},
 		"./templates/*": {
 			"default": "./src/templates/*.ts"
+		},
+		"./lib/*": {
+			"default": "./src/lib/*.ts"
 		}
 	},
-	"scripts": {},
+	"scripts": {
+		"check-types": "tsc --noEmit"
+	},
 	"dependencies": {
+		"@howlcast/config": "workspace:*",
 		"resend": "catalog:"
 	},
 	"devDependencies": {
-		"@howlcast/config": "workspace:*",
 		"@types/nodemailer": "catalog:",
 		"nodemailer": "catalog:",
 		"typescript": "catalog:"

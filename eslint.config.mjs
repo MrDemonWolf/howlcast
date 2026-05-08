@@ -16,6 +16,7 @@ export default tseslint.config(
 			"**/.wrangler/**",
 			"**/.alchemy/**",
 			"**/.source/**",
+			"**/.claude/**",
 			"**/out/**",
 			"**/public/sw.js",
 			"**/public/workbox-*.js",
@@ -33,6 +34,16 @@ export default tseslint.config(
 	// Base configs
 	js.configs.recommended,
 	...tseslint.configs.recommended,
+
+	// Parser options — pin tsconfigRootDir so worktree symlinks under
+	// .claude/worktrees don't surface multiple candidate tsconfigs.
+	{
+		languageOptions: {
+			parserOptions: {
+				tsconfigRootDir: import.meta.dirname,
+			},
+		},
+	},
 
 	// Unused imports plugin
 	{
@@ -60,7 +71,7 @@ export default tseslint.config(
 		rules: {
 			"no-param-reassign": "error",
 			"@typescript-eslint/no-non-null-assertion": "warn",
-			"@typescript-eslint/no-explicit-any": "warn",
+			"@typescript-eslint/no-explicit-any": "error",
 			"@typescript-eslint/no-empty-object-type": "off",
 			"@typescript-eslint/no-require-imports": "off",
 		},

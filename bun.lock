@@ -59,6 +59,7 @@
         "@better-auth/passkey": "^1.6.9",
         "@howlcast/api": "workspace:*",
         "@howlcast/auth": "workspace:*",
+        "@howlcast/config": "workspace:*",
         "@howlcast/env": "workspace:*",
         "@howlcast/ui": "workspace:*",
         "@libsql/client": "catalog:",
@@ -91,7 +92,6 @@
       },
       "devDependencies": {
         "@cloudflare/workers-types": "catalog:",
-        "@howlcast/config": "workspace:*",
         "@tailwindcss/postcss": "^4.1.18",
         "@tanstack/react-query-devtools": "^5.91.1",
         "@types/hast": "^3.0.4",
@@ -110,6 +110,7 @@
       "name": "@howlcast/api",
       "dependencies": {
         "@howlcast/auth": "workspace:*",
+        "@howlcast/config": "workspace:*",
         "@howlcast/db": "workspace:*",
         "@howlcast/env": "workspace:*",
         "@howlcast/mail": "workspace:*",
@@ -121,11 +122,12 @@
         "rehype-sanitize": "^6.0.0",
         "rehype-stringify": "^10.0.1",
         "unified": "^11.0.5",
+        "unist-util-visit": "^5.0.0",
         "zod": "catalog:",
       },
       "devDependencies": {
-        "@howlcast/config": "workspace:*",
         "@libsql/client": "^0.17.3",
+        "@types/hast": "^3.0.4",
         "hono": "catalog:",
         "typescript": "catalog:",
         "vitest": "^4.1.5",
@@ -144,6 +146,7 @@
       },
       "devDependencies": {
         "@howlcast/config": "workspace:*",
+        "@simplewebauthn/server": "^13.3.0",
         "typescript": "catalog:",
       },
     },
@@ -197,10 +200,10 @@
     "packages/mail": {
       "name": "@howlcast/mail",
       "dependencies": {
+        "@howlcast/config": "workspace:*",
         "resend": "catalog:",
       },
       "devDependencies": {
-        "@howlcast/config": "workspace:*",
         "@types/nodemailer": "catalog:",
         "nodemailer": "catalog:",
         "typescript": "catalog:",
