@@ -5,10 +5,12 @@
 // Allowed surface is intentionally narrow: paragraphs, headings, basic
 // formatting, lists, and links. No images, no inline styles, no scripts.
 
+import type { Element, Root } from "hast";
 import rehypeParse from "rehype-parse";
 import rehypeSanitize, { defaultSchema } from "rehype-sanitize";
 import rehypeStringify from "rehype-stringify";
 import { unified } from "unified";
+import { visit } from "unist-util-visit";
 
 const schema = {
 	...defaultSchema,
@@ -22,10 +24,26 @@ const schema = {
 	},
 };
 
+// Force `rel="noopener noreferrer"` on every <a target="_blank">. Tab-nabbing
+// + referrer-leak protection — sanitize-html can't enforce this directly so
+// we run a second pass.
+function rehypeForceRel() {
+	return (tree: Root) => {
+		visit(tree, "element", (node: Element) => {
+			if (node.tagName !== "a") return;
+			const target = node.properties?.target;
+			if (target !== "_blank") return;
+			node.properties = node.properties ?? {};
+			node.properties.rel = "noopener noreferrer";
+		});
+	};
+}
+
 export async function sanitizeLegalHtml(rawHtml: string): Promise<string> {
 	const file = await unified()
 		.use(rehypeParse, { fragment: true })
 		.use(rehypeSanitize, schema)
+		.use(rehypeForceRel)
 		.use(rehypeStringify)
 		.process(rawHtml);
 	return String(file);

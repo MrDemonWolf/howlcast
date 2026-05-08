@@ -43,12 +43,18 @@ export const brandingRouter = router({
 				customPlatformName: z.string().max(24).nullable().optional(),
 				footerAttribution: z.enum(["default", "custom", "off"]).optional(),
 				customFooterText: z.string().max(80).nullable().optional(),
-				customLogoKey: z.string().max(200).nullable().optional(),
+				// Logo keys are minted server-side by /api/upload/logo. Pin the
+				// shape so a broadcaster can't point this at arbitrary R2 keys.
+				customLogoKey: z
+					.string()
+					.regex(/^branding\/logo-[a-f0-9]{16}\.(svg|png|jpg)$/)
+					.nullable()
+					.optional(),
 			}),
 		)
 		.mutation(async ({ ctx, input }) => {
 			await assertBroadcaster(ctx.session.user.id);
-			const db = createDb();
+			const db = ctx.db;
 			const patch: Record<string, unknown> = {};
 			if (input.customPlatformName !== undefined) {
 				patch.customPlatformName = input.customPlatformName?.trim() || null;
@@ -82,9 +88,8 @@ export const brandingRouter = router({
 	// is locked in at write time.
 	getLegal: publicProcedure
 		.input(z.object({ id: z.enum(["privacy", "terms"]) }))
-		.query(async ({ input }) => {
-			const db = createDb();
-			const row = await db.select().from(legalDocs).where(eq(legalDocs.id, input.id)).get();
+		.query(async ({ ctx, input }) => {
+			const row = await ctx.db.select().from(legalDocs).where(eq(legalDocs.id, input.id)).get();
 			if (!row) {
 				throw new TRPCError({ code: "NOT_FOUND", message: `Legal doc '${input.id}' missing.` });
 			}
@@ -105,7 +110,7 @@ export const brandingRouter = router({
 		.mutation(async ({ ctx, input }) => {
 			await assertBroadcaster(ctx.session.user.id);
 			const clean = await sanitizeLegalHtml(input.bodyHtml);
-			const db = createDb();
+			const db = ctx.db;
 			const existing = await db
 				.select({ id: legalDocs.id })
 				.from(legalDocs)

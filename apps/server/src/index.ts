@@ -3,6 +3,7 @@ import { createContext } from "@howlcast/api/context";
 import { fanOutDiscord } from "@howlcast/api/lib/discord";
 import { refreshEmotes } from "@howlcast/api/lib/emotes";
 import { verifyStreamWebhook } from "@howlcast/api/lib/stream";
+import { enforceThrottle } from "@howlcast/api/lib/throttle";
 import { appRouter } from "@howlcast/api/routers/index";
 import { createAuth } from "@howlcast/auth";
 import { createDb } from "@howlcast/db";
@@ -62,6 +63,18 @@ app.post("/api/upload/logo", async (c) => {
 		return c.json({ error: "broadcaster only" }, 403);
 	}
 
+	// 5/hour cap. R2 + D1 writes per call; cheap to abuse otherwise.
+	try {
+		await enforceThrottle({
+			kv: env.EMOTES_KV,
+			key: `branding:upload:${sess.user.id}`,
+			limit: 5,
+			windowSec: 3600,
+		});
+	} catch {
+		return c.json({ error: "rate limit" }, 429);
+	}
+
 	const form = await c.req.formData();
 	const raw = form.get("file");
 	// Hono types FormDataEntryValue as `string | Blob | null` in some
@@ -100,6 +113,25 @@ app.post("/api/upload/logo", async (c) => {
 // API Secret (no separate webhook secret) — verified via X-SIGNATURE header.
 // Updates channelConfig.liveStartedAt/liveEndedAt on call.live_started /
 // call.session_ended / call.ended. Discord fanout runs after the DB write.
+//
+// Event types we accept without HMAC verification (GetStream Chat events
+// use a different signing scheme; we don't act on them, just ack).
+const WEBHOOK_NO_VERIFY_EVENTS = new Set([
+	"call.session_participant_joined",
+	"call.session_participant_left",
+	"call.member_added",
+	"call.member_removed",
+	"call.member_updated",
+	"call.updated",
+	"call.permission_request",
+	"call.recording_started",
+	"call.recording_stopped",
+	"chat.message.new",
+	"chat.message.updated",
+	"chat.message.deleted",
+	"chat.user.banned",
+	"chat.user.unbanned",
+]);
 app.post("/api/webhooks/getstream", async (c) => {
 	const sig = c.req.header("x-signature") ?? "";
 	const raw = await c.req.text();
@@ -117,10 +149,17 @@ app.post("/api/webhooks/getstream", async (c) => {
 	const isLiveEvent = event.type === "call.live_started" || event.type === "call.session_started";
 	const isEndEvent = event.type === "call.session_ended" || event.type === "call.ended";
 
-	// Acknowledge all events we don't act on (e.g. chat message.new) without
+	// Acknowledge events we don't act on (e.g. chat message.new) without
 	// HMAC verification — Chat and Video may use different signing schemes.
 	// HMAC is only enforced for events that trigger DB writes or Discord fanout.
-	if (!isLiveEvent && !isEndEvent) return c.json({ ok: true });
+	// Anything not in the explicit allowlist gets rejected so we don't become
+	// an open ping endpoint.
+	if (!isLiveEvent && !isEndEvent) {
+		if (event.type && WEBHOOK_NO_VERIFY_EVENTS.has(event.type)) {
+			return c.json({ ok: true });
+		}
+		return c.json({ error: "unknown event type" }, 400);
+	}
 
 	const ok = await verifyStreamWebhook(raw, sig, env.STREAM_API_SECRET);
 	if (!ok) return c.json({ error: "invalid signature" }, 401);

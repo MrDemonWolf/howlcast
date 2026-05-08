@@ -19,12 +19,23 @@ import { eq } from "drizzle-orm";
 import { z } from "zod";
 
 import { publicProcedure, router } from "../index";
+import { enforceThrottle } from "../lib/throttle";
 import {
 	lookupTwitchUser,
 	probeEmoteProviders,
 	type ProviderProbe,
 	TwitchNotConfiguredError,
 } from "../lib/twitch";
+
+// Pull the caller's IP from the Hono context for setup throttle. CF-Connecting-IP
+// is the canonical Cloudflare header; X-Forwarded-For is the fallback.
+function callerIp(headers: Headers): string {
+	return (
+		headers.get("cf-connecting-ip") ??
+		headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??
+		"unknown"
+	);
+}
 
 const SITE_ID = "site";
 
@@ -53,8 +64,14 @@ export const setupRouter = router({
 	// Step 1: resolve Twitch username + probe emote providers. No writes.
 	lookup: publicProcedure
 		.input(z.object({ username: z.string().min(1).max(25) }))
-		.mutation(async ({ input }) => {
+		.mutation(async ({ ctx, input }) => {
 			await assertNotCompleted();
+			await enforceThrottle({
+				kv: env.EMOTES_KV,
+				key: `setup:throttle:${callerIp(ctx.headers)}`,
+				limit: 10,
+				windowSec: 60,
+			});
 			try {
 				const user = await lookupTwitchUser(input.username, env.EMOTES_KV, {
 					clientId: env.TWITCH_CLIENT_ID,
@@ -94,6 +111,12 @@ export const setupRouter = router({
 		)
 		.mutation(async ({ ctx, input }) => {
 			const cfg = await assertNotCompleted();
+			await enforceThrottle({
+				kv: env.EMOTES_KV,
+				key: `setup:commit:${callerIp(ctx.headers)}`,
+				limit: 3,
+				windowSec: 60,
+			});
 
 			const auth = createAuth();
 			const result = await auth.api.signUpEmail({
@@ -115,7 +138,7 @@ export const setupRouter = router({
 				});
 			}
 
-			const db = createDb();
+			const db = ctx.db;
 			const now = new Date();
 
 			await db

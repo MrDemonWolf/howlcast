@@ -3,32 +3,23 @@
 // and to make the broadcaster surface area easy to scan.
 
 import { sendMail } from "@howlcast/mail";
-import { createDb } from "@howlcast/db";
-import { channelConfig, invites, profiles, webhooks } from "@howlcast/db/schema";
+import { invites, profiles, webhooks } from "@howlcast/db/schema";
 import { env } from "@howlcast/env/server";
 import { TRPCError } from "@trpc/server";
 import { desc, eq } from "drizzle-orm";
 import { z } from "zod";
 
 import { protectedProcedure, router } from "../index";
-
-const SITE_ID = "site";
-
-async function assertBroadcaster(userId: string) {
-	const db = createDb();
-	const cfg = await db.select().from(channelConfig).where(eq(channelConfig.id, SITE_ID)).get();
-	if (!cfg || cfg.ownerId !== userId) {
-		throw new TRPCError({ code: "FORBIDDEN", message: "Broadcaster only." });
-	}
-	return cfg;
-}
+import { assertBroadcaster } from "../lib/broadcaster-guard";
+import { escapeHtml, escapeHtmlAttr } from "../lib/html";
+import { enforceThrottle } from "../lib/throttle";
 
 export const adminRouter = router({
 	// ─── Discord webhooks ──────────────────────────────────────────────
 
 	listWebhooks: protectedProcedure.query(async ({ ctx }) => {
 		await assertBroadcaster(ctx.session.user.id);
-		const db = createDb();
+		const db = ctx.db;
 		const rows = await db.select().from(webhooks).all();
 		const byId = new Map(rows.map((r) => [r.id, r]));
 		// Always return both rows (public + private) — UI renders empty
@@ -57,7 +48,7 @@ export const adminRouter = router({
 		)
 		.mutation(async ({ ctx, input }) => {
 			await assertBroadcaster(ctx.session.user.id);
-			const db = createDb();
+			const db = ctx.db;
 			const existing = await db.select().from(webhooks).where(eq(webhooks.id, input.id)).get();
 			if (existing) {
 				await db
@@ -85,8 +76,16 @@ export const adminRouter = router({
 	createInvite: protectedProcedure
 		.input(z.object({ email: z.string().email() }))
 		.mutation(async ({ ctx, input }) => {
-			const cfg = await assertBroadcaster(ctx.session.user.id);
-			const db = createDb();
+			const { cfg } = await assertBroadcaster(ctx.session.user.id);
+			// 20/hour cap. Compromised broadcaster account shouldn't be a
+			// turnkey spam relay via the magic-link transport.
+			await enforceThrottle({
+				kv: env.EMOTES_KV,
+				key: `invites:create:${ctx.session.user.id}`,
+				limit: 20,
+				windowSec: 3600,
+			});
+			const db = ctx.db;
 			const code = crypto.randomUUID();
 			const now = new Date();
 			const expires = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
@@ -99,6 +98,9 @@ export const adminRouter = router({
 				createdAt: now,
 			});
 			const url = `${env.BETTER_AUTH_URL.replace(/^https?:\/\/api\./, "https://").replace(/\/$/, "")}/invite/${code}`;
+			// cfg.title is broadcaster-supplied — never trust it raw in HTML
+			// or in headers some clients render as HTML (Outlook web).
+			const title = cfg.title ?? "the den";
 			await sendMail(
 				{
 					RESEND_API_KEY: env.RESEND_API_KEY,
@@ -107,8 +109,8 @@ export const adminRouter = router({
 				},
 				{
 					to: input.email,
-					subject: `You're invited to ${cfg.title ?? "the den"}`,
-					html: `<p>You've been invited to join an invite-only HowlCast den.</p><p><a href="${url}">Accept your invite</a></p><p>This link expires in 30 days.</p>`,
+					subject: `You're invited to ${title}`,
+					html: `<p>You've been invited to join an invite-only HowlCast den (${escapeHtml(title)}).</p><p><a href="${escapeHtmlAttr(url)}">Accept your invite</a></p><p>This link expires in 30 days.</p>`,
 					text: `You've been invited to join an invite-only HowlCast den. Accept here: ${url}\n\nThis link expires in 30 days.`,
 				},
 			);
@@ -117,7 +119,7 @@ export const adminRouter = router({
 
 	listInvites: protectedProcedure.query(async ({ ctx }) => {
 		await assertBroadcaster(ctx.session.user.id);
-		const db = createDb();
+		const db = ctx.db;
 		const rows = await db.select().from(invites).orderBy(desc(invites.createdAt)).all();
 		return rows.map((r) => ({
 			code: r.code,
@@ -129,13 +131,14 @@ export const adminRouter = router({
 		}));
 	}),
 
-	// Public — called from /invite/[code]. If the visitor is signed in,
-	// flips their isInvited flag and marks the invite used. If not, returns
-	// the invite metadata so the page can show a magic-link sign-in form.
+	// Protected — the /invite/[code] page sends signed-out visitors through a
+	// magic-link sign-in (which auto-creates the viewer account); the redirect
+	// lands them back here signed in, then they click Accept and we flip
+	// isInvited + mark the invite used.
 	acceptInvite: protectedProcedure
 		.input(z.object({ code: z.string().min(1) }))
 		.mutation(async ({ ctx, input }) => {
-			const db = createDb();
+			const db = ctx.db;
 			const inv = await db.select().from(invites).where(eq(invites.code, input.code)).get();
 			if (!inv) throw new TRPCError({ code: "NOT_FOUND", message: "Invite not found." });
 			if (inv.usedAt) throw new TRPCError({ code: "CONFLICT", message: "Already accepted." });
@@ -158,7 +161,7 @@ export const adminRouter = router({
 		.input(z.object({ code: z.string().min(1) }))
 		.mutation(async ({ ctx, input }) => {
 			await assertBroadcaster(ctx.session.user.id);
-			const db = createDb();
+			const db = ctx.db;
 			await db.delete(invites).where(eq(invites.code, input.code));
 			return { ok: true };
 		}),
@@ -175,7 +178,7 @@ export const adminRouter = router({
 		)
 		.mutation(async ({ ctx, input }) => {
 			await assertBroadcaster(ctx.session.user.id);
-			const db = createDb();
+			const db = ctx.db;
 			await db
 				.update(profiles)
 				.set({
