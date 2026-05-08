@@ -6,22 +6,27 @@
 
 ## Where we are
 
-**Phase 5 shipped. Domain rename + OBS fix shipped. Go Live verification pending.**
+**Phase 6 layout/Card refactor shipped. Only OBS hard test + Web Analytics + cross-browser sweep + ops runbook left for Phase 6.** Then Phase 7 (docs site).
 
-All 9 dashboard pages live (Stream / Panels / Emotes / Invites / Stream key / Notifications / Status / Account / Chat + popout). First-run setup wizard creates the broadcaster account in one flow. /signup gone (invite-only). Login = single form.
+All Phase 5 surface holds (9 dashboard pages, setup wizard, invite-only auth, two-domain workers + custom DNS). Phase 6 polish is now ~80% done — Stats, Streamer Mode, viewer `/account`, white-label, Tiptap legal, error boundaries, 404, loading skeletons, OG images, robots/sitemap all shipped earlier in the phase. Recent work concentrated on internal consolidation (audit findings, helper dedupe, brand-hex centralization, public-mode removal) and a structural UI refactor (layout token scale → shadcn primitives → layout shells → page migrations → Card sweep).
 
-**Recent (this session):**
+**Recent (latest 15 commits, newest first):**
 
-- Workers renamed: `howlcast` → `tv`, `howlcast-api` → `tv-api`
-- Custom domains: `tv.mrdemonwolf.com` (web) + `api.tv.mrdemonwolf.com` (api)
-- Cookie fix: `crossSubDomainCookies` on `tv.mrdemonwolf.com` — resolves the post-setup ERR_TOO_MANY_REDIRECTS
-- OBS fix: stream.provision now reads `ingress.rtmp.address` from GetStream + persists `channel_config.rtmps_url`. RtmpsCard reads from API instead of hardcoded URL
-- Stepped dashboard walkthrough: `<StreamWizard />` (unprovisioned → ready → live)
-- Migration 0005: `stream_sessions` table + `rtmps_url` column
-- Webhook handles both `call.live_started` and `call.session_started`
-- Sidebar cleaned: ghost links to Stats / Branding / Privacy/TOS removed (Phase 6 will add them back)
-
-**Phase 6 (polish + Stats + Branding + Legal + viewer Account + OBS hardening) is the next phase.** Stats schema + webhook integration done; tRPC router + page pending.
+- `6b49085` phase 6: card primitive sweep + dashboard inline-style cleanup
+- `6c0b155` phase 6: route channel page through `ChannelLayout`
+- `8645e46` refactor: serve branding logo via Next.js route + optimize through `<Image>`
+- `7441061` feat: stream branding logos through `/api/branding/logo`, drop public-bucket env
+- `b3f44ab` feat(infra): bind `NEXT_PUBLIC_PUBLIC_BUCKET_URL` on web worker
+- `d1bc6d7` phase 6: route auth + viewer pages through `PageContainer`
+- `335b3c4` phase 6: extract shared `LegalDocPage`, dedupe privacy + terms
+- `d4c057c` phase 6: add layout shells (`PageContainer`, `ChannelLayout`, `ContentSection`)
+- `c5bd186` phase 6: 11 shadcn primitives → `@howlcast/ui`
+- `3ed92b6` phase 6: layout token scale → `globals.css`
+- `dd5167c` feat: invite-only by design — drop public mode end-to-end
+- `8620704` docs: pre-Phase-6 code audit report (`AUDIT.md`)
+- `98c51c4` feat(env): `NEXT_PUBLIC_PUBLIC_BUCKET_URL` via env package
+- `c34b1a7` refactor(api): dedupe shared helpers, single drizzle per request
+- `9d42c56` feat(config): centralize brand hex tokens
 
 **Live URLs:**
 
@@ -29,19 +34,20 @@ All 9 dashboard pages live (Stream / Panels / Emotes / Invites / Stream key / No
 - API: <https://api.tv.mrdemonwolf.com> (custom domain) + <https://tv-api.mrdemonwolf.workers.dev> (fallback)
 - All `/api/health` return `{"ok":true}`. CI/Deploy via GH Actions, all secrets in place.
 
-**Outstanding issues from end of session:**
+**Outstanding before Phase 6 ships:**
 
-1. **Go Live UI stuck at "Going live…"** — likely cause: GetStream webhook URL still points at dead `howlcast-api.mrdemonwolf.workers.dev` worker. User must update URL to `https://tv-api.mrdemonwolf.workers.dev/api/webhooks/getstream` in GetStream dashboard. NEED_TO_DO.md item.
-2. **Channel page chat error** when broadcaster is logged in — error now surfaced inline ("Chat unavailable: …") instead of crashing. Root cause TBD — may be cross-domain token timing or stream-chat SDK race condition. Investigate next session.
-3. **Wizard UX wolf/den motifs** — user requested "corp but furry" polish. Cosmetic, deferred.
+1. **Hard live OBS test** — push real RTMPS, verify webhook fires, Discord fanout fires, channel page flips to LIVE, Stats page records the session. Only Nathanial can do.
+2. **Cloudflare Web Analytics snippet** — drop into `app/layout.tsx`.
+3. **Cross-browser sweep** — Safari, Chrome, Firefox, iOS, Android. Looking for layout regressions in the new shells + Card surfaces.
+4. **Operations runbook** (`docs/operations.md`) — deploy / rollback / D1 migrate / GetStream rotation.
 
-**Next session — planned:**
+**Done since last RESUME refresh:**
 
-- GetStream Video + Chat React SDK full audit (read all docs, compare to our channel-page / live-player / live-chat implementations)
-- Write structured rewrite plan in `docs/getstream-rewrite-plan.md`
-- Implement fixes once approved
+- Migrations applied to remote D1 ✅
+- `legal@mrdemonwolf.com` mailbox set up ✅
+- GetStream Video webhook URL updated (Go Live no longer hangs) ✅
 
-**Repo:** <https://github.com/MrDemonWolf/howlcast> — public, default branch `main`. Pushed up through `be0eac2`. Branch protection enabled (no force-push, no deletion).
+**Repo:** <https://github.com/MrDemonWolf/howlcast> — default branch `main`. Latest pushed: `6b49085`. Branch protection enabled.
 
 ---
 
@@ -123,71 +129,52 @@ Worker also has a 12h cron handler that pulls emotes from Twitch/7TV/BTTV/FFZ �
 
 ## Recent commit history
 
+For full history run `git log --oneline`. Highlights since Phase 5 wrap:
+
 ```
+6b49085 phase 6: card primitive sweep + dashboard inline-style cleanup
+6c0b155 phase 6: route channel page through ChannelLayout
+8645e46 refactor: serve branding logo via next.js route + optimize <Image>
+7441061 feat: stream branding logos through /api/branding/logo
+b3f44ab feat(infra): bind NEXT_PUBLIC_PUBLIC_BUCKET_URL on web worker
+d1bc6d7 phase 6: route auth + viewer pages through PageContainer
+335b3c4 phase 6: extract shared LegalDocPage, dedupe privacy + terms
+d4c057c phase 6: add layout shells (PageContainer, ChannelLayout, ContentSection)
+c5bd186 phase 6: add 11 shadcn primitives to @howlcast/ui
+3ed92b6 phase 6: add layout token scale to globals.css
+dd5167c feat: invite-only by design — drop public mode end-to-end
+8620704 docs: pre-Phase-6 code audit report (AUDIT.md)
+98c51c4 feat(env): NEXT_PUBLIC_PUBLIC_BUCKET_URL via env package
+c34b1a7 refactor(api): dedupe shared helpers, single drizzle per request
+9d42c56 feat(config): centralize brand hex tokens
+39196df refactor(db): drop unused user_bans table, index invites
+02234fd fix(security): html-escape, rate-limit, webhook hardening
+b44509f feat(api): add html-escape + kv throttle primitives
+0383964 fix: lint pipeline + check-types coverage across all packages
+1e415c0 fix(setup): client-side setup-completed redirect + private-gate height
+258305d phase 6: getstream rewrite round 2
+bb81a75 phase 6 polish: refresh UI to claude design v2 handoff
+15277a1 phase 6 wrap: full ci test bundle + prod wipe + pro removal
+341c4b1 phase 6: white-label + tiptap legal + viewer account + og images
+ca20341 phase 6: stats page + streamer mode + error pages + privacy/terms
+c1a9003 fix(stream): getstream frontend rewrite + webhook chat unblock
 be0eac2 docs: phase 5 sweep — progress, resume, need_to_do
-79e481d phase 5.3-5.9: full broadcaster dashboard
-4415105 phase 5.2: live → stream dashboard page (go live + rtmps + title)
-9c75cc1 phase 5.0 v3: onboarding ui polish
-09340aa chore: scrub remaining mrdemonwolf placeholders, keep mrdemonwolf inc. branding
-0b2bc92 chore: drop /signup, allowSignups, and @mrdemonwolf hardcoding
-8357c24 phase 5.0 v2: simpler single-form login
-5e4e068 phase 5.0 v2: first-run setup creates account + broadcaster in one flow
-aa9543a fix(web): dashboard layout reads via api, not direct db
-4a00b59 phase 5.1: dashboard shell + broadcaster middleware
-587797f phase 5.0a: twitch helix lib + setup tRPC router
-75353d4 fix(web): chat css path moved in stream-chat-react v14
-c0ae417 fix(ci): adopt existing cloudflare resources on first ci deploy
-7472604 fix(ci): forward deploy-time env vars through turbo to alchemy
-9e0809b chore(ci): bump oven-sh/setup-bun v2.1.3 -> v2.2.0
-b07bdc5 fix(ci): pass alchemy + stream + twitch secrets to deploy step
-a6208b0 fix(ci): use CloudflareStateStore for alchemy in CI
-04ded53 refactor: read broadcasterTwitchId from db, drop the env var
-40e7cd5 docs: phase 4 sweep — progress, resume, need_to_do
-e3ead0a phase 4: custom emote rendering in chat
-eda0a19 phase 4: emote pipeline (twitch/7tv/bttv/ffz -> kv, 12h cron)
-7aa26bc phase 4: channel.createCall mutation seeds streamCallId + chatChannelCid
-c151db0 chore: swap biome for eslint + prettier (matches fangdash setup)
-6ab6911 phase 4: wire real getstream video player + chat dock (lazy-loaded)
-485f40b docs: mark phase 3 (a-d) complete in progress + resume
-7871c6c phase 3d: discord webhook fanout on go-live/end
-580a995 phase 3c: channel page replaces / (single tenant)
-909b27d phase 3b: getstream jwt signer + trpc procedures + webhook receiver
-39939d1 phase 3a: channel schema (profiles, channelConfig, panels, invites, webhooks, userBans)
-08ab359 refactor: extract DisplayHeading + auth-toast helpers (audit dedupe)
-e71f85d phase 2: docs sweep (bun, mail.md, ci/cd notes, progress checkboxes)
-0011e14 phase 2: github actions ci + deploy + license bump + LICENSE
-a405891 phase 2: /account/security with 2fa + passkeys + session mgmt
-2a50ddc phase 2: better auth plugins (username, twoFactor, magicLink, passkey)
-81c65c7 phase 2: switch pnpm to bun, bump catalogs ...
-35d45bb phase 2: mail package with resend/smtp/console transports + mailpit dev compose
-05b1954 phase 1: wire server.url to web build for prod proxy
-030ac02 phase 1: darker bg, token-based form colors, og meta, mrdw readme
-efd4335 phase 1: navy/cyan theme, bricolage font, howlcast landing
-9bb5acd phase 1: initial drizzle migration from auth schema
-c3873fe phase 1: rename workers, add r2/kv/cron, same-origin api proxy
-206077b docs: drop r2 emote proxy, twitch id as single setup input, free plan ok
-a39c4a3 scaffold from better-t-stack 3.27
-49a56f5 docs: pre-scaffold snapshot
 ```
 
 ---
 
-## What's next — Phase 6 (Polish & Launch)
+## What's next — finishing Phase 6 + Phase 7
 
-Roughly in priority order:
+**Phase 6 remaining:**
 
-1. **Live → Stats page** — broadcaster analytics. 7-day rolling viewer count + minutes streamed. Source: GetStream call recordings or Cloudflare Worker analytics + a small `stream_sessions` table we'd add.
-2. **Viewer `/account` page** — display name, pronouns, avatar; sessions list (mirrors broadcaster /account but for viewers).
-3. **Streamer Mode toggle** in dashboard header — masks the stream key + redacts notification text in case the broadcaster screen-shares.
-4. **White-label settings** — `whiteLabel` table (logo, name, footer attribution); rendered site-wide. Reference `docs/branding-spec.md`.
-5. **PP / TOS WYSIWYG** + `/privacy` + `/terms` routes — Tiptap editor, rehype-sanitize. Single-row `legalDocs` table.
-6. **Error boundaries** on every page + 404 page + loading skeletons.
-7. **OG images** via `@vercel/og`.
-8. **Cloudflare Web Analytics** snippet.
-9. **Hard live OBS test** — real RTMPS push, verify webhook fires, Discord fanout fires, channel page goes live.
-10. **Operations runbook** — deploy/rollback steps in `docs/`.
+1. **Hard live OBS test** — real RTMPS push, verify webhook fires, Discord fanout fires, channel page goes live, Stats records the session. Only Nathanial can do.
+2. **Cloudflare Web Analytics** snippet in `app/layout.tsx`.
+3. **Cross-browser sweep** — Safari, Chrome, Firefox, iOS, Android. Watch for regressions in the new shells + Card surfaces.
+4. **Operations runbook** (`docs/operations.md`) — deploy / rollback / D1 migrate / GetStream rotation / Resend rotation.
 
-After Phase 6: **Phase 7** is the Astro Starlight docs site at `docs.howlcast.tv`.
+**Already done in Phase 6** (don't relitigate): Stats, Streamer Mode, viewer `/account`, white-label, Tiptap legal editor, error boundaries, 404, loading skeletons, OG images, robots+sitemap, code-audit pass, brand-hex centralization, API helper dedupe, public-mode removal, layout token scale, shadcn primitives, layout shells, page migrations, Card sweep, inline-style cleanup, branding logo via Next.js route.
+
+After Phase 6: **Phase 7** is the Astro Starlight docs site at `docs.howlcast.tv`. See `docs/docs-site.md`.
 
 ---
 

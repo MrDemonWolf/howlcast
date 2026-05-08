@@ -7,14 +7,8 @@
 
 ## 🚀 RIGHT NOW (unblocks launch)
 
-- [ ] **Apply migrations to remote D1.** Migration 0005 (`stream_sessions`
-      table + `rtmps_url` column) and 0004 (drop `allow_signups`) need to
-      land in prod or `/dashboard/stats` will throw "no such table". Run:
-      `    bunx wrangler d1 migrations apply howlcast-db --remote`
-- [ ] **Set up `legal@mrdemonwolf.com`** mailbox or forwarder.
-      Both `/privacy` and `/terms` pages now reference it as the contact
-      for data requests + account deletion. If the mailbox doesn't exist
-      or doesn't forward to a real inbox, GDPR / CCPA requests go nowhere.
+- [x] **Apply migrations to remote D1** — DONE
+- [x] **Set up `legal@mrdemonwolf.com`** mailbox — DONE
 - [ ] **Test Go Live** end-to-end: 1. Set up stream in dashboard (one click) 2. Copy RTMPS URL + key into OBS 3. Click Start Streaming in OBS 4. Click Go Live in dashboard 5. Verify LIVE badge appears on `tv.mrdemonwolf.com` homepage 6. Verify Discord webhook fires (public + private channels) 7. Verify chat works for both broadcaster + anonymous viewer 8. Verify Stats page shows the session after End
 - [ ] Delete orphan workers in Cloudflare dashboard:
       `howlcast` + `howlcast-api` (or `bunx wrangler delete howlcast` /

@@ -2,8 +2,8 @@
 
 > Update this as you go. Claude Code will read it to know where you are.
 
-**Last updated:** 2026-05-02 (Phase 5 fully shipped + deployed live)
-**Current phase:** Phase 5 done; Phase 6 (Polish & Launch) is next
+**Last updated:** 2026-05-08 (Phase 6 layout/Card refactor shipped)
+**Current phase:** Phase 6 polish — only OBS hard test + Web Analytics + cross-browser + ops runbook remain
 
 ---
 
@@ -68,7 +68,7 @@
 - [x] Passkey enroll + sign in works (on real domain, not `*.workers.dev`)
 - [x] 2FA enroll + verify works
 - [x] `/account/security` page complete
-- [ ] Migrations applied to remote D1
+- [x] Migrations applied to remote D1
 
 ## Phase 3 — Channel & Streaming
 
@@ -137,8 +137,19 @@
 - [x] Loading skeletons (root + dashboard)
 - [x] OG images (channel home, /privacy, /terms via next/og ImageResponse)
 - [x] robots.txt + sitemap.xml
-- [ ] OG images via `@vercel/og`
-- [ ] robots.txt + sitemap
+- [x] Pre-Phase-6 code audit ([`AUDIT.md`](AUDIT.md))
+- [x] Centralize brand hex tokens (`@howlcast/config`)
+- [x] API helper dedupe + single drizzle-per-request
+- [x] Drop public mode end-to-end (invite-only by design)
+- [x] Branding logo served via Next.js route + optimized `<Image>`
+- [x] Layout token scale (`--container-*`, `--gutter-x*`, `--section-y`, `--chat-dock-w`) in `globals.css`
+- [x] 11 shadcn primitives added to `@howlcast/ui` (Card, Tabs, Dialog, Sheet, etc.)
+- [x] Layout shells: `PageContainer`, `ChannelLayout`, `ContentSection`
+- [x] Shared `LegalDocPage` (privacy + terms route dedupe)
+- [x] Auth + viewer pages routed through `PageContainer`
+- [x] Channel home page routed through `ChannelLayout`
+- [x] Card primitive re-skinned to brand defaults + 9 dashboard surfaces swept onto Card/CardHeader/CardContent
+- [x] Dashboard inline-style cleanup (header-strip, sidebar, overview, streamer-mode-toggle)
 - [ ] Cloudflare Web Analytics snippet
 - [ ] Cross-browser tested (Safari, Chrome, Firefox, mobile)
 - [ ] **Hard live OBS test** — RTMPS push, webhook fires, Discord fanout fires, channel page goes live
