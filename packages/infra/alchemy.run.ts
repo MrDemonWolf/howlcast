@@ -89,6 +89,11 @@ export const web = await Nextjs("web", {
 	domains: [{ domainName: "tv.mrdemonwolf.com", adopt: true }],
 	bindings: {
 		NEXT_PUBLIC_SERVER_URL: server.url!,
+		// R2 public bucket origin — branding/logo-* keys resolve relative to
+		// this. Override via env if the bucket's served from a different host;
+		// defaults to the canonical pub.howlcast.tv subdomain.
+		NEXT_PUBLIC_PUBLIC_BUCKET_URL:
+			alchemy.env.NEXT_PUBLIC_PUBLIC_BUCKET_URL ?? "https://pub.howlcast.tv",
 		DB: db,
 		PUBLIC_BUCKET: publicBucket,
 		ISR_BUCKET: isrBucket,
