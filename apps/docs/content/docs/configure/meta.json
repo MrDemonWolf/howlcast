@@ -1,0 +1,4 @@
+{
+	"title": "Configure",
+	"pages": ["first-run-wizard", "getstream", "resend", "twitch-emotes", "branding", "notifications"]
+}

@@ -1,0 +1,4 @@
+{
+	"title": "Deploy",
+	"pages": ["cloudflare-setup", "d1-and-r2", "secrets", "first-deploy"]
+}

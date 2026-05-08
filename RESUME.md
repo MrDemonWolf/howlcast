@@ -6,13 +6,16 @@
 
 ## Where we are
 
-**Phase 6 layout/Card refactor shipped. Only OBS hard test + Web Analytics + cross-browser sweep + ops runbook left for Phase 6.** Then Phase 7 (docs site).
+**Phase 7 docs site shipped. Phase 6 OBS hard test + ops runbook still pending (only Nathanial-side blockers).**
 
 All Phase 5 surface holds (9 dashboard pages, setup wizard, invite-only auth, two-domain workers + custom DNS). Phase 6 polish is now ~80% done — Stats, Streamer Mode, viewer `/account`, white-label, Tiptap legal, error boundaries, 404, loading skeletons, OG images, robots/sitemap all shipped earlier in the phase. Recent work concentrated on internal consolidation (audit findings, helper dedupe, brand-hex centralization, public-mode removal) and a structural UI refactor (layout token scale → shadcn primitives → layout shells → page migrations → Card sweep).
 
 **Recent (latest commits, newest first):**
 
-- _pending_ phase 6: own analytics — viewer + chat tracking via GetStream webhooks
+- _pending_ phase 7: fumadocs site + github pages deploy
+- `d9b2958` chore: add root-level d1 migration scripts
+- `5a22de7` docs: correct webhook URL to tv-api.mrdemonwolf.workers.dev; mark 0009 applied
+- `72d7918` phase 6: own analytics — viewer + chat tracking via GetStream webhooks
 - `6b49085` phase 6: card primitive sweep + dashboard inline-style cleanup
 - `6c0b155` phase 6: route channel page through `ChannelLayout`
 - `8645e46` refactor: serve branding logo via Next.js route + optimize through `<Image>`

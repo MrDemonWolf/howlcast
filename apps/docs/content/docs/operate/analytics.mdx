@@ -1,0 +1,76 @@
+---
+title: Analytics
+description: Built-in viewer + chat tracking via GetStream webhooks. No third-party.
+---
+
+HowlCast ships its own per-session analytics instead of using Cloudflare Web Analytics or Google Analytics. Driven by GetStream webhooks; data lives in your D1.
+
+## What's tracked
+
+Per session (one row per live event):
+
+- **Peak viewers** — high watermark across the session, broadcaster excluded
+- **Chat message count** — total messages, includes broadcaster's own
+- **Total minutes** — `(endedAt - startedAt) / 60_000`
+- **Viewer snapshots** — point-in-time counts (line chart)
+- **Per-minute chat counts** — bucketed by minute (bar chart)
+
+## Where to see it
+
+### Stats overview
+
+Dashboard → **Stats** → 4 top cards (last 7 days):
+
+- Total minutes
+- Sessions
+- Chat messages
+- Current streak
+
+Below: session table sortable by start time. Each row links into the per-session detail.
+
+### Per-session detail
+
+`/dashboard/stats/[id]` (click any row).
+
+- Top cards: Peak viewers · Avg viewers · Chat messages · Duration
+- **Viewers over time** — line chart of `stream_viewer_snapshots` rows, x = sample time, y = count
+- **Chat messages per minute** — bar chart of `stream_chat_minutes` UPSERT'd buckets
+
+## How it works
+
+The cron-pumped pipeline:
+
+1. `call.live_started` webhook → opens `stream_sessions` row, seeds `analytics:current_session_id` + `analytics:viewers:{sessionId}` in KV
+2. Each `call.session_participant_joined` → KV bump, snapshot row, `peakViewers` update if new high
+3. Each `call.session_participant_left` → KV decrement, snapshot row
+4. Each chat `message.new` → `chat_message_count` increment + `stream_chat_minutes` UPSERT for the current minute
+5. Every 60s while live (cron `* * * * *`) → baseline snapshot row from KV count, regardless of join/leave activity
+6. `call.session_ended` → close session row, clear analytics KV
+7. Cron also prunes snapshots older than 7 days (gated to once an hour)
+
+## Why this approach over Cloudflare Web Analytics
+
+- **Per-session granularity** — CFA gives you per-page-view counts. Useless for "how many people watched session 5"
+- **Server-side truth** — webhooks are the source of truth for participant join/leave; no cookies, no client-side tracking, no GDPR consent banner
+- **Owned by you** — D1 row, you control retention, no third-party correlation
+
+## Trust model
+
+Video webhooks are HMAC-verified. Chat webhooks are **not** (different signing scheme HowlCast hasn't yet researched). Anyone with the chat webhook URL can inflate `chat_message_count`. Mitigation: keep the URL out of public docs and rotate if leaked.
+
+## Retention
+
+7 days, hardcoded in the pruning cron. To change:
+
+- `apps/server/src/index.ts` → `SNAPSHOT_RETENTION_MS` constant
+- `packages/api/src/routers/stream.ts` → `getStats` query window
+
+Future: surface this as a dashboard setting.
+
+## Out of scope
+
+- Per-user message attribution / chat leaderboards
+- Total view-time per viewer (not currently computed)
+- Geographic / device breakdowns (would need a different telemetry path)
+
+Next: [Architecture](/docs/reference/architecture).

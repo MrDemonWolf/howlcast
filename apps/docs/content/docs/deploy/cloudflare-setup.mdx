@@ -1,0 +1,56 @@
+---
+title: Cloudflare setup
+description: Provisioning Workers, D1, R2, and KV via Alchemy.
+---
+
+HowlCast uses [Alchemy](https://alchemy.run/) to declare its Cloudflare resources in TypeScript. One file, one command, idempotent.
+
+## What gets created
+
+[`packages/infra/alchemy.run.ts`](https://github.com/MrDemonWolf/howlcast/blob/main/packages/infra/alchemy.run.ts) creates:
+
+| Resource              | Name                         | Purpose                                      |
+| --------------------- | ---------------------------- | -------------------------------------------- |
+| Worker                | `tv`                         | Web app (Next.js via OpenNext)               |
+| Worker                | `tv-api`                     | API (Hono + tRPC + webhooks + crons)         |
+| D1 database           | `howlcast-db`                | Auth + channel config + sessions + analytics |
+| R2 bucket             | `howlcast-public`            | Branding logos + avatars                     |
+| R2 bucket             | `howlcast-isr`               | OpenNext ISR cache                           |
+| KV namespace          | `EMOTES_KV`                  | Emote map + analytics scratch + throttles    |
+| Cron `0 */12 * * *`   | (on `tv-api`)                | Emote refresh from Twitch / 7TV / BTTV / FFZ |
+| Cron `* * * * *`      | (on `tv-api`)                | Per-minute viewer-count snapshot + 7d prune  |
+
+## One-shot deploy
+
+```bash
+bun run deploy
+```
+
+Reads the alchemy spec, makes whatever Cloudflare API calls are needed to converge the account state to match. First run takes ~2 minutes; re-runs are seconds.
+
+Output ends with two `*.workers.dev` URLs:
+
+- `https://tv.<your-account>.workers.dev` — web
+- `https://tv-api.<your-account>.workers.dev` — api
+
+Curl `/api/health` on the api URL — it returns `{"ok":true}` once both workers are live.
+
+## Custom domains (optional)
+
+[`alchemy.run.ts`](https://github.com/MrDemonWolf/howlcast/blob/main/packages/infra/alchemy.run.ts) attaches `tv.mrdemonwolf.com` and `api.tv.mrdemonwolf.com` by default. Edit those entries to your domain. Cloudflare must be the registrar (or at least the DNS provider) for the apex.
+
+If you skip custom domains, leave `*.workers.dev` URLs in place. Cookies still work because the apex domain matches.
+
+## Reading the alchemy state
+
+Alchemy stores its state in a per-environment file (`alchemy.state.json`) plus a Cloudflare Worker / Durable Object in CI. Local dev = file. CI = Durable Object via `CloudflareStateStore`. See [GitHub Actions secrets](/docs/deploy/secrets) for the CI state secret.
+
+If state drifts (you deleted a resource manually), `bun run destroy` then `bun run deploy` rebuilds. **Destructive** — don't do this in prod with live data.
+
+## Troubleshooting
+
+- **"Cloudflare API token unauthorized"** — re-run `bunx wrangler login` and retry.
+- **"D1 database already exists"** — alchemy treats this as `adopt` and continues. Safe.
+- **"Custom domain not active"** — DNS hasn't propagated; check Cloudflare DNS tab. Records appear automatically once the worker deploys.
+
+Next: [D1 and R2](/docs/deploy/d1-and-r2).

@@ -1,0 +1,68 @@
+---
+title: Notifications
+description: Two Discord webhooks, fired on go-live and stream-end.
+---
+
+HowlCast does **one** thing for outbound notifications: fire two Discord webhooks. Public + private. Per-event toggles for "live started" and "stream ended". That's the entire surface area.
+
+## Why only Discord
+
+Discord webhook URLs are the cheapest possible "notify N humans of one event" primitive — no SMTP, no API key, no rate-limit math, no auth. One curl POST to a stable URL, you're done. For a single broadcaster's "I'm live" alert, anything more is overkill.
+
+Anything else (email blasts, RSS, web push, SMS) was explicitly removed from scope in [`DESIGN-DECISIONS.md`](https://github.com/MrDemonWolf/howlcast/blob/main/DESIGN-DECISIONS.md).
+
+## Setup
+
+<Steps>
+<Step>
+### Create two Discord webhooks
+
+In your Discord server, pick a public channel + a private channel. For each:
+
+- Channel settings → Integrations → Webhooks → New Webhook
+- Name it (e.g. "HowlCast Public", "HowlCast Den")
+- Copy Webhook URL
+</Step>
+
+<Step>
+### Paste them in the dashboard
+
+Dashboard → **Notifications**. Paste public URL into "Public channel" card, private URL into "Private channel" card. Click Save on each.
+</Step>
+
+<Step>
+### Pick events
+
+Two checkboxes per webhook:
+
+- **Notify when live starts** — fires on `call.live_started` / `call.session_started`
+- **Notify when stream ends** — fires on `call.session_ended` / `call.ended`
+
+Default: both on for the public webhook, both on for the private webhook.
+</Step>
+</Steps>
+
+## What gets posted
+
+Discord embed format. Example for live start:
+
+```
+🟢 HowlCast is live
+[Watch] (button → channel page)
+
+Title: <stream title from dashboard>
+```
+
+Embed color is brand cyan. The full payload is in [`packages/api/src/lib/discord.ts`](https://github.com/MrDemonWolf/howlcast/blob/main/packages/api/src/lib/discord.ts).
+
+## Failure handling
+
+`fanOutDiscord` is fire-and-forget. Errors get swallowed (logged to worker logs, not propagated). The DB write happens before the webhook fan-out so the LIVE state is correct even if Discord is down.
+
+Webhook errors land in the `discord_webhooks.last_error` column; the dashboard surfaces them inline.
+
+## Streamer Mode masking
+
+When [Streamer Mode](/docs/operate/streamer-mode) is on, the webhook URL field shows masked text in the dashboard so you can screen-share without leaking it. Saving requires the URL — toggle Streamer Mode off when editing.
+
+Next: [Going live](/docs/operate/going-live).

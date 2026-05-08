@@ -1,0 +1,72 @@
+---
+title: Resend
+description: Configuring Resend for magic-link and invite emails.
+---
+
+Resend sends two types of emails:
+
+1. **Magic-link sign-in** — single-form login, sent to existing viewers
+2. **Private stream invite** — outbound from `/dashboard/invites`
+
+There's only one template (`packages/mail/src/templates/magic-link.ts`) — it does both jobs.
+
+## Setup
+
+<Steps>
+<Step>
+### Verify a sending domain
+
+[resend.com/domains](https://resend.com/domains) → Add domain → enter your domain. Resend gives you SPF, DKIM, and DMARC records to add to your DNS. Apply them in Cloudflare DNS.
+
+Wait ~15 minutes for verification. Refresh the Resend dashboard until status flips to "verified".
+</Step>
+
+<Step>
+### Get the API key
+
+[resend.com/api-keys](https://resend.com/api-keys) → Create API key → name it `HowlCast prod`. Copy.
+</Step>
+
+<Step>
+### Set the secrets
+
+```bash
+# locally
+echo "RESEND_API_KEY=re_yourkey" >> apps/server/.env
+echo 'MAIL_FROM=HowlCast <invites@mail.your-domain.tv>' >> apps/server/.env
+
+# prod (push via alchemy)
+bun run deploy
+```
+
+`MAIL_FROM` must be at the verified domain. Common gotcha: using `noreply@gmail.com` — Resend rejects.
+</Step>
+</Steps>
+
+## Local fallback (mailpit)
+
+For local dev without Resend, the mail package falls through to SMTP. Spin up mailpit in Docker:
+
+```bash
+bun run dev:mail        # starts mailpit on :1025 (SMTP) + :8025 (UI)
+bun run dev:mail:logs   # tail
+bun run dev:mail:stop   # tear down
+```
+
+Set `SMTP_URL=smtp://localhost:1025` in `apps/server/.env`. Magic-link emails appear in the mailpit UI at `http://localhost:8025`.
+
+## Console fallback (no config)
+
+If neither `RESEND_API_KEY` nor `SMTP_URL` is set, the mail package logs the magic-link URL to console. Useful for reading the link without setting up infra. **Useless in prod** — log scraping is brittle.
+
+## Rotation
+
+Generate a new API key, add it as `RESEND_API_KEY`, redeploy, then revoke the old one in the Resend dashboard. Plan on ~30s of mail downtime during the swap.
+
+## Troubleshooting
+
+- **Magic-link email never arrives** — check `RESEND_API_KEY` is set, `MAIL_FROM` is at a verified domain, recipient isn't blocked. Resend dashboard "Logs" tab shows delivery status.
+- **Resend 403 / 422** — almost always a `MAIL_FROM` domain mismatch.
+- **Console fallback fires in prod** — neither secret is set. Check `bun run deploy` actually pushed `RESEND_API_KEY`.
+
+Next: [Twitch + emotes](/docs/configure/twitch-emotes).

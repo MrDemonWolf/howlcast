@@ -1,0 +1,63 @@
+---
+title: OBS not pushing
+description: When OBS won't connect to GetStream RTMPS.
+---
+
+## Stream key rejected
+
+**Symptom:** OBS says "Failed to connect to server" or "Disconnected from server".
+
+**Causes:**
+
+1. **Call not provisioned** — click **Set up your stream** in dashboard first. The stream key is a signed JWT only generated after `stream.provision`.
+2. **JWT expired** — broadcaster JWT lifetime is 24h. Refresh by reloading the dashboard (regenerates).
+3. **Wrong service in OBS** — must be **Custom**, not Twitch. Twitch service ignores the URL field.
+4. **`STREAM_API_KEY` / `STREAM_API_SECRET` mismatch** — check secrets in Cloudflare dashboard match GetStream exactly.
+
+## Connection drops mid-stream
+
+**Symptom:** OBS reconnects every few minutes.
+
+**Causes:**
+
+1. **Network instability** — ISP routing flap. Try wired ethernet over WiFi.
+2. **Bitrate too high** — drop OBS bitrate to 4500 Kbps for 1080p60. RTMPS doesn't tolerate uplink saturation well.
+3. **GetStream rate limit** — unusual; check GetStream dashboard "Logs" for throttle warnings.
+
+## "Disconnected" but channel still shows LIVE
+
+**Symptom:** OBS dropped, channel page badge still says LIVE.
+
+**Cause:** GetStream's `call.session_ended` event hasn't fired yet — they wait for an inactivity window (default 10s).
+
+**Fix:** wait 30s. If still stuck, click **End stream** or use the **Force end** escape hatch in the dashboard.
+
+## "Encoder error"
+
+**Symptom:** OBS logs show encoder failures.
+
+**Causes:**
+
+1. **Hardware encoder unavailable** — switch to x264 software encoder
+2. **Resolution scaling broken** — set output resolution explicitly (1920x1080 or 1280x720)
+3. **GPU driver outdated** — update graphics drivers, especially on AMD
+
+## Stream key shows "Not yet provisioned"
+
+**Symptom:** RTMPS card shows masked dots and "Not yet provisioned".
+
+**Cause:** `stream.provision` hasn't run yet, or failed silently.
+
+**Fix:** dashboard → **Stream** → **Set up your stream** button. Watch the toast — if it errors, the message will say why (usually "Stream not configured" → check Secrets).
+
+## RTMPS URL contains placeholder
+
+**Symptom:** Dashboard shows `rtmps://wrong-host/live/...`.
+
+**Cause:** old build before `8645e46` (refactor that streams `ingress.rtmp.address` from GetStream). Re-deploy.
+
+```bash
+bun run deploy
+```
+
+Then re-run `stream.provision` (click **Set up your stream**) — the row gets re-written with the correct URL.

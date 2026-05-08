@@ -1,0 +1,4 @@
+{
+	"title": "Reference",
+	"pages": ["architecture", "schema", "env-vars", "trpc-routes", "webhooks", "design-decisions"]
+}

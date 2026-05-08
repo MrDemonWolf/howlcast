@@ -1,0 +1,54 @@
+---
+title: Invites
+description: Send, list, and revoke magic-link invite emails.
+---
+
+HowlCast has no `/signup` route. The only way a viewer ends up with a chat-capable account is through an invite you sent.
+
+## Send
+
+Dashboard → **Invites** → **Send an invite** card.
+
+- Type their email
+- Click Send invite
+
+Server-side, `admin.createInvite`:
+1. Generates a random invite code (32 chars)
+2. Persists a row to `invites` (`code`, `email`, `createdBy`, `createdAt`, 30-day TTL)
+3. Sends the magic-link email via Resend (or fallback) — link points at `/invite/[code]`
+
+## What the invitee sees
+
+Click the email link → `/invite/[code]` page:
+
+- **Signed-out** — magic-link form pre-populated with their email. They click "Send sign-in link" → check inbox → log in. Once signed in, the page auto-accepts the invite.
+- **Signed-in** — single button "Accept invite". Click → flips `profiles.isInvited = true` on their existing account.
+
+Either path lands them on the channel page with chat-write permission.
+
+## List
+
+Dashboard → **Invites** → **Outstanding invites** section. Shows code prefix (8 chars), used / unused / expired status, expiry date.
+
+## Revoke
+
+Trash icon on an invite row → confirm. Server flips `revokedAt`. Subsequent `/invite/[code]` visits show "Invite expired".
+
+Revoking does **not** demote a viewer who already accepted. Once `profiles.isInvited` flips, only a separate `admin.updateProfile` (or direct DB edit) can demote.
+
+## Revoking a viewer's chat access
+
+There's no UI for this currently — it's intentional. The two patterns:
+
+1. **Mute via GetStream** — the broadcaster has chat-mod permissions in the GetStream Chat dashboard. Mute or ban the user there. Their messages stop landing.
+2. **Demote via DB** — `bun run db:execute:remote --command 'UPDATE profiles SET is_invited = 0 WHERE user_id = "..."'`. Crude but works.
+
+Plan to add a UI for this in a follow-up. See [`docs/roles-and-notifications.md`](https://github.com/MrDemonWolf/howlcast/blob/main/docs/roles-and-notifications.md) for the rationale on minimal moderation tooling.
+
+## Why no public mode
+
+Single-tenant + invite-only is the entire product positioning. Private den, friends only, no algorithm, no mass signups. Adding a public mode means adding rate-limiting, abuse handling, captchas, CSAM scanning — none of which fits a one-broadcaster setup.
+
+If you want public, a fork that swaps the gate to pass-through is straightforward. The codebase isolates the gate to one component (`PrivateGate`) and one boolean (`isInvited`).
+
+Next: [Panels](/docs/operate/panels).

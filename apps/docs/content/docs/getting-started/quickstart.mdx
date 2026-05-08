@@ -1,0 +1,96 @@
+---
+title: Quickstart
+description: Zero to live channel in about 30 minutes.
+---
+
+<Callout type="warn">
+Make sure you've finished [Prerequisites](/docs/getting-started/prerequisites) first. You need a Cloudflare account, GetStream API key + secret, Twitch dev app credentials, and Bun installed.
+</Callout>
+
+This is the speed run. Each section links to the long-form guide for context.
+
+<Steps>
+<Step>
+### Clone + install
+
+```bash
+git clone https://github.com/MrDemonWolf/howlcast.git
+cd howlcast
+bun install
+```
+</Step>
+
+<Step>
+### Provision Cloudflare resources
+
+```bash
+bun run deploy
+```
+
+This runs Alchemy ([packages/infra/alchemy.run.ts](https://github.com/MrDemonWolf/howlcast/blob/main/packages/infra/alchemy.run.ts)) which creates the D1 database, two R2 buckets, the KV namespace, and both Workers in your Cloudflare account in one shot. Re-running is idempotent.
+
+See [Cloudflare setup](/docs/deploy/cloudflare-setup) for details.
+</Step>
+
+<Step>
+### Set secrets
+
+```bash
+cp apps/server/.env.example apps/server/.env
+# fill in: STREAM_API_KEY, STREAM_API_SECRET, BETTER_AUTH_SECRET,
+# TWITCH_CLIENT_ID, TWITCH_CLIENT_SECRET, RESEND_API_KEY, MAIL_FROM
+bun run deploy
+```
+
+See [Secrets](/docs/deploy/secrets) for the full list.
+</Step>
+
+<Step>
+### Apply migrations
+
+```bash
+bun run db:migrate:remote
+```
+
+Runs all Drizzle migrations against your remote D1.
+</Step>
+
+<Step>
+### Run the setup wizard
+
+Open `https://tv.<your-domain>` (or the `*.workers.dev` fallback URL printed by deploy). The first-run wizard is locked to whoever hits it first — that becomes the broadcaster. Enter your Twitch user ID, pick a display name, set a password.
+
+See [First-run wizard](/docs/configure/first-run-wizard).
+</Step>
+
+<Step>
+### Configure GetStream webhook
+
+In the GetStream dashboard, set the Video webhook URL to:
+
+```
+https://tv-api.<your-account>.workers.dev/api/webhooks/getstream
+```
+
+Subscribe to: `call.live_started`, `call.session_started`, `call.session_ended`, `call.ended`, `call.session_participant_joined`, `call.session_participant_left`. Same URL for the Chat webhook subscribed to `message.new`.
+
+See [GetStream](/docs/configure/getstream).
+</Step>
+
+<Step>
+### Go live
+
+In your dashboard at `/dashboard`:
+
+1. Click **Set up your stream** (one time)
+2. Copy the RTMPS URL + stream key into OBS → Settings → Stream → Service "Custom"
+3. Click **Start Streaming** in OBS
+4. Click **Go live** in the dashboard
+
+The channel page flips to LIVE. Discord webhooks fire. Stats record the session.
+
+See [Going live](/docs/operate/going-live).
+</Step>
+</Steps>
+
+That's it. You now have a live HowlCast.

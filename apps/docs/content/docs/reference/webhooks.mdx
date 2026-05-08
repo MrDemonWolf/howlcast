@@ -1,0 +1,85 @@
+---
+title: Webhooks
+description: GetStream events HowlCast acts on, plus their payloads.
+---
+
+Single webhook URL: `/api/webhooks/getstream` on the api worker. Used by both Video and Chat. Events dispatched in [`apps/server/src/index.ts`](https://github.com/MrDemonWolf/howlcast/blob/main/apps/server/src/index.ts).
+
+## Trust model
+
+| Source        | Verification                                        |
+| ------------- | --------------------------------------------------- |
+| GetStream Video | HMAC SHA-256 against `STREAM_API_SECRET` via `X-SIGNATURE` header |
+| GetStream Chat  | _(unverified — currently URL secrecy as trust boundary; TODO)_ |
+
+Anything not in the explicit allowlist below returns 400 — keeps the endpoint from becoming an open ping.
+
+## Acted-on events
+
+### `call.live_started` (or `call.session_started`)
+
+Fired by GetStream when the call goes live. Different configs send different names — both treated identically.
+
+Action:
+1. Update `channel_config.live_started_at`, clear `live_ended_at`
+2. Insert row into `stream_sessions` with new UUID + `started_at = now`
+3. Set `analytics:current_session_id` in KV
+4. Zero `analytics:viewers:{sessionId}` in KV
+5. Fire Discord webhooks (public + private if subscribed to live-start)
+
+### `call.session_ended` / `call.ended`
+
+Fired when streaming ends.
+
+Action:
+1. Update `channel_config.live_ended_at = now`
+2. Find most recent open session row, set `ended_at` + compute `total_minutes`
+3. Delete `analytics:viewers:{sessionId}` + `analytics:current_session_id` from KV
+4. Fire Discord webhooks (subscribed to stream-end)
+
+### `call.session_participant_joined`
+
+Fired when someone joins the call. Skipped if `event.participant.user.id === channel_config.owner_id` (broadcaster).
+
+Action:
+1. Read current viewer count from KV, increment, write back
+2. Insert row into `stream_viewer_snapshots`
+3. If new count > current `peak_viewers` on the session row, update
+
+### `call.session_participant_left`
+
+Same as joined but decrement (clamped to 0). Snapshot row written.
+
+### `message.new` (Chat)
+
+Sent by GetStream Chat. Currently HMAC unverified.
+
+Action:
+1. Read `analytics:current_session_id` from KV. No-op if not live.
+2. `UPDATE stream_sessions SET chat_message_count = chat_message_count + 1 WHERE id = ?`
+3. UPSERT row into `stream_chat_minutes` keyed on `(session_id, minute_bucket_ms)` where bucket = `floor(now / 60000) * 60000`
+
+## Ack-only events
+
+Returned 200 OK with no DB writes:
+
+**Video:** `call.member_added`, `call.member_removed`, `call.member_updated`, `call.updated`, `call.permission_request`, `call.recording_started`, `call.recording_stopped`
+
+**Chat:** `message.updated`, `message.deleted`, `user.banned`, `user.unbanned`
+
+These are subscribed in case GetStream auto-includes them; we just don't act on them.
+
+## Configuring in GetStream dashboard
+
+See [Configure → GetStream](/docs/configure/getstream). Same URL for both products. Ensure participant events + message.new are subscribed or analytics stays at 0.
+
+## Failure handling
+
+- **HMAC fail** → 401, no DB write
+- **Unknown event type** → 400
+- **JSON parse fail** → 400
+- **DB write fail** → 500 (GetStream retries automatically)
+
+Discord fanout is fire-and-forget. Errors logged, not propagated. The DB write happens before the Discord call so live state is correct even if Discord is down.
+
+Next: [Design decisions](/docs/reference/design-decisions).

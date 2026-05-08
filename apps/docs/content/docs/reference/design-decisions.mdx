@@ -1,0 +1,68 @@
+---
+title: Design decisions
+description: What's in, what's out, and why.
+---
+
+The full file lives at [`DESIGN-DECISIONS.md`](https://github.com/MrDemonWolf/howlcast/blob/main/DESIGN-DECISIONS.md) in the repo. This page is the public summary.
+
+## Locked YES
+
+These are explicitly in scope and won't be removed.
+
+- **Single broadcaster, single channel** — channel page IS the home page (`/`). No `/[username]` routing.
+- **Two roles only** — `broadcaster` + `viewer`. No `mod` role. Broadcaster moderates via GetStream's built-in tools.
+- **One permission flag** — `profiles.is_invited`. Replaces all tier / sub / VIP logic.
+- **Den layout only** — no theater mode, no editorial layout. The two-column grid is canonical.
+- **Two Discord webhooks** — public + private. The only outbound notification channel.
+- **One email template** — "Private stream invite". Used for both magic-link sign-in and invite-onboarding.
+- **No R2 emote proxy** — emote images load direct from provider CDNs. Browser caches them. Only metadata in KV.
+- **Twitch ID is the single setup input** — first-run wizard resolves display name, bio, avatar, emotes from one numeric ID.
+- **Cross-subdomain cookies in prod** — needed for `tv.your-domain.tv` ↔ `api.tv.your-domain.tv` session sharing.
+- **No `/signup`** — viewers arrive only via emailed magic-link invites. `allow_signups` column dropped in migration 0004.
+- **Dark mode only** — explicit product choice. No light mode.
+
+## Locked NO
+
+Things that look like good ideas but aren't.
+
+- ❌ **Mod role** — too much complexity for den-sized audiences
+- ❌ **Subscriber tiers** — no $3/mo, no $8/mo, no Tier 1/2/3
+- ❌ **Viewer tiers** — single `is_invited` boolean replaces all
+- ❌ **Multi-channel notification fanout** — email blasts, RSS, web push all skipped
+- ❌ **Multiple email templates** — one template only
+- ❌ **Theater / Editorial layouts** — Den only
+- ❌ **Schedule, Tags, VODs, Subscribe, Follow, Channel URL** — all removed
+- ❌ **Mounting Hono in the same Worker as Next.js** — BTS doesn't support; not worth hacking
+- ❌ **Module-scope `betterAuth(...)` instance** — must be per-request factory in Workers
+- ❌ **`@cloudflare/next-on-pages`** — deprecated; use `@opennextjs/cloudflare`
+- ❌ **MailChannels** — free tier died Aug 2024
+- ❌ **NextAuth / Clerk** — picked Better Auth instead
+- ❌ **Postgres / MySQL** — D1 only; BTS doesn't support otherwise
+- ❌ **`drizzle-kit migrate` against D1** — use `wrangler d1 migrations apply`
+- ❌ **Recording / VODs** — live only by product choice
+- ❌ **Light mode** — explicit choice
+- ❌ **Painting backgrounds with cyan** — cyan reserved for primary CTAs, focus rings, LIVE pulse, brand mark, verified check, used sparingly
+
+## Stack picks
+
+- **Next.js 16** + **OpenNext for Cloudflare** — the web worker
+- **Hono** + **tRPC v11** — the api worker
+- **Better Auth 1.6+** — username, magic-link, passkey, 2FA
+- **Drizzle ORM** — schema in TypeScript, migrations as SQL files
+- **D1** — SQLite, single database
+- **R2** — two buckets, no egress fees
+- **Cloudflare KV** — eventually-consistent scratch
+- **GetStream Video + Chat** — RTMPS ingress, HLS, chat, mod tools
+- **Resend** — outbound email; SMTP fallback to mailpit in dev
+- **Twitch Helix** — emote sync + setup-wizard channel lookup
+- **Alchemy 0.93+** — declarative Cloudflare resource provisioning
+- **bun 1.3+** — package manager + runtime
+
+## Brand
+
+- Navy `#091533` background, cyan `#0FACED` accent
+- Bricolage Grotesque (display), Geist Sans (UI), Geist Mono (numbers / codes)
+- Wolf-themed but understated — "Linear-calm, not Twitch-busy"
+- All design tokens in [`packages/ui/src/styles/globals.css`](https://github.com/MrDemonWolf/howlcast/blob/main/packages/ui/src/styles/globals.css)
+
+Next: [Troubleshooting](/docs/troubleshooting/common-issues).

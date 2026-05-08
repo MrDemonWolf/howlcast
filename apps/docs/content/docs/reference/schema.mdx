@@ -1,0 +1,177 @@
+---
+title: Schema
+description: Every table, column, and index in HowlCast's D1 database.
+---
+
+Authoritative source: [`packages/db/src/schema/`](https://github.com/MrDemonWolf/howlcast/tree/main/packages/db/src/schema). Migrations in [`packages/db/src/migrations/`](https://github.com/MrDemonWolf/howlcast/tree/main/packages/db/src/migrations).
+
+## Auth (Better Auth)
+
+Standard Better Auth schema. Tables: `user`, `account`, `session`, `verification`, plus plugin tables for `passkey` and `two_factor`.
+
+Won't reproduce the columns here — see [Better Auth docs](https://www.better-auth.com/docs/concepts/database).
+
+## `profiles`
+
+One row per `user`. Holds all the human-facing identity bits.
+
+| Column        | Type       | Purpose                                       |
+| ------------- | ---------- | --------------------------------------------- |
+| `user_id` PK  | text       | FK → `user.id` cascade delete                 |
+| `display_name`| text       | Shown above the player + chat user card      |
+| `bio`         | text?      | Long-form, free text                          |
+| `pronouns`    | text?      | Optional                                      |
+| `avatar_key`  | text?      | R2 key in `howlcast-public`                  |
+| `banner_key`  | text?      | R2 key (currently unused in UI)               |
+| `verified`    | boolean    | Cyan check mark next to display name          |
+| `role`        | enum       | `'broadcaster' \| 'viewer'`                   |
+| `is_invited`  | boolean    | Single permission flag — chat-write access    |
+| `invited_at`  | ts         |                                               |
+| `invited_by`  | text?      | FK → `user.id` (no cascade — historical only) |
+
+Indexes: `role`, `is_invited`.
+
+## `channel_config`
+
+Single row, `id = 'site'`. Site-level state.
+
+| Column                   | Purpose                                           |
+| ------------------------ | ------------------------------------------------- |
+| `id` PK                  | Always `'site'`                                   |
+| `owner_id`               | FK → `user.id` (the broadcaster)                  |
+| `title`                  | Stream title shown over player                    |
+| `live_started_at`        | Set by `call.live_started` webhook                |
+| `live_ended_at`          | Set by `call.session_ended` webhook               |
+| `stream_call_id`         | GetStream call id                                 |
+| `chat_channel_cid`       | GetStream chat channel id                         |
+| `rtmps_url`              | RTMPS ingress URL persisted from GetStream        |
+| `broadcaster_twitch_id`  | Numeric Twitch user ID                            |
+| `setup_completed_at`     | Locks the `/setup` wizard once set                |
+
+## `panels`
+
+Cards that show below the player.
+
+| Column      | Purpose                                  |
+| ----------- | ---------------------------------------- |
+| `id` PK     | UUID                                     |
+| `position`  | Sort order, integer                      |
+| `title`     | Card heading                             |
+| `body`      | Card body, plain text                    |
+| `image_key` | R2 key (currently unused in UI)          |
+| `link_url`  | If set, the card becomes a link          |
+
+Indexes: `position`.
+
+## `invites`
+
+Magic-link invite codes for new viewers.
+
+| Column         | Purpose                                          |
+| -------------- | ------------------------------------------------ |
+| `code` PK      | 32-char random string                            |
+| `email`        | Recipient email                                  |
+| `created_by`   | FK → `user.id` (the broadcaster)                 |
+| `created_at`   | ts                                               |
+| `expires_at`   | 30 days from creation                            |
+| `used_at`      | Set when the invitee accepts                     |
+| `used_by`      | FK → `user.id`                                   |
+| `revoked_at`   | Set when the broadcaster revokes                 |
+
+Indexes: `created_at`.
+
+## `discord_webhooks`
+
+Two rows, ids `'public'` + `'private'`.
+
+| Column            | Purpose                                  |
+| ----------------- | ---------------------------------------- |
+| `id` PK           | `'public' \| 'private'`                  |
+| `url`             | Discord webhook URL (nullable)           |
+| `notify_on_live`  | boolean                                  |
+| `notify_on_end`   | boolean                                  |
+| `last_fired_at`   | ts of last successful POST               |
+| `last_error`      | If non-null, last delivery error         |
+
+## `stream_sessions`
+
+One row per live session. Written by the GetStream webhook handler.
+
+| Column                | Purpose                                              |
+| --------------------- | ---------------------------------------------------- |
+| `id` PK               | UUID                                                 |
+| `call_id`             | GetStream call id                                    |
+| `started_at`          | From `call.live_started`                             |
+| `ended_at`            | From `call.session_ended`                            |
+| `peak_viewers`        | High watermark from join events (broadcaster excl.)  |
+| `chat_message_count`  | Bumped from `message.new` events                     |
+| `total_minutes`       | Computed at session end                              |
+
+Indexes: `started_at`.
+
+## `stream_viewer_snapshots`
+
+Time-series viewer counts. Powers the line chart.
+
+| Column         | Purpose                                          |
+| -------------- | ------------------------------------------------ |
+| `id` PK        | UUID                                             |
+| `session_id`   | FK → `stream_sessions.id` cascade delete         |
+| `sampled_at`   | ts                                               |
+| `viewer_count` | Integer                                          |
+
+Indexes: `(session_id, sampled_at)`. Pruned to 7 days by hourly cron.
+
+## `stream_chat_minutes`
+
+Per-minute chat counts. Powers the bar chart.
+
+| Column              | Purpose                                          |
+| ------------------- | ------------------------------------------------ |
+| `session_id`        | FK → `stream_sessions.id` cascade delete         |
+| `minute_bucket_ms`  | Millis floored to the minute                     |
+| `count`             | Bumped via UPSERT                                |
+
+Composite PK on `(session_id, minute_bucket_ms)`. UPSERT key matches.
+
+## `white_label`
+
+Single row, `id = 'site'`.
+
+| Column                | Purpose                                  |
+| --------------------- | ---------------------------------------- |
+| `id` PK               | Always `'site'`                          |
+| `custom_logo_key`     | R2 key (nullable)                        |
+| `custom_platform_name`| Override "HowlCast" (nullable)           |
+| `footer_attribution`  | enum: `'default' \| 'custom' \| 'off'`   |
+| `custom_footer_text`  | Used when `footer_attribution = custom`  |
+| `updated_at`          | ts                                       |
+
+## `legal_docs`
+
+Two rows, ids `'privacy'` + `'terms'`.
+
+| Column       | Purpose                                       |
+| ------------ | --------------------------------------------- |
+| `id` PK      | `'privacy' \| 'terms'`                        |
+| `body_html`  | Sanitized HTML from Tiptap editor             |
+| `updated_at` | ts                                            |
+
+## Migrations
+
+Numbered `0000_…` through `0009_…` at time of writing. Each is a SQL file plus a journal entry in `_journal.json`. Apply via `bun run db:migrate:remote`.
+
+| #    | Tag                                       | Summary                                    |
+| ---- | ----------------------------------------- | ------------------------------------------ |
+| 0000 | `yielding_major_mapleleaf`                | Better Auth tables                         |
+| 0001 | `bumpy_bushwacker`                        | profiles, channel_config, panels           |
+| 0002 | `supreme_master_chief`                    | invites + discord_webhooks                 |
+| 0003 | `thin_mole_man`                           | passkey + 2fa plugin tables                |
+| 0004 | `lean_nocturne`                           | drop `allow_signups`                       |
+| 0005 | `stream_sessions_and_rtmps_url`           | sessions table + RTMPS column              |
+| 0006 | `white_label_and_legal_docs`              | white-label + legal-docs                   |
+| 0007 | `drop_user_bans_and_invite_indexes`       | dropped unused user_bans table             |
+| 0008 | `drop_visibility`                         | dropped public mode                        |
+| 0009 | `stream_analytics`                        | viewer snapshots + chat minutes + counts   |
+
+Next: [Env vars](/docs/reference/env-vars).

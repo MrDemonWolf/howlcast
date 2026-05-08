@@ -1,0 +1,99 @@
+---
+title: Architecture
+description: How HowlCast fits together — workers, data flow, storage layout.
+---
+
+<Callout type="info">
+For the canonical architecture doc see [`docs/architecture.md`](https://github.com/MrDemonWolf/howlcast/blob/main/docs/architecture.md) in the repo. This page is the public-friendly summary.
+</Callout>
+
+## Big picture
+
+```
+                ┌─────────────────────┐
+                │  Browser            │
+                │  (Next.js + React)  │
+                └──┬──────────────┬───┘
+                   │              │
+       same-origin │              │ subdomain
+       /           │              │ api.tv.your-domain.tv
+                   ▼              ▼
+        ┌──────────────┐   ┌──────────────┐
+        │  WEB Worker  │   │  API Worker  │
+        │  tv          │   │  tv-api      │
+        │  Next.js     │   │  Hono + tRPC │
+        └──────┬───────┘   └──────┬───────┘
+               │                  │
+               └────────┬─────────┘
+                        ▼
+                  ┌──────────┐
+                  │  D1      │
+                  │  R2      │
+                  │  KV      │
+                  └──────────┘
+```
+
+GetStream sits outside this — RTMPS in from OBS, HLS / chat out to the browser, webhooks back into the api worker.
+
+## Two workers, one origin
+
+The `tv` worker (Next.js via OpenNext) serves the channel page, dashboard, setup wizard, and an `/api/*` rewrite that proxies tRPC + auth to the api worker via same-origin. Cookies stay first-party.
+
+The `tv-api` worker (Hono + tRPC) owns auth, tRPC routers, GetStream webhooks, branding logo upload, and crons.
+
+See [Why split workers, not one](/docs/reference/design-decisions) for the reasoning.
+
+## Data flow
+
+### Read (channel page)
+
+1. Browser → `GET /` on web worker → SSR shell + lazy-loaded chat/player chunks
+2. Browser → `GET /api/trpc/channel.getInfo` (rewrite) → api worker
+3. API worker → reads `channel_config`, `profiles`, `panels` from D1
+4. Browser → `GET /api/trpc/stream.isLive` polled every 10s
+5. If live → browser → GetStream Video SDK → HLS playlist
+6. Always → browser → GetStream Chat SDK → channel messages
+
+### Write (go live)
+
+1. Dashboard → `POST /api/trpc/stream.provision` (mutation)
+2. API worker → POST to GetStream `videocalls`
+3. API worker → persist `streamCallId` + `chatChannelCid` + `rtmpsUrl` on `channel_config`
+4. Broadcaster → OBS push → GetStream RTMPS ingress
+5. Dashboard → `POST /api/trpc/stream.goLive`
+6. API worker → tells GetStream to flip call public
+7. GetStream → POST to `/api/webhooks/getstream` with `call.live_started`
+8. API worker → flip `liveStartedAt`, open `stream_sessions` row, fire Discord
+9. Channel page (polling) sees `isLive: true`, mounts player
+
+## Storage layout
+
+| Resource | Name              | Purpose                                                  |
+| -------- | ----------------- | -------------------------------------------------------- |
+| D1       | `howlcast-db`     | Auth + channel state + sessions + analytics             |
+| R2       | `howlcast-public` | Branding logos + broadcaster avatar (one-time pull)     |
+| R2       | `howlcast-isr`    | OpenNext incremental-static-regen cache                 |
+| KV       | `EMOTES_KV`       | Emote map + analytics scratch + throttle keys           |
+
+## Cookies
+
+Same-origin via the Next.js `/api/*` rewrite. In dev (web on `:3001`, api on `:3000`), the rewrite makes cookies first-party. In prod with custom domains, `crossSubDomainCookies` is enabled in Better Auth so a session cookie set on `tv.your-domain.tv` is sent to `api.tv.your-domain.tv`.
+
+`*.workers.dev` host pairs **don't** support cross-subdomain cookies (Public Suffix List). Either use custom domains or stick to the same-origin proxy.
+
+## Crons
+
+Two scheduled handlers on `tv-api`:
+
+- `0 */12 * * *` — emote pipeline refresh (Twitch + 7TV + BTTV + FFZ → KV)
+- `* * * * *` — analytics sampler (baseline viewer snapshot during live + 7-day prune)
+
+## Why D1 + R2 + KV instead of Postgres + S3 + Redis
+
+- **D1** — free, fast for reads, lives next to the worker, schema is simple
+- **R2** — no egress fees, fits the budget, S3-compatible API
+- **KV** — eventually-consistent but fine for our use cases (emote refresh, throttle, analytics scratch)
+
+See [`DESIGN-DECISIONS.md`](https://github.com/MrDemonWolf/howlcast/blob/main/DESIGN-DECISIONS.md).
+
+Next: [Schema](/docs/reference/schema).

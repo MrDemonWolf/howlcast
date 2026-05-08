@@ -1,0 +1,74 @@
+---
+title: Prerequisites
+description: Accounts and CLI tools you need before deploying HowlCast.
+---
+
+You need accounts at four services and a working local toolchain. Most of them have free tiers that cover this.
+
+## Accounts
+
+<Steps>
+<Step>
+### Cloudflare
+
+Sign up at [dash.cloudflare.com](https://dash.cloudflare.com). Verify your email. The free Workers plan covers everything HowlCast does — D1, R2, KV, two Workers, and the cron triggers all sit under free quotas for a single broadcaster.
+</Step>
+
+<Step>
+### GetStream
+
+Sign up at [getstream.io](https://getstream.io). You need both **Chat** and **Video** products on the same app. Free tier covers small audiences; pricing kicks in at scale. Note the **API Key** and **API Secret** — you'll paste these into Wrangler secrets.
+</Step>
+
+<Step>
+### Resend (optional but recommended)
+
+Sign up at [resend.com](https://resend.com) and verify your sending domain (SPF / DKIM / DMARC records). Without Resend the magic-link emails fall through to console output in dev and silently fail in prod.
+</Step>
+
+<Step>
+### Twitch developer app
+
+Go to [dev.twitch.tv/console/apps/create](https://dev.twitch.tv/console/apps/create). Create a confidential app named `HowlCast`. Use any placeholder OAuth redirect URL — HowlCast uses `client_credentials` grant, so the redirect URL is never hit. Copy the **Client ID** and generate a **Client Secret**.
+
+Twitch is required for two things: emote pipeline (7TV / BTTV / FFZ / Twitch lookups by Twitch user ID) and the first-run setup wizard's channel lookup.
+</Step>
+</Steps>
+
+## CLI tools
+
+<Steps>
+<Step>
+### Bun 1.3+
+
+```bash
+curl -fsSL https://bun.sh/install | bash
+```
+
+Verify with `bun --version`. The repo's `packageManager` field pins this.
+</Step>
+
+<Step>
+### Wrangler (via Bun)
+
+```bash
+bunx wrangler login
+```
+
+Authorizes Wrangler against your Cloudflare account. Re-running this is safe.
+</Step>
+
+<Step>
+### Git + GitHub
+
+A GitHub account, the `gh` CLI, and SSH keys configured if you plan to deploy via GitHub Actions.
+</Step>
+</Steps>
+
+## Optional but useful
+
+- **Discord** with two webhooks (public + private channels) for the go-live / stream-end fanout
+- **OBS Studio 30+** to push RTMPS to GetStream
+- **1Password** (or another secrets manager) to keep API tokens organized — HowlCast uses ~15 distinct secrets
+
+Once you have the accounts and CLI in place, head to [Quickstart](/docs/getting-started/quickstart).

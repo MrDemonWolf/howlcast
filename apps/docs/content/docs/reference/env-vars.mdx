@@ -1,0 +1,60 @@
+---
+title: Environment variables
+description: Every env var HowlCast reads, where it's read, and what breaks without it.
+---
+
+The authoritative source is [`packages/env/src/server.ts`](https://github.com/MrDemonWolf/howlcast/blob/main/packages/env/src/server.ts) and [`packages/env/src/web.ts`](https://github.com/MrDemonWolf/howlcast/blob/main/packages/env/src/web.ts). This page is the cheat sheet.
+
+See also [Secrets](/docs/deploy/secrets) for setup steps.
+
+## Server (`tv-api` worker)
+
+| Var                       | Required? | What breaks without it                                 |
+| ------------------------- | --------- | ------------------------------------------------------ |
+| `BETTER_AUTH_SECRET`      | yes       | Auth refuses to boot                                   |
+| `BETTER_AUTH_URL`         | yes       | Magic-link callbacks point at wrong host               |
+| `CORS_ORIGIN`             | yes       | API rejects browser requests                           |
+| `STREAM_API_KEY`          | for live  | `stream.*` procedures throw                            |
+| `STREAM_API_SECRET`       | for live  | Webhook HMAC verification fails                        |
+| `TWITCH_CLIENT_ID`        | for setup | Setup wizard + emote pipeline disabled                 |
+| `TWITCH_CLIENT_SECRET`    | for setup | Same                                                   |
+| `RESEND_API_KEY`          | for prod  | Magic-link emails fall through to console              |
+| `MAIL_FROM`               | for prod  | Resend rejects                                         |
+| `SMTP_URL`                | dev only  | mailpit fallback                                       |
+
+## Web (`tv` worker)
+
+| Var                                  | Required? | What breaks without it                          |
+| ------------------------------------ | --------- | ----------------------------------------------- |
+| `NEXT_PUBLIC_SERVER_URL`             | yes       | tRPC client points at wrong host                |
+| `BETTER_AUTH_SECRET`                 | yes       | Auth client refuses to boot                     |
+| `BETTER_AUTH_URL`                    | yes       | Better Auth couldn't compute callback URL       |
+| `CORS_ORIGIN`                        | yes       | Cross-origin tRPC calls rejected                |
+| `NEXT_PUBLIC_PUBLIC_BUCKET_URL`      | optional  | Branding logos fall back to default mark        |
+
+## Build / deploy
+
+| Var                       | Where             | Purpose                              |
+| ------------------------- | ----------------- | ------------------------------------ |
+| `CLOUDFLARE_API_TOKEN`    | local + GH Actions| Alchemy auth                         |
+| `CLOUDFLARE_ACCOUNT_ID`   | local + GH Actions| Alchemy account binding              |
+| `ALCHEMY_PASSWORD`        | local + GH Actions| Alchemy state encryption             |
+| `ALCHEMY_STATE_TOKEN`     | GH Actions        | Alchemy reads its state Worker       |
+| `ALCHEMY_TELEMETRY_DISABLED` | optional       | Set to `1` to silence telemetry     |
+
+## Runtime-only (not env vars, but adjacent)
+
+These are bound by alchemy on each worker and aren't strings — they're objects.
+
+| Binding         | Worker | Type        | Purpose                              |
+| --------------- | ------ | ----------- | ------------------------------------ |
+| `DB`            | both   | D1 database | `howlcast-db`                        |
+| `PUBLIC_BUCKET` | web    | R2 bucket   | `howlcast-public`                    |
+| `ISR_BUCKET`    | web    | R2 bucket   | `howlcast-isr`                       |
+| `EMOTES_KV`     | api    | KV namespace| Emote map + analytics + throttle     |
+
+## Catalog versions
+
+The repo `package.json` has a workspace catalog. Run `bun install` to refresh after editing.
+
+Next: [tRPC routes](/docs/reference/trpc-routes).

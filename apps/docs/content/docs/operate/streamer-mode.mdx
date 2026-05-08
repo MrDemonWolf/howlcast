@@ -1,0 +1,40 @@
+---
+title: Streamer Mode
+description: Mask secrets while screen-sharing.
+---
+
+Streamer Mode is a single sidebar toggle that masks every secret-shaped string in the dashboard. Designed for the case where you screen-share your dashboard while live and don't want to leak credentials.
+
+## What it masks
+
+When ON:
+
+- **Stream key** — shows masked dots instead of the JWT, with reveal button hidden
+- **RTMPS server URL** — shows `rtmps://••••••...` (kept the protocol prefix so the field is recognizable)
+- **Discord webhook URLs** — shows masked text in the Notifications form
+- **Streamer Mode toggle itself** — visually highlighted cyan when on
+
+When OFF, all values render as normal.
+
+## Toggle from sidebar
+
+Bottom of the dashboard sidebar, above the user chip. Click to flip.
+
+- **OFF → ON** — instant. No confirmation.
+- **ON → OFF** — confirm modal. "Reveal sensitive info?" with a warning about screen-sharing. Esc cancels, "Yes, reveal" flips off.
+
+The asymmetry is intentional — accidentally turning Streamer Mode **on** while not sharing is annoying but harmless. Accidentally turning it **off** while sharing leaks credentials.
+
+## State
+
+Stored client-side in localStorage (`useStreamerMode` hook in [`apps/web/src/lib/streamer-mode.ts`](https://github.com/MrDemonWolf/howlcast/blob/main/apps/web/src/lib/streamer-mode.ts)). Survives page reloads, doesn't sync across devices.
+
+## What it doesn't mask
+
+- The chat itself — anyone can already read public chat
+- Channel title, broadcaster display name — public anyway
+- Custom logo — public asset
+
+Streamer Mode is a partial defense — it covers the common forgotten-credentials case. It does **not** make a screen-share safe in general. Use OBS scene filtering for full protection.
+
+Next: [Analytics](/docs/operate/analytics).

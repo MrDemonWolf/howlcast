@@ -1,0 +1,48 @@
+---
+title: Welcome to HowlCast
+description: Self-hosted single-tenant invite-only live streaming platform on Cloudflare Workers + GetStream.
+---
+
+<Callout type="info">
+**TL;DR** — HowlCast is one broadcaster, invite-only viewers, dark mode only. RTMPS via GetStream. Two Cloudflare Workers (web + api), one D1 database, two R2 buckets, one KV. Free tier covers it.
+</Callout>
+
+HowlCast is a self-hosted live streaming platform. One broadcaster — you. Viewers join only via emailed magic-link invites. No public mode, no signups, no subscriber tiers. The whole thing runs on Cloudflare's free tier; GetStream handles all media.
+
+## What you're getting
+
+| Feature                | Details                                                            |
+| ---------------------- | ------------------------------------------------------------------ |
+| **Single broadcaster** | One profile, one channel page, one set of credentials              |
+| **Invite-only**        | Viewers arrive via emailed magic-link → flips `isInvited` boolean  |
+| **RTMPS in**           | OBS pushes to GetStream. Viewers see HLS in browser                |
+| **Chat with emotes**   | GetStream Chat + 7TV / BTTV / FFZ / Twitch emotes (12h cron)       |
+| **Two Discord hooks**  | Public + private webhooks fired on go-live + end                   |
+| **Streamer Mode**      | Masks stream key, RTMPS URL, webhook URLs while screen-sharing     |
+| **Per-session stats**  | Peak viewers, chat msg count, viewer line + chat-msgs/min charts   |
+| **White label**        | Custom logo, platform name, footer attribution                     |
+| **Tiptap legal**       | WYSIWYG editor for `/privacy` + `/terms` pages                     |
+
+## Quick links
+
+- [Prerequisites](/docs/getting-started/prerequisites) — accounts you need before you start
+- [Quickstart](/docs/getting-started/quickstart) — 30 minutes from zero to live
+- [First deploy](/docs/deploy/first-deploy) — get it running on Cloudflare
+- [Going live](/docs/operate/going-live) — provision → OBS → go live
+- [Architecture](/docs/reference/architecture) — how it all fits together
+- [Troubleshooting](/docs/troubleshooting/common-issues) — when something breaks
+
+## Stack
+
+- **Cloudflare Workers** — two of them, web (Next.js via OpenNext) + api (Hono + tRPC)
+- **D1** — SQLite, single database, Drizzle ORM
+- **R2** — two buckets: public assets + ISR cache
+- **KV** — emote metadata + analytics scratch + throttle keys
+- **Better Auth 1.6+** — username, magic-link, passkey, 2FA
+- **GetStream** — RTMPS ingress + HLS + chat
+- **Resend** (or SMTP fallback) — magic-link + invite emails
+- **Twitch Helix** — emote sync + setup-wizard channel lookup
+
+## Status
+
+HowlCast is **Phase 6 polish** at the time of writing — Phase 7 is this docs site. Track real progress in [`PROGRESS.md`](https://github.com/MrDemonWolf/howlcast/blob/main/PROGRESS.md).

@@ -1,0 +1,95 @@
+---
+title: tRPC routes
+description: Every router and procedure HowlCast exposes.
+---
+
+All tRPC routers live in [`packages/api/src/routers/`](https://github.com/MrDemonWolf/howlcast/tree/main/packages/api/src/routers). The browser hits them via `/api/trpc/*` rewritten through the web worker → api worker.
+
+Three procedure types:
+
+- **Public** — anyone can call
+- **Protected (broadcaster)** — `assertBroadcaster` runs first
+- **Protected (any signed-in)** — Better Auth session required
+
+## `setup`
+
+First-run wizard.
+
+| Procedure  | Type   | Purpose                                                  |
+| ---------- | ------ | -------------------------------------------------------- |
+| `getStatus`| public | Returns `{ setupCompleted, broadcasterTwitchId? }`       |
+| `lookup`   | public | Twitch Helix lookup + 7TV/BTTV/FFZ counts (preview)      |
+| `commit`   | public | Creates broadcaster account, locks setup, sets cookie    |
+
+`commit` is locked by a single read of `setupCompletedAt` — once set, returns 409.
+
+## `channel`
+
+Public reads + broadcaster-only writes.
+
+| Procedure       | Type             | Purpose                             |
+| --------------- | ---------------- | ----------------------------------- |
+| `getInfo`       | public           | Display name, title, verified, etc. |
+| `getPanels`     | public           | Sorted panel list                   |
+| `getEmotes`     | public           | Merged emote map from KV            |
+| `createCall`    | broadcaster      | First-time GetStream provisioning   |
+| `updateConfig`  | broadcaster      | Title (autosave on blur)            |
+| `upsertPanel`   | broadcaster      | Add or edit a panel                 |
+| `deletePanel`   | broadcaster      | Hard delete                         |
+| `reorderPanels` | broadcaster      | Sends id-ordered array              |
+| `refreshEmotes` | broadcaster      | Manual emote pipeline kick          |
+
+## `stream`
+
+Live state + tokens + analytics.
+
+| Procedure              | Type             | Purpose                                  |
+| ---------------------- | ---------------- | ---------------------------------------- |
+| `isLive`               | public           | Polled by channel page every 10s         |
+| `getStreamCredentials` | public           | callId + chatChannelCid + apiKey         |
+| `getViewerToken`       | public           | Short-lived viewer JWT                   |
+| `getBroadcasterToken`  | broadcaster      | Long-lived broadcaster JWT (= OBS key)   |
+| `provision`            | broadcaster      | Provisions GetStream call, sets RTMPS    |
+| `goLive`               | broadcaster      | Tells GetStream to flip live             |
+| `stopLive`             | broadcaster      | Tells GetStream to end                   |
+| `getStats`             | broadcaster      | Last 7d aggregates + session list        |
+| `getSessionDetail`     | broadcaster      | Per-session viewer + chat charts data    |
+
+## `admin`
+
+Invites + webhook config + profile.
+
+| Procedure        | Type             | Purpose                              |
+| ---------------- | ---------------- | ------------------------------------ |
+| `listWebhooks`   | broadcaster      | Two Discord webhook rows             |
+| `upsertWebhook`  | broadcaster      | URL + per-event toggles              |
+| `createInvite`   | broadcaster      | Generates code, sends magic-link     |
+| `listInvites`    | broadcaster      | Outstanding + used + revoked         |
+| `acceptInvite`   | public           | Flips `is_invited`                   |
+| `revokeInvite`   | broadcaster      | Sets `revoked_at`                    |
+| `updateProfile`  | broadcaster      | Display name, bio, pronouns          |
+
+## `branding`
+
+White-label + legal docs.
+
+| Procedure     | Type             | Purpose                              |
+| ------------- | ---------------- | ------------------------------------ |
+| `get`         | public           | Resolved white-label values          |
+| `update`      | broadcaster      | Logo key, platform name, footer      |
+| `getLegal`    | public           | Privacy or Terms HTML                |
+| `updateLegal` | broadcaster      | Save sanitized HTML from Tiptap      |
+
+## `account`
+
+Viewer / broadcaster account management. Lives in [`packages/api/src/routers/account.ts`](https://github.com/MrDemonWolf/howlcast/blob/main/packages/api/src/routers/account.ts).
+
+| Procedure   | Type        | Purpose                                  |
+| ----------- | ----------- | ---------------------------------------- |
+| `getMe`     | any signed  | Profile + sessions list                  |
+| `updateMe`  | any signed  | Display name, pronouns, etc.             |
+| `deleteMe`  | any signed  | Hard delete with FK guards               |
+
+`deleteMe` precondition: cannot delete if you're the broadcaster on `channel_config`. Schema FK has no cascade for that case.
+
+Next: [Webhooks](/docs/reference/webhooks).

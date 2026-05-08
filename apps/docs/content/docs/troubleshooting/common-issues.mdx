@@ -1,0 +1,89 @@
+---
+title: Common issues
+description: Quick fixes for the things that go wrong most often.
+---
+
+## "Stream not configured"
+
+**Symptom:** any `stream.*` tRPC procedure throws `PRECONDITION_FAILED`.
+
+**Fix:** secrets aren't deployed. Run `bun run deploy` after setting `STREAM_API_KEY` + `STREAM_API_SECRET`. See [Secrets](/docs/deploy/secrets).
+
+## "Going live..." stuck
+
+**Symptom:** dashboard shows "Going live..." indefinitely. OBS connected, but channel page doesn't flip to LIVE.
+
+**Cause:** GetStream webhook URL not configured, or pointing at a dead worker.
+
+**Fix:** GetStream dashboard → Video → Webhook URL → set to `https://tv-api.<your-account>.workers.dev/api/webhooks/getstream`. Subscribe to `call.live_started`, `call.session_started`. See [GetStream](/docs/configure/getstream).
+
+## Magic-link emails never arrive
+
+**Symptom:** invitee clicks "Send sign-in link", nothing in inbox.
+
+**Causes (most common first):**
+
+1. `RESEND_API_KEY` not deployed
+2. `MAIL_FROM` domain not verified in Resend
+3. Recipient blocked the sender
+
+**Fix:** check Resend dashboard "Logs" tab for delivery status. See [Resend](/docs/configure/resend).
+
+## ERR_TOO_MANY_REDIRECTS after setup
+
+**Symptom:** finishing the wizard sends you into a redirect loop.
+
+**Cause:** session cookie can't cross between web (`tv.*`) and api (`api.tv.*`) hosts on `*.workers.dev`. Public Suffix List blocks cross-subdomain cookies on workers.dev.
+
+**Fix:** either attach a custom domain (cookies work fine) or use the same-origin proxy in dev (web on `:3001` proxies `/api` to api on `:3000`).
+
+## Migration "no such column"
+
+**Symptom:** SQL error like `no such column: chat_message_count`.
+
+**Cause:** new schema deployed but migrations not applied.
+
+**Fix:** `bun run db:migrate:remote`. Check pending: `bun run db:migrations:list`.
+
+## Setup wizard locked
+
+**Symptom:** `/setup` returns "already configured", but you want to redo setup (e.g. testing fresh).
+
+**Cause:** `setup_completed_at` is set on `channel_config`.
+
+**Fix (destructive — wipes broadcaster):**
+
+```bash
+bun run db:execute:remote --command 'UPDATE channel_config SET setup_completed_at = NULL WHERE id = "site"'
+```
+
+Wizard re-opens. The previous broadcaster's user row + profile is still there. Either work around it or:
+
+```bash
+bun run db:execute:remote --command 'DELETE FROM user'
+bun run db:execute:remote --command 'DELETE FROM channel_config'
+```
+
+(deletes EVERYTHING — only do this in test environments)
+
+## CI deploy fails on first run
+
+**Symptom:** `bun run deploy` in GitHub Actions fails with "resource already exists".
+
+**Cause:** alchemy hasn't yet adopted resources you created locally.
+
+**Fix:** alchemy adopts on `adopt: true` config (already set in `alchemy.run.ts`). If still failing, the state file is missing — `CloudflareStateStore` worker either deleted or not initialized. Push `ALCHEMY_STATE_TOKEN` secret + re-run.
+
+## Worker over CPU limit
+
+**Symptom:** worker logs show "exceeded CPU time".
+
+**Cause:** typically a single-request hot loop, or unbounded query.
+
+**Fix:** check tRPC procedure performance. Common offenders: panel reorder writing too many rows, emote pipeline timing out on a slow provider, snapshot prune query without an index.
+
+## Other issues
+
+- **OBS not pushing** → [OBS not pushing](/docs/troubleshooting/obs-not-pushing)
+- **Chat not working** → [Chat not working](/docs/troubleshooting/chat-not-working)
+- **Bug not listed here** → [Open an issue](https://github.com/MrDemonWolf/howlcast/issues/new)

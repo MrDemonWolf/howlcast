@@ -1,0 +1,61 @@
+---
+title: Moderation
+description: "How chat moderation works in HowlCast — short version, GetStream does it."
+---
+
+There's no "mod" role in HowlCast. The broadcaster moderates directly, using GetStream's built-in chat moderation tools.
+
+## Why no mod role
+
+[`DESIGN-DECISIONS.md`](https://github.com/MrDemonWolf/howlcast/blob/main/DESIGN-DECISIONS.md) explicitly removes mod assignment. Reasoning:
+
+1. Single broadcaster product — small chat
+2. Adding mods adds DB tables, role checks, audit logs, UI surfaces, abuse vectors
+3. GetStream Chat already ships pin / delete / ban / mute in their dashboard
+
+For a den-sized audience this is enough. If you outgrow it, the path forward is "use GetStream's built-in mod assignment" rather than "build a parallel role system".
+
+## Moderating during a stream
+
+### Inline (preferred)
+
+The broadcaster's chat client (signed-in dashboard or popout) shows mod actions on hover for any message:
+
+- 📌 **Pin** — promotes a message to the pinned banner above the chat
+- 🗑 **Delete** — removes the message from everyone's view
+- 🔇 **Mute user** — they can read but not write
+- 🚫 **Ban user** — they get kicked from the channel
+
+These come from `stream-chat-react`'s default UI. The signed-in broadcaster's JWT has the role required.
+
+### From GetStream dashboard
+
+GetStream Chat dashboard → Chats → pick channel → message log. You can see, delete, and ban from here without being live.
+
+## Per-user permanent demotion
+
+To strip an invited viewer's chat-write access permanently:
+
+```bash
+bun run db:execute:remote --command 'UPDATE profiles SET is_invited = 0 WHERE user_id = "<id>"'
+```
+
+After this, their composer locks immediately on next refresh — `LockedComposerOverlay` shows "Sign in to chat" overlay.
+
+UI for this is on the roadmap. Open an issue if you need it sooner.
+
+## Pinned message default
+
+The chat dock ships with a default pinned message:
+
+> _Be useful or be silent. No spoilers without /spoiler._
+
+Edit it in [`apps/web/src/components/channel/channel-page.tsx`](https://github.com/MrDemonWolf/howlcast/blob/main/apps/web/src/components/channel/channel-page.tsx) — search for `<PinnedMessage>`. Future: surface this as a dashboard setting.
+
+## Spam mitigation
+
+GetStream Chat handles per-channel rate-limits server-side. The HowlCast layer adds a 5/hour throttle on `branding.upload`, but no rate limit on chat messages — that's GetStream's job.
+
+If you start seeing spam patterns GetStream isn't catching, file an issue. Adding `kv-throttle` per-user on `message.new` is a 30-line addition.
+
+Next: [Streamer Mode](/docs/operate/streamer-mode).

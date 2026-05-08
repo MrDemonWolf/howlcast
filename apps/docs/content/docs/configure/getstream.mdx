@@ -1,0 +1,71 @@
+---
+title: GetStream
+description: Configuring Video + Chat on the same GetStream app.
+---
+
+GetStream handles **all** the live media in HowlCast — RTMPS ingest, HLS playback, chat, member roles, and the lifecycle webhooks that drive the dashboard.
+
+## One app, two products
+
+In the GetStream dashboard create one app and enable both **Chat** and **Video**. They share the API Key + API Secret. HowlCast signs JWTs with the secret on the server side; the browser SDKs receive short-lived tokens via tRPC.
+
+## Webhook URL
+
+Set the webhook URL on **both** products to:
+
+```
+https://tv-api.<your-account>.workers.dev/api/webhooks/getstream
+```
+
+Or the custom domain equivalent. Same path for both.
+
+## Events to subscribe
+
+### Video webhook
+
+| Event                              | What HowlCast does                                    |
+| ---------------------------------- | ----------------------------------------------------- |
+| `call.live_started`                | Flips `liveStartedAt`, opens a `stream_sessions` row, fans out Discord |
+| `call.session_started`             | Treated identically to `call.live_started` (some configs fire this instead) |
+| `call.session_ended` / `call.ended`| Closes the session, fires Discord end fanout          |
+| `call.session_participant_joined`  | Bumps viewer count, writes a snapshot, updates `peakViewers` |
+| `call.session_participant_left`    | Decrements viewer count, writes a snapshot            |
+
+### Chat webhook
+
+| Event              | What HowlCast does                                    |
+| ------------------ | ----------------------------------------------------- |
+| `message.new`      | Increments `chat_message_count` + per-minute bucket   |
+
+## HMAC verification
+
+Video webhooks are signed with `STREAM_API_SECRET` and verified via the `X-SIGNATURE` header. The handler in [`apps/server/src/index.ts`](https://github.com/MrDemonWolf/howlcast/blob/main/apps/server/src/index.ts) rejects mismatched signatures with 401.
+
+Chat webhooks use a different signing scheme that hasn't been verified yet. They're currently accepted on URL secrecy alone — keep the URL out of public docs (this docs site is fine; the GetStream dashboard URL field stays private).
+
+## Why GetStream over self-hosted
+
+Tested SFU + transcoding + HLS distribution + chat + permissions out of the box. Self-hosting Janus or LiveKit covers SFU but not chat or HLS at scale. The free tier covers a single broadcaster's testing; paid plans scale to thousands of viewers.
+
+See `docs/integrations/getstream.md` in the repo for deeper integration notes.
+
+## Provision the call
+
+The first time you click **Set up your stream** on the dashboard, `channel.createCall` runs server-side:
+
+1. POST to GetStream `videocalls` endpoint
+2. Persist `streamCallId` + `chatChannelCid` on `channel_config`
+3. The `stream.provision` mutation later reads `ingress.rtmp.address` from the call and persists `rtmpsUrl`
+
+Once provisioned, the RTMPS URL + key (your signed user JWT, doubles as OBS stream key) populate the dashboard.
+
+## Troubleshooting
+
+- **"Stream not configured. Set STREAM_API_KEY..."** — secrets aren't deployed. See [Secrets](/docs/deploy/secrets).
+- **Webhook returns 401** — signature mismatch. Re-check `STREAM_API_SECRET` matches the dashboard.
+- **Webhook returns 400 unknown event** — you subscribed to an event the handler doesn't handle. Look in [`WEBHOOK` constants](https://github.com/MrDemonWolf/howlcast/blob/main/apps/server/src/index.ts) for the supported list and add to `*_ACK_ONLY_EVENTS` if you want to accept-and-ignore.
+- **LIVE badge doesn't flip on go-live** — webhook URL not subscribed to `call.live_started` (or `call.session_started`).
+- **Viewer count stays at 0** — webhook missing `call.session_participant_joined` / `_left`.
+- **Chat msg count stays at 0** — Chat webhook URL not configured, or `message.new` not subscribed.
+
+Next: [Resend](/docs/configure/resend).

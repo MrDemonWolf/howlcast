@@ -53,7 +53,12 @@ tmp
 temp
 
 # Next.js build artifacts
+.next
 .open-next
+out
+
+# Fumadocs generated source
+.source
 
 # Claude Code session artifacts
 .claude/

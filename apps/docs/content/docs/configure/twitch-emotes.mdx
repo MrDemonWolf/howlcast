@@ -1,0 +1,89 @@
+---
+title: Twitch + emotes
+description: Setting up the Twitch dev app and the emote pipeline.
+---
+
+The Twitch app credentials power two things:
+
+1. **Setup wizard** — the channel lookup that seeds your profile
+2. **Emote pipeline** — 12-hourly cron that pulls from 4 providers and merges into KV
+
+Both use the `client_credentials` grant — no user OAuth flow, no redirect URL, no callback.
+
+## Twitch dev app
+
+<Steps>
+<Step>
+### Create the app
+
+[dev.twitch.tv/console/apps/create](https://dev.twitch.tv/console/apps/create)
+
+- **Name:** `HowlCast`
+- **OAuth Redirect URL:** `https://tv.your-domain.tv/auth/twitch/callback` _(placeholder — never hit)_
+- **Category:** Application Integration
+- **Client Type:** Confidential
+- **Organization:** None
+</Step>
+
+<Step>
+### Copy the credentials
+
+Click Manage on the app. Copy the **Client ID**. Click "New Secret" → copy the **Client Secret** _(you only get to see it once)_.
+</Step>
+
+<Step>
+### Set the secrets
+
+```bash
+echo "TWITCH_CLIENT_ID=xxx" >> apps/server/.env
+echo "TWITCH_CLIENT_SECRET=yyy" >> apps/server/.env
+bun run deploy   # pushes to prod via alchemy
+```
+</Step>
+</Steps>
+
+## Emote pipeline
+
+The cron in [`apps/server/src/index.ts`](https://github.com/MrDemonWolf/howlcast/blob/main/apps/server/src/index.ts) fires every 12 hours (`0 */12 * * *`). It:
+
+1. Reads `channelConfig.broadcasterTwitchId` from D1
+2. Fetches a Twitch app token (cached 50min in `EMOTES_KV` at `twitch:apptoken`)
+3. Fans out to four provider fetchers in parallel:
+   - **Twitch** Helix (subscriber + global emotes)
+   - **7TV** (`/v3/users/twitch/{id}`)
+   - **BTTV** (`/cached/users/twitch/{id}`)
+   - **FFZ** (`/v1/room/id/{id}`)
+4. Merges results into one map, writes to `emotes:current` in KV
+5. Provider failures fail-soft — the map is rebuilt from whichever providers responded
+
+## Provider setup
+
+For emotes to actually appear, you need accounts at the providers and emotes assigned to your Twitch channel:
+
+### 7TV
+
+[7tv.app](https://7tv.app) → sign in with Twitch → Profile → Emotes → upload PNGs. Usable by anyone in your chat. Free.
+
+### BTTV
+
+[betterttv.com](https://betterttv.com) → sign in with Twitch → upload emotes to your channel.
+
+### FFZ
+
+[frankerfacez.com](https://www.frankerfacez.com/) → sign in with Twitch → submit a New Emote → upload PNG → wait for moderator approval (1–7 days).
+
+### Twitch (subs + global)
+
+Subscriber emotes only appear if you're an Affiliate / Partner. Global emotes (Kappa, etc.) auto-included.
+
+## Manual refresh
+
+Don't want to wait for the cron? Hit **Channel → Emotes → Refresh** in the dashboard. Same handler, runs immediately. Bumps the `emotes:current` KV value and the channel page picks up the new map on next chat connect.
+
+## Troubleshooting
+
+- **No emotes show after upload** — check `bun run deploy` pushed Twitch creds. Then click **Refresh** in the dashboard. Then check the worker logs for `getTwitchAppToken` or fetch failures.
+- **"Twitch app token failed"** — Client Secret rotated? Generate a new one in the Twitch dev console.
+- **Some providers missing, others working** — provider outage. Fail-soft means the next cron retries.
+
+Next: [Branding](/docs/configure/branding).

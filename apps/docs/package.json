@@ -1,0 +1,33 @@
+{
+	"name": "@howlcast/docs",
+	"version": "0.0.0",
+	"private": true,
+	"scripts": {
+		"dev": "next dev --turbopack --port 3002",
+		"build": "next build",
+		"start": "bunx serve out",
+		"check-types": "fumadocs-mdx && tsc --noEmit",
+		"clean": "rm -rf .next .turbo .source out",
+		"postinstall": "fumadocs-mdx"
+	},
+	"dependencies": {
+		"fumadocs-core": "^16.6.16",
+		"fumadocs-mdx": "^14.2.9",
+		"fumadocs-ui": "^16.6.16",
+		"lucide-react": "catalog:",
+		"next": "^16.2.0",
+		"react": "catalog:",
+		"react-dom": "catalog:"
+	},
+	"devDependencies": {
+		"@howlcast/config": "workspace:*",
+		"@tailwindcss/postcss": "^4.2.1",
+		"@types/mdx": "^2.0.13",
+		"@types/node": "^25.4.0",
+		"@types/react": "catalog:",
+		"@types/react-dom": "catalog:",
+		"postcss": "^8.5.8",
+		"tailwindcss": "catalog:",
+		"typescript": "catalog:"
+	}
+}

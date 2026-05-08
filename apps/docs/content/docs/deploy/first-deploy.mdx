@@ -1,0 +1,106 @@
+---
+title: First deploy
+description: Walk through the first-time deploy step by step.
+---
+
+Assumes you've finished [Cloudflare setup](/docs/deploy/cloudflare-setup), [D1 + R2](/docs/deploy/d1-and-r2), and [Secrets](/docs/deploy/secrets).
+
+<Steps>
+<Step>
+### Smoke-test locally
+
+```bash
+bun install
+bun run dev
+```
+
+Web at `http://localhost:3001`, api at `http://localhost:3000`. Hit `http://localhost:3000/api/health` — should return `{"ok":true}`.
+</Step>
+
+<Step>
+### Apply local migrations
+
+```bash
+bun run db:migrate:local
+```
+
+Drizzle SQL under `packages/db/src/migrations/` lands in your local SQLite.
+</Step>
+
+<Step>
+### Run the app once locally
+
+`http://localhost:3001/setup` lets you walk the first-run wizard. **This account becomes the broadcaster.** Locked once `setupCompletedAt` flips.
+
+Verify you can sign in, see the dashboard at `/dashboard`, and that `/api/trpc/channel.getInfo` returns your data.
+</Step>
+
+<Step>
+### First deploy
+
+```bash
+bun run deploy
+```
+
+Provisions every Cloudflare resource and uploads both Workers. ~2 minutes for the first run.
+
+Output ends with two URLs — note them.
+</Step>
+
+<Step>
+### Apply remote migrations
+
+```bash
+bun run db:migrate:remote
+```
+
+Migrations run against the prod D1 instance.
+</Step>
+
+<Step>
+### Smoke-test prod
+
+```bash
+curl https://tv-api.<your-account>.workers.dev/api/health
+# {"ok":true}
+```
+
+Open `https://tv.<your-account>.workers.dev` in a browser. The first-run wizard lives at `/setup`. The first person to fill it in becomes the prod broadcaster.
+
+If you set up locally already (Step 3), and want a fresh prod state: nothing carries over from local — local D1 is separate from remote D1.
+</Step>
+
+<Step>
+### Configure GetStream webhook
+
+GetStream dashboard → Video → Webhook URL:
+
+```
+https://tv-api.<your-account>.workers.dev/api/webhooks/getstream
+```
+
+Subscribe to:
+- `call.live_started`
+- `call.session_started`
+- `call.session_ended`
+- `call.ended`
+- `call.session_participant_joined`
+- `call.session_participant_left`
+
+Same URL for the Chat webhook subscribed to `message.new`.
+
+Without these the LIVE badge never flips, viewer counts stay at 0, and the Stats page shows zeros.
+
+See [GetStream](/docs/configure/getstream).
+</Step>
+
+<Step>
+### CI/CD on push to main
+
+`.github/workflows/deploy.yml` runs after `ci.yml` succeeds on `main`. Concurrency group `deploy` so two pushes don't race.
+
+Push a commit, watch GitHub Actions, verify `/api/health` still returns `{"ok":true}` after.
+</Step>
+</Steps>
+
+You're deployed. Now go [configure GetStream](/docs/configure/getstream) and [run the first-run wizard](/docs/configure/first-run-wizard).

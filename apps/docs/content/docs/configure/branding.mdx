@@ -1,0 +1,61 @@
+---
+title: Branding
+description: White-label settings and the Tiptap legal editor.
+---
+
+HowlCast ships with a default brand (HowlCast / navy + cyan / wolf-themed-but-understated). The `whiteLabel` table lets a fork swap logo, platform name, and footer attribution without touching code.
+
+## Logo + name + footer
+
+Dashboard → **Branding** has one form with three fields:
+
+### Logo upload
+
+PNG, SVG, or JPEG, max 1 MB. Multipart POST to `/api/upload/logo` (5/hour throttle per user). Bytes go directly to R2 (`branding/logo-<hash>.<ext>`); the hash key prevents collisions and is content-addressed so re-uploading the same file is a no-op.
+
+Reads route through `/api/branding/logo` to pipe through Next.js `<Image>` for optimization. The R2 bucket URL is intentionally not exposed.
+
+Reset to default reverts the `customLogoKey` column to NULL — the `BrandMark` SVG component in `@howlcast/ui` renders instead.
+
+### Platform name
+
+Defaults to "HowlCast". Set a custom string (24 char max) and it shows in:
+
+- Site nav
+- Email subject lines + body
+- OG images (`apps/web/src/app/opengraph-image.tsx`)
+- Site footer
+
+### Footer attribution
+
+Three choices:
+
+- **Default**: `Powered by <platformName> by MrDemonWolf, Inc.`
+- **Custom**: any string up to 80 chars
+- **Off**: nothing
+
+`useWhiteLabel` ([`apps/web/src/lib/use-white-label.ts`](https://github.com/MrDemonWolf/howlcast/blob/main/apps/web/src/lib/use-white-label.ts)) is the reactive hook that reads the table; the dashboard form mutates via `branding.update`.
+
+## Privacy + Terms
+
+Dashboard → **Branding** → Privacy & Terms tabs. Tiptap WYSIWYG editor with bold, italic, headings, bullets, ordered lists, links, undo / redo. Saves on click.
+
+Server sanitizes the HTML on save via `rehype-sanitize` ([`packages/api/src/lib/legal-sanitize.ts`](https://github.com/MrDemonWolf/howlcast/blob/main/packages/api/src/lib/legal-sanitize.ts)) — script tags, inline event handlers, and weird protocols are stripped before the row hits D1. Public reads at `/privacy` and `/terms` use `dangerouslySetInnerHTML` directly because sanitization happened at write time.
+
+The default templates ship with a placeholder. Replace them on first deploy or you'll publish a placeholder.
+
+## Reading the data
+
+Public read: `branding.get` returns the resolved white-label values (custom-or-default). Always returns a value. Used by the public channel page.
+
+Broadcaster read: `branding.get` returns the same shape. Mutate via `branding.update`.
+
+Tables involved: `white_label`, `legal_docs`. See [Schema](/docs/reference/schema).
+
+## Removing branding entirely
+
+To strip MrDemonWolf attribution: Branding → Footer attribution → **Off**. The white-label form persists `footerAttribution = "off"` and the footer renders nothing.
+
+This doesn't remove the legal disclaimers in `/privacy` and `/terms` — those are governed by your edited templates.
+
+Next: [Notifications](/docs/configure/notifications).

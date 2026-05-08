@@ -1,0 +1,76 @@
+---
+title: Going live
+description: Provision, OBS, go live, end stream.
+---
+
+The go-live flow is a 3-stage state machine driven by your dashboard.
+
+## Stage 1 — Provision (one time)
+
+Dashboard → **Stream** → **Set up your stream**.
+
+Server-side: `stream.provision` mutation calls GetStream's `videocalls` endpoint, persists the `streamCallId` + `chatChannelCid` on `channel_config`, reads `ingress.rtmp.address` from the call response, persists it as `rtmpsUrl`. RTMPS card on the dashboard now shows real OBS connection details.
+
+You only do this once per install. After this, "Go live" works any time.
+
+## Stage 2 — Connect OBS
+
+Dashboard → **Stream** → **OBS connection** card. Two fields:
+
+- **Server (RTMPS)** — copy and paste into OBS → Settings → Stream → Server. Service must be set to **Custom**, not Twitch.
+- **Stream key** — your signed broadcaster JWT from GetStream. Doubles as the OBS stream key. Hidden by default; click 👁 to reveal, 📋 to copy.
+
+OBS settings:
+
+- **Service:** Custom
+- **Server:** _(paste RTMPS URL — starts with `rtmps://`)_
+- **Stream key:** _(paste JWT — long token)_
+- **Encoder:** Hardware if available; software x264 fallback at faster preset
+- **Bitrate:** start with 4500 Kbps for 1080p60, 2500 for 720p60
+- **Keyframe interval:** 2 seconds
+
+Click Start Streaming in OBS. Bytes flow to GetStream. Channel page is **not yet live** — GetStream is just receiving the bytes.
+
+## Stage 3 — Go live
+
+Dashboard → **Stream** → **Go live** button.
+
+Server-side: `stream.goLive` mutation tells GetStream to flip the call from backstage to public. GetStream fires `call.live_started` (or `call.session_started`) → webhook handler updates `channel_config.liveStartedAt`, opens a `stream_sessions` row, writes the session ID to KV, fires Discord embeds.
+
+Channel page polls `stream.isLive` every 10s and flips to LIVE within 10s of the webhook landing.
+
+## Stage 4 — End
+
+Click **End stream** in the dashboard, **or** stop streaming in OBS (GetStream auto-ends after a configurable timeout).
+
+Server-side: `stream.stopLive` mutation tells GetStream to end the call. Webhook fires `call.session_ended` → handler closes the `stream_sessions` row (writes `endedAt` + computes `totalMinutes`), clears the analytics KV, fires Discord stream-end embeds.
+
+## Force-end escape hatch
+
+If GetStream's webhook URL is misconfigured or Discord delivery fails, the wizard can stick at "ready" or "live" even though OBS is no longer pushing. The dashboard shows a "Force end" button below the main flow. It calls `stopLive` directly without waiting for the webhook. Use sparingly.
+
+## What viewers see
+
+- **Signed-out** — `PrivateGate` component (sign-in CTA + LIVE badge if applicable)
+- **Signed-in viewers without `isInvited`** — channel watchable, chat dock present but composer locked with "Sign in to chat" overlay
+- **Signed-in invited viewers** — full chat access
+
+The channel page lazily loads the GetStream Video + Chat SDKs (~200KB minified). No anonymous viewer pays this cost while offline.
+
+## Stats while live
+
+Dashboard → **Stats** → most recent session row → click into `/dashboard/stats/[id]`. Real-time-ish charts:
+
+- Viewer line chart updates as `call.session_participant_joined` / `_left` events fire
+- Chat-msgs/min bars update as messages flow in
+- Peak viewers + total chat msg counters stamped onto the session row
+
+See [Analytics](/docs/operate/analytics).
+
+## Common issues
+
+- **"Going live..." stuck** — webhook URL wrong. See [GetStream](/docs/configure/getstream).
+- **OBS connects but channel never goes live** — `call.live_started` webhook isn't firing. Check GetStream "Webhooks" log.
+- **Stream key rejected** — call hasn't been provisioned yet. Click **Set up your stream**.
+
+Next: [Invites](/docs/operate/invites).

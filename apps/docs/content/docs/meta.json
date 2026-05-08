@@ -1,0 +1,16 @@
+{
+	"title": "HowlCast",
+	"pages": [
+		"index",
+		"---Get started---",
+		"getting-started",
+		"deploy",
+		"---Run it---",
+		"configure",
+		"operate",
+		"---Reference---",
+		"reference",
+		"troubleshooting",
+		"changelog"
+	]
+}

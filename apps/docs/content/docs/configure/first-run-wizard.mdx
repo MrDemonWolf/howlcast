@@ -1,0 +1,62 @@
+---
+title: First-run wizard
+description: The /setup flow that creates the broadcaster account.
+---
+
+`/setup` is a 3-step state machine. It creates the broadcaster account, writes the channel config, sets the session cookie, and redirects to `/dashboard`. Locked forever once `channelConfig.setupCompletedAt` flips.
+
+## Steps
+
+<Steps>
+<Step>
+### Twitch lookup
+
+You enter your **Twitch user ID** (numeric, not the username). The wizard hits Twitch Helix to fetch:
+
+- Display name → seeds `profiles.displayName`
+- Bio → seeds `profiles.bio`
+- Profile picture → downloaded once to R2 `howlcast-public`, written to `profiles.avatarKey`
+- Channel emote count from 7TV / BTTV / FFZ / Twitch (preview only — full sync runs after)
+
+Recap card shows what was found. If your Twitch ID resolves to nothing, the call surfaces a clear error.
+</Step>
+
+<Step>
+### Account credentials
+
+- Email
+- Password (with strength meter)
+- Display name (pre-filled from Twitch, editable)
+
+Submit creates the user via Better Auth's `signUpEmail`, writes the `profiles` row with `role = "broadcaster"`, `verified = true`, and `isInvited = true`.
+</Step>
+
+<Step>
+### Visibility confirm
+
+Single confirm — invite-only is the only mode. The legacy public-mode toggle was removed in migration 0008. The button text reads **"Create my den"**; click sets `setupCompletedAt`, opens the session cookie, redirects to `/dashboard`.
+</Step>
+</Steps>
+
+## Why locked after first run
+
+Setup is a one-shot account creation. Re-running would mean either:
+1. Replacing the broadcaster — which silently nukes their content, or
+2. Refusing — which is what we do.
+
+If you _need_ to redo setup (e.g. wiped prod D1 to restart), the `setupCompletedAt` column being null is the only gate. A fresh DB or a manual `UPDATE channel_config SET setup_completed_at = NULL WHERE id = 'site';` re-opens the wizard.
+
+## Where the data lands
+
+- `user` (Better Auth) — credentials
+- `profiles` — display info, role, isInvited flag
+- `channel_config` (id = `'site'`) — single-row site state including `ownerId`, `broadcasterTwitchId`, `setupCompletedAt`
+- `white_label` (id = `'site'`) — initialized empty (defaults to "HowlCast")
+
+## Failure modes
+
+- **Twitch ID doesn't resolve** → wizard stays on step 1 with error. Common cause: typing the username instead of the numeric ID. Use `https://www.streamweasels.com/tools/convert-twitch-username-to-user-id/` or the Twitch Helix API directly.
+- **Email already taken** → step 2 errors via Better Auth.
+- **Resend not configured** → setup still completes; the broadcaster account doesn't need a magic-link email at creation time. But invitee magic-links will fail until [Resend](/docs/configure/resend) is wired.
+
+Next: [GetStream](/docs/configure/getstream).

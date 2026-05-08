@@ -1,0 +1,45 @@
+---
+title: Panels
+description: The cards that show below the player on the channel page.
+---
+
+Panels are the static-ish content cards under the video player. Up to ~10 fits comfortably; the grid is 1/2/3 columns at sm/md/lg breakpoints.
+
+## Add
+
+Dashboard → **Panels** → **Add panel** button → side drawer:
+
+- **Title** — bold heading on the card
+- **Body** — markdown-ish plain text (line breaks render, no inline HTML)
+- **Link URL** — optional; if set, the entire card becomes a `<a>` to that URL with `Open link →` affordance at the bottom
+
+Click Add panel. New panel lands at the end of the list.
+
+## Edit
+
+Click the pencil icon on a panel row. Same drawer with prefilled values. Save to update.
+
+## Reorder
+
+Up / down arrow buttons on each row. Order persists via `channel.reorderPanels` mutation (sends a full id-ordered array — no drag library, no DnD context, easy to reason about).
+
+## Delete
+
+Trash icon on a row. Confirm prompt. Hard delete from `panels` table.
+
+## What viewers see
+
+Channel page → below the player + streamer info. Renders in `PanelsGrid` ([`apps/web/src/components/channel/channel-page.tsx`](https://github.com/MrDemonWolf/howlcast/blob/main/apps/web/src/components/channel/channel-page.tsx)).
+
+If `panels` table is empty, no grid renders.
+
+## Use cases
+
+- **Schedule** — link to your calendar / Google Calendar embed
+- **Discord invite** — link to the public Discord server
+- **Other channels** — link to YouTube, Twitch, etc.
+- **Donations / merch** — link to Ko-fi, Streamlabs, store
+
+We removed Twitch's "Tags" and "Schedule" surfaces by design. Panels are the single space for "everything else" — keeps the channel page clean.
+
+Next: [Chat popout](/docs/operate/chat-popout).

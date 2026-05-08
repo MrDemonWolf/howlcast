@@ -2,8 +2,8 @@
 
 > Update this as you go. Claude Code will read it to know where you are.
 
-**Last updated:** 2026-05-08 (own analytics shipped)
-**Current phase:** Phase 6 polish — only OBS hard test + cross-browser + ops runbook remain
+**Last updated:** 2026-05-08 (Phase 7 docs site shipped)
+**Current phase:** Phase 7 docs site live on GitHub Pages — Phase 6 OBS hard test + ops runbook still pending
 
 ---
 
@@ -157,27 +157,26 @@
 
 ## Phase 7 — Docs Site
 
-_See [`docs/docs-site.md`](docs/docs-site.md) for the full plan._
+_See [`docs/docs-site.md`](docs/docs-site.md) for the live plan. Mirrors `MrDemonWolf/fangdash` setup._
 
-- [ ] Domain decided (`docs.howlcast.tv` recommended)
-- [ ] DNS record added in Cloudflare
-- [ ] Starlight added via `bts add` (or manual scaffold)
-- [ ] Custom theme (navy/cyan) applied
-- [ ] Logo dropped in
-- [ ] Landing page built (write fresh content following the design tokens in `design-handoff/project/shared.css`)
-- [ ] Quickstart page written
-- [ ] Deploy guide written (Cloudflare setup, D1/R2, secrets, first deploy)
-- [ ] Configuration guides written (GetStream, Resend, Twitch, wizard)
-- [ ] Operations guides written (going live, moderation, invites, panels)
-- [ ] Troubleshooting pages written
-- [ ] Reference docs written (env vars, architecture, schema, routes, webhooks)
-- [ ] About + changelog
-- [ ] OG images set up
-- [ ] Screenshots taken from real deployment
-- [ ] Search enabled (Pagefind)
-- [ ] Analytics installed
-- [ ] Deployed to `docs.howlcast.tv`
-- [ ] Cross-links between main app and docs
+- [x] Framework decided — **Fumadocs** (Next.js + MDX), mirroring fangdash
+- [x] Hosting decided — **GitHub Pages** at `mrdemonwolf.github.io/howlcast`
+- [x] `apps/docs` scaffolded with Fumadocs config + tsconfig + postcss + source.config
+- [x] Custom theme (navy `#091533` + cyan `#0FACED`) in `app/global.css`
+- [x] Landing page (hero, stats, feature grid, footer)
+- [x] Quickstart page + Prerequisites
+- [x] Deploy guides — Cloudflare setup, D1/R2, Secrets, First deploy
+- [x] Configuration guides — First-run wizard, GetStream, Resend, Twitch+emotes, Branding, Notifications
+- [x] Operations guides — Going live, Invites, Panels, Chat popout, Moderation, Streamer Mode, Analytics
+- [x] Reference docs — Architecture, Schema, Env vars, tRPC routes, Webhooks, Design decisions
+- [x] Troubleshooting — Common issues, OBS not pushing, Chat not working
+- [x] Changelog (high-level by phase)
+- [x] GitHub Actions workflow (`.github/workflows/deploy-docs.yml`)
+- [ ] Repo Settings → Pages → Source: GitHub Actions (one-time, manual — see NEED_TO_DO.md)
+- [ ] First push triggers initial build → site live at `https://mrdemonwolf.github.io/howlcast/`
+- [ ] Real screenshots after first OBS stream
+- [ ] Search (Pagefind) — deferred
+- [ ] Custom domain `docs.howlcast.tv` — deferred
 
 **Done when:** a stranger can read the docs and deploy their own HowlCast in under 30 minutes.
 

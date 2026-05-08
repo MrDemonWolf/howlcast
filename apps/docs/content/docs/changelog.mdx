@@ -1,0 +1,71 @@
+---
+title: Changelog
+description: High-level summary of what shipped, when.
+---
+
+This is the human-readable phase summary. For per-commit detail, see [git log on main](https://github.com/MrDemonWolf/howlcast/commits/main) or [PROGRESS.md](https://github.com/MrDemonWolf/howlcast/blob/main/PROGRESS.md).
+
+## Phase 7 — Docs site (in flight)
+
+This site. Fumadocs (Next.js + MDX), deployed to GitHub Pages. Mirrors the structure of [`MrDemonWolf/fangdash`](https://github.com/MrDemonWolf/fangdash) docs.
+
+## Phase 6 — Polish + own analytics
+
+Long phase. Major shipped items:
+
+- **Layout refactor** — token scale (`--container-*`, `--gutter-x*`, `--section-y`, `--chat-dock-w`), 11 shadcn primitives in `@howlcast/ui`, layout shells (`PageContainer`, `ChannelLayout`, `ContentSection`).
+- **Page migrations** — auth, viewer account, invite, setup, channel home, legal pages all routed through shells.
+- **Card primitive sweep** — 9 dashboard surfaces converted to `Card`/`CardHeader`/`CardContent`. Inline styles cleaned out of header-strip, sidebar, overview, streamer-mode-toggle.
+- **Stats page** — 7-day aggregates, session table, peak viewers + chat count columns
+- **Streamer Mode** — sidebar toggle masking RTMPS / stream key / Discord webhook URLs
+- **Viewer `/account`** — display name, pronouns, sessions list, danger zone
+- **White-label** — logo, platform name, footer attribution; `<Image>` optimized via `/api/branding/logo`
+- **Tiptap legal editor** — `/privacy` + `/terms` server-rendered from sanitized HTML
+- **Error boundaries** — root + dashboard + global-error
+- **404 + loading skeletons + OG images + robots.txt + sitemap.xml**
+- **Public mode dropped** — invite-only end-to-end. Migration 0008.
+- **Brand hex tokens centralized** in `@howlcast/config`
+- **API helper dedupe** + single drizzle-per-request
+- **Branding logo via Next.js route** (no public bucket URL exposed)
+- **Own analytics** — viewer + chat tracking via GetStream webhooks. Per-session detail page (`/dashboard/stats/[id]`) with viewer line + chat-msgs/min charts. Migration 0009. 1-min cron baseline + 7-day prune.
+
+## Phase 5 — Broadcaster dashboard
+
+- First-run setup wizard at `/setup`
+- 9-page broadcaster dashboard (Stream, Panels, Emotes, Invites, Stream key, Notifications, Status, Account, Chat + popout)
+- Three-tier middleware (session → setupCompleted → role=broadcaster)
+- StreamWizard state machine (unprovisioned → ready → live)
+- RTMPS URL persisted from GetStream `ingress.rtmp.address`
+- Migration 0005 — `stream_sessions` table + `rtmps_url` column
+
+## Phase 4 — Chat + emotes
+
+- GetStream Chat React SDK lazy-loaded into channel page
+- Emote pipeline cron (Twitch + 7TV + BTTV + FFZ → KV every 12h)
+- `renderText` override with rehype emote plugin
+- `channel.createCall` mutation seeds `streamCallId` + `chatChannelCid`
+
+## Phase 3 — Channel + streaming
+
+- Channel-related schema (profiles, channelConfig, panels, invites, webhooks)
+- GetStream JWT signer (manual WebCrypto)
+- tRPC procedures for live state + tokens
+- Webhook receiver at `/api/webhooks/getstream` with HMAC verification
+- Channel page = home page (single tenant)
+- Discord fanout on go-live / end
+
+## Phase 2 — Auth
+
+- Better Auth plugins (username, magicLink, twoFactor, passkey)
+- `/account/security` page
+- Magic-link email via Resend / SMTP fallback
+- GitHub Actions CI + Deploy
+
+## Phase 1 — Foundation
+
+- BTS (Better-T-Stack) scaffold
+- D1 database, R2 buckets, KV namespace via Alchemy
+- OpenNext for Cloudflare Workers
+- `crossSubDomainCookies` for `tv.* ↔ api.tv.*`
+- Theme tokens (navy + cyan + Bricolage + Geist)
+- Two-worker split (web + api) with same-origin proxy in dev

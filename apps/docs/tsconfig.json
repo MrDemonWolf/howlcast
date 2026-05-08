@@ -1,0 +1,45 @@
+{
+	"extends": "@howlcast/config/tsconfig.base.json",
+	"compilerOptions": {
+		"baseUrl": ".",
+		"ignoreDeprecations": "6.0",
+		"allowImportingTsExtensions": true,
+		"allowArbitraryExtensions": true,
+		"verbatimModuleSyntax": false,
+		"types": ["node"],
+		"jsx": "preserve",
+		"module": "esnext",
+		"moduleResolution": "bundler",
+		"noEmit": true,
+		"composite": false,
+		"declaration": false,
+		"declarationMap": false,
+		"incremental": true,
+		"isolatedModules": true,
+		"lib": ["dom", "dom.iterable", "esnext"],
+		"plugins": [
+			{
+				"name": "next"
+			}
+		],
+		"paths": {
+			"@/*": ["./*"],
+			"@/.source": ["./.source"]
+		},
+		"exactOptionalPropertyTypes": false
+	},
+	"include": [
+		"**/*.mjs",
+		"app/**/*.ts",
+		"app/**/*.tsx",
+		"lib/**/*.ts",
+		"lib/**/*.tsx",
+		".source/**/*.ts",
+		"mdx-components.tsx",
+		"next-env.d.ts",
+		"global.d.ts",
+		"source.config.ts",
+		".next/types/**/*.ts"
+	],
+	"exclude": ["node_modules", ".next", "out"]
+}

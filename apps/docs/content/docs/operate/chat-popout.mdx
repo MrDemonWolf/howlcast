@@ -1,0 +1,38 @@
+---
+title: Chat popout
+description: Use the chat as an OBS browser source or a docked window.
+---
+
+`/popout/chat` is a chrome-free version of the chat dock. Same `LiveChat` component the channel page uses, but with no header, no footer, no nav — just chat.
+
+## Two ways to use it
+
+### As an OBS browser source
+
+OBS → Sources → Add → Browser. Paste:
+
+```
+https://tv.<your-domain>.tv/popout/chat
+```
+
+Width 380, height 640 work well for a sidebar overlay. Tick "Refresh browser when scene becomes active" so chat reconnects on scene swap.
+
+### As a second window
+
+Dashboard → **Chat** → **Pop out** button. Opens `/popout/chat` in a 380×640 window. Drag to a second monitor while you stream.
+
+## Auth model
+
+The popout reads the same session cookie as the rest of the dashboard, so the broadcaster's tokens are available — chat connects as the broadcaster with full mod / pin / delete permissions.
+
+If you want to use it on a streaming PC that's not signed in, generate a temporary token via Better Auth and bake it into a custom URL. (Not implemented out of the box; the assumption is the streaming PC and the broadcasting PC are the same.)
+
+## Styling for OBS
+
+The popout uses dark navy + cyan brand. For a transparent background suitable for chroma-keying, append `?transparent=1` (planned, not yet shipped — track in issues).
+
+## Refresh behavior
+
+Chat is GetStream's React SDK. Reconnects automatically. If a stale connection sticks (e.g. after a long sleep on the streaming machine), refresh the browser source.
+
+Next: [Moderation](/docs/operate/moderation).

@@ -1,0 +1,66 @@
+---
+title: D1 and R2
+description: Database migrations, R2 buckets, and the assets that live in them.
+---
+
+## D1
+
+`howlcast-db` is single-tenant. One database, one set of migrations, all writes go through Drizzle.
+
+### Migrations
+
+Drizzle generates SQL migrations under [`packages/db/src/migrations/`](https://github.com/MrDemonWolf/howlcast/tree/main/packages/db/src/migrations). Wrangler applies them.
+
+Root-level scripts (added in `package.json`):
+
+| Command                          | What                                              |
+| -------------------------------- | ------------------------------------------------- |
+| `bun run db:migrate:local`       | Apply pending migrations to **local** D1 (dev)    |
+| `bun run db:migrate:remote`      | Apply pending migrations to **remote** D1 (prod)  |
+| `bun run db:migrations:list`     | List migrations remaining on remote               |
+| `bun run db:execute:local`       | Run raw SQL against local D1                      |
+| `bun run db:execute:remote`      | Run raw SQL against remote D1                     |
+| `bun run db:generate`            | Generate a new migration from schema diff         |
+
+The `db:migrate:*` scripts cd into `apps/web` because that's where `wrangler.jsonc` lives with the D1 binding.
+
+### Adding a column or table
+
+1. Edit [`packages/db/src/schema/`](https://github.com/MrDemonWolf/howlcast/tree/main/packages/db/src/schema)
+2. Run `bun run db:generate` (drizzle-kit prompts may need a TTY — handle non-interactively by writing the SQL by hand mirroring [`0009_stream_analytics.sql`](https://github.com/MrDemonWolf/howlcast/blob/main/packages/db/src/migrations/0009_stream_analytics.sql))
+3. `bun run db:migrate:local` to test
+4. `bun run db:migrate:remote` after PR merge
+
+### Why D1, not Postgres
+
+It's free, fast for reads, lives next to the Worker, and HowlCast doesn't need anything Postgres-only. See [DESIGN-DECISIONS.md](https://github.com/MrDemonWolf/howlcast/blob/main/DESIGN-DECISIONS.md).
+
+## R2
+
+Two buckets, both bound to the web Worker.
+
+| Binding           | Bucket name        | Contents                                                  |
+| ----------------- | ------------------ | --------------------------------------------------------- |
+| `PUBLIC_BUCKET`   | `howlcast-public`  | Custom branding logos, broadcaster avatar (one-time pull) |
+| `ISR_BUCKET`      | `howlcast-isr`     | OpenNext incremental-static-regen cache                   |
+
+Logos are uploaded via `/api/upload/logo` (multipart POST). The route streams bytes directly to R2, hashes the content for the key (`branding/logo-<hash>.<ext>`), and writes the key onto `whiteLabel.customLogoKey`. Reads go through `/api/branding/logo` to pipe through `<Image>` optimization rather than expose the bucket URL.
+
+Avatars get downloaded from Twitch once during setup, then served from R2. No live Twitch API calls per pageview.
+
+Originally there was a third bucket for emotes (`EMOTES_BUCKET`). It was removed — emote images load directly from provider CDNs (browser-cached, no proxy hop).
+
+## KV
+
+One namespace, `EMOTES_KV`, used for three unrelated things:
+
+| Key prefix             | Purpose                                                    |
+| ---------------------- | ---------------------------------------------------------- |
+| `emotes:current`       | Merged emote map (Twitch + 7TV + BTTV + FFZ)               |
+| `analytics:viewers:*`  | Live viewer count per session, plus current-session pointer |
+| `branding:upload:*`    | Per-user upload throttle (5/hour cap)                      |
+| `twitch:apptoken`      | Twitch app-credentials JWT cache                           |
+
+The bucket is small. Free tier covers it.
+
+Next: [Secrets](/docs/deploy/secrets).

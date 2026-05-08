@@ -1,0 +1,90 @@
+---
+title: Chat not working
+description: When the chat dock won't connect or messages don't send.
+---
+
+## "Chat unavailable" inline
+
+**Symptom:** chat dock shows "Chat unavailable: &lt;error&gt;" instead of messages.
+
+**Cause:** GetStream Chat client failed to mount. Common reasons:
+
+1. **`STREAM_API_KEY` / `STREAM_API_SECRET` mismatch** — token signing fails server-side
+2. **Cross-origin token race** — token issued for one host, used on another
+3. **Network blocked** — corporate firewall blocking GetStream WSS
+
+**Fix:**
+
+1. Check api worker logs for token-signing errors
+2. Confirm web + api workers share the same `STREAM_API_KEY` env var
+3. Try a different network (mobile hotspot to isolate)
+
+## Locked composer overlay
+
+**Symptom:** chat shows messages, but the composer is hidden behind a "Sign in to chat" overlay.
+
+**Cause:** signed-out, OR signed-in but `is_invited = false` on the profile.
+
+**Fix:**
+
+- **Signed-out viewer** — sign in via `/login` or magic-link from an invite email
+- **Signed-in but not invited** — broadcaster needs to send them an invite. See [Invites](/docs/operate/invites).
+
+## Anonymous viewer can't see messages
+
+**Symptom:** signed-out viewer landing on the channel page sees the chat dock empty.
+
+**Cause:** anonymous chat tokens are minted, but the GetStream channel may not be configured for anonymous reads.
+
+**Fix:** in GetStream Chat dashboard → Channel Type → ensure "Read" permission is granted to the `anonymous` role. Default channel types may differ.
+
+## Emotes don't render
+
+**Symptom:** chat shows `:Pog:` literally instead of the emote image.
+
+**Causes:**
+
+1. **Emote pipeline never ran** — KV `emotes:current` is empty
+2. **Provider didn't return that emote** — check 7TV / BTTV / FFZ profiles
+3. **Channel emote, not global** — set `broadcaster_twitch_id` in setup wizard
+
+**Fix:**
+
+1. Dashboard → **Emotes** → click **Refresh**
+2. Check the count. If 0, all four provider fetches failed — check worker logs
+3. Open `/api/trpc/channel.getEmotes` in a browser; should be a non-empty `emotes` array
+
+## `message.new` webhook not increment chat count
+
+**Symptom:** Stats page shows 0 chat messages even after a session with chat activity.
+
+**Causes:**
+
+1. Chat webhook URL not configured in GetStream
+2. Chat webhook configured but not subscribed to `message.new`
+3. `analytics:current_session_id` not set in KV (session never went live properly)
+
+**Fix:**
+
+1. GetStream dashboard → **Chat** → Webhook URL → set to `https://tv-api.<your-account>.workers.dev/api/webhooks/getstream`
+2. Subscribe to `message.new`
+3. Verify by sending a chat message during a live session and checking dashboard → Stats → most recent session has non-zero count
+
+## Chat reconnects every few seconds
+
+**Symptom:** chat client connects and disconnects in a loop.
+
+**Cause:** GetStream Chat token re-mints on every render due to a state change. Indicates a React render bug.
+
+**Fix:** report as an issue. Workaround: hard reload the page; the lazy-loaded chat client mounts once on initial render.
+
+## Pop-out chat won't load
+
+**Symptom:** `/popout/chat` shows blank or "Connecting chat..." indefinitely.
+
+**Causes:**
+
+1. Session cookie not sent — popout depends on the same cookie as dashboard
+2. CORS blocking the OBS browser source — set "Custom CSS" empty, ensure URL ends in `/`
+
+**Fix:** test the popout URL in a regular browser tab first. If it works there but not in OBS, check OBS browser source settings.
