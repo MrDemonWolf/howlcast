@@ -1,162 +1,151 @@
 "use client";
 
-// Dashboard sidebar nav. Matches design-handoff/project/dash-shell.css
-// structurally: brand, "Go live" pill, three sections (Live, Channel,
-// Server). Icons from lucide; active route highlighted with a cyan bar.
+// Dashboard sidebar nav. Matches design-handoff/howcast-v2 prototype: three
+// groups (CHANNEL / STREAM / SETTINGS), Streamer Mode toggle above the user
+// chip footer, cyan dot to the left of the active item.
 
+import { Avatar } from "@howlcast/ui/components/avatar";
+import { BrandMark } from "@howlcast/ui/components/brand-mark";
 import {
 	Activity,
-	BellRing,
+	BarChart3,
+	Bell,
 	Image as ImageIcon,
 	Key,
 	LayoutGrid,
 	type LucideIcon,
 	Mail,
 	MessageSquare,
-	Server,
-	Settings,
-	Sparkles,
-	Tv,
+	Smile,
 	UserCircle,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 import { useWhiteLabel } from "@/lib/use-white-label";
+import { StreamerModeToggle } from "./streamer-mode-toggle";
 
-type Item = { href: string; label: string; icon: LucideIcon; soon?: boolean };
+type Item = { href: string; label: string; icon: LucideIcon };
 type Section = { title: string; items: Item[] };
 
-// `soon: true` items render as disabled with a "soon" pill so the roadmap
-// is visible without 404-ing on click. Drop the flag once the page ships.
 const SECTIONS: Section[] = [
 	{
-		title: "Live",
+		title: "CHANNEL",
 		items: [
-			{ href: "/dashboard", label: "Stream", icon: Tv },
-			{ href: "/dashboard/stats", label: "Stats", icon: Activity },
-		],
-	},
-	{
-		title: "Channel",
-		items: [
+			{ href: "/dashboard", label: "Overview", icon: Activity },
 			{ href: "/dashboard/panels", label: "Panels", icon: LayoutGrid },
-			{ href: "/dashboard/emotes", label: "Emotes", icon: Sparkles },
-			{ href: "/dashboard/invites", label: "Invite emails", icon: Mail },
-			{ href: "/dashboard/stream-key", label: "Stream key", icon: Key },
-			{ href: "/dashboard/notifications", label: "Notifications", icon: BellRing },
-			{ href: "/dashboard/chat", label: "Chat (OBS source)", icon: MessageSquare },
+			{ href: "/dashboard/branding", label: "Branding", icon: ImageIcon },
 		],
 	},
 	{
-		title: "Server",
+		title: "STREAM",
 		items: [
-			{ href: "/dashboard/branding", label: "Branding", icon: ImageIcon },
-			{ href: "/dashboard/status", label: "Self-host status", icon: Server },
+			{ href: "/dashboard/status", label: "Status", icon: Activity },
+			{ href: "/dashboard/stream-key", label: "Stream key", icon: Key },
+			{ href: "/dashboard/chat", label: "Chat", icon: MessageSquare },
+			{ href: "/dashboard/emotes", label: "Emotes", icon: Smile },
+			{ href: "/dashboard/stats", label: "Stats", icon: BarChart3 },
+		],
+	},
+	{
+		title: "SETTINGS",
+		items: [
+			{ href: "/dashboard/invites", label: "Invites", icon: Mail },
+			{ href: "/dashboard/notifications", label: "Notifications", icon: Bell },
 			{ href: "/dashboard/account", label: "Account", icon: UserCircle },
 		],
 	},
 ];
 
-export default function Sidebar({
-	displayName,
-	verified,
-}: {
+interface SidebarProps {
 	displayName: string;
 	verified: boolean;
-}) {
+}
+
+export default function Sidebar({ displayName, verified: _verified }: SidebarProps) {
 	const pathname = usePathname();
 	const wl = useWhiteLabel();
 
 	return (
-		<aside className="sticky top-0 hidden h-svh w-60 flex-none flex-col gap-5 overflow-y-auto border-border border-r bg-bg p-4 lg:flex">
-			<div className="flex items-center gap-2.5 border-border border-b pb-3">
-				{wl.hasCustomLogo ? (
-					<img
-						src={wl.logoUrl}
-						alt={wl.platformName}
-						className="h-9 w-9 flex-none rounded-md object-contain"
-					/>
-				) : (
-					<div className="grid h-9 w-9 flex-none place-items-center rounded-md bg-cyan-soft font-display font-semibold text-fg uppercase">
-						{displayName.charAt(0)}
-					</div>
-				)}
-				<div className="flex min-w-0 flex-col leading-tight">
-					<span className="flex items-center gap-1 truncate font-semibold text-foreground text-sm">
-						{displayName}
-						{verified ? (
-							<span aria-label="verified" className="text-cyan">
-								✓
+		<aside
+			className="sticky top-0 hidden h-svh w-60 flex-none flex-col gap-1 overflow-y-auto border-border border-r bg-background p-3 lg:flex"
+			data-slot="dashboard-sidebar"
+		>
+			<div className="flex items-center justify-between px-2 pt-1.5 pb-4">
+				<Link href="/" className="flex items-center gap-2.5" aria-label="Home">
+					{wl.hasCustomLogo ? (
+						<>
+							{}
+							<img
+								src={wl.logoUrl}
+								alt={wl.platformName}
+								width={20}
+								height={20}
+								className="h-5 w-5"
+							/>
+							<span
+								className="font-display font-bold text-base"
+								style={{ letterSpacing: "-0.02em" }}
+							>
+								{wl.platformName}
 							</span>
-						) : null}
-					</span>
-					<span className="font-mono text-[10px] text-muted-foreground tracking-wider">
-						BROADCASTER
-					</span>
-				</div>
+						</>
+					) : (
+						<BrandMark size={20} brandName={wl.platformName} />
+					)}
+				</Link>
 			</div>
 
-			{SECTIONS.map((section) => (
-				<div key={section.title} className="flex flex-col gap-1">
-					<div className="px-1.5 font-mono text-[10px] text-fg-4 uppercase tracking-wider">
-						{section.title}
-					</div>
-					<nav className="flex flex-col gap-px">
-						{section.items.map((item) => {
-							const active =
-								pathname === item.href ||
-								(item.href !== "/dashboard" && pathname.startsWith(item.href));
-							const Icon = item.icon;
-							if (item.soon) {
+			<div className="scroll-y flex-1 pb-3">
+				{SECTIONS.map((section) => (
+					<div key={section.title} className="mb-4">
+						<div className="eyebrow px-2.5 pb-2">{section.title}</div>
+						<nav className="flex flex-col gap-px">
+							{section.items.map((item) => {
+								const active =
+									pathname === item.href ||
+									(item.href !== "/dashboard" && pathname.startsWith(item.href));
+								const Icon = item.icon;
 								return (
-									<span
+									<Link
 										key={item.href}
-										aria-disabled="true"
-										className="flex cursor-not-allowed items-center gap-2.5 rounded-md px-2.5 py-2 font-medium text-fg-3 text-sm"
-										title="Coming soon"
+										href={item.href as never}
+										className="group relative flex items-center gap-2.5 rounded-md px-2.5 py-1.5 font-medium text-[13px] transition"
+										style={{
+											background: active ? "var(--bg-3)" : "transparent",
+											color: active ? "var(--fg)" : "var(--fg-3)",
+											fontWeight: active ? 500 : 400,
+										}}
+										aria-current={active ? "page" : undefined}
 									>
-										<Icon className="h-3.5 w-3.5 flex-none text-fg-4" aria-hidden />
-										<span className="opacity-70">{item.label}</span>
-										<span className="ml-auto rounded bg-bg-2 px-1.5 py-0.5 font-mono text-[9px] text-fg-3 uppercase tracking-wider">
-											soon
-										</span>
-									</span>
+										{active && (
+											<span
+												aria-hidden
+												className="-translate-y-1/2 absolute top-1/2 left-[-12px] h-1 w-1 rounded-full"
+												style={{ background: "var(--cyan)" }}
+											/>
+										)}
+										<Icon size={15} aria-hidden />
+										{item.label}
+									</Link>
 								);
-							}
-							return (
-								<Link
-									key={item.href}
-									href={item.href as never}
-									className={`group flex items-center gap-2.5 rounded-md px-2.5 py-2 font-medium text-sm transition ${
-										active
-											? "bg-bg-2 text-foreground"
-											: "text-fg-2 hover:bg-bg-2 hover:text-foreground"
-									}`}
-								>
-									{active ? (
-										<span className="-ml-1 mr-1 block h-3.5 w-0.5 rounded bg-cyan" />
-									) : null}
-									<Icon
-										className={`h-3.5 w-3.5 flex-none ${active ? "text-foreground" : "text-fg-3"}`}
-										aria-hidden
-									/>
-									{item.label}
-								</Link>
-							);
-						})}
-					</nav>
-				</div>
-			))}
+							})}
+						</nav>
+					</div>
+				))}
+			</div>
 
-			<div className="mt-auto border-border border-t pt-3">
-				<Link
-					href="/account/security"
-					className="flex items-center gap-2 rounded-md px-2.5 py-2 text-fg-3 text-sm hover:bg-bg-2 hover:text-foreground"
-				>
-					<Settings className="h-3.5 w-3.5" aria-hidden />
-					Account security
-				</Link>
+			<div className="border-border border-t pt-2.5 pb-1">
+				<StreamerModeToggle />
+			</div>
+			<div className="flex items-center gap-2.5 px-2 pt-2.5 pb-1">
+				<Avatar size={28} name={displayName || "WL"} hue={250} />
+				<div className="min-w-0 flex-1">
+					<div className="truncate font-medium text-[12px] leading-tight">{displayName}</div>
+					<div className="text-[11px]" style={{ color: "var(--fg-4)" }}>
+						Broadcaster · Owner
+					</div>
+				</div>
 			</div>
 		</aside>
 	);

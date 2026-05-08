@@ -1,5 +1,11 @@
 "use client";
 
+// Global error boundary — design v2 copy.
+
+import { Button } from "@howlcast/ui/components/button";
+import { Eyebrow } from "@howlcast/ui/components/eyebrow";
+import { RefreshCw } from "lucide-react";
+import Link from "next/link";
 import { useEffect } from "react";
 
 export default function ErrorPage({
@@ -14,28 +20,39 @@ export default function ErrorPage({
 	}, [error]);
 
 	return (
-		<main className="grid min-h-[70svh] place-items-center px-4">
-			<div className="mx-auto flex max-w-md flex-col items-center gap-4 text-center">
-				<span className="font-mono text-[10px] text-live uppercase tracking-[0.2em]">Error</span>
-				<h1 className="font-display font-semibold text-3xl text-foreground leading-tight tracking-tight">
-					Something went sideways.
-				</h1>
-				<p className="text-muted-foreground text-sm">
-					An unexpected error happened. Try again — if it keeps failing, the broadcaster has been
-					notified.
-				</p>
-				{error.digest ? (
-					<code className="rounded bg-bg-2 px-2 py-1 font-mono text-[11px] text-fg-3">
-						ref: {error.digest}
-					</code>
-				) : null}
-				<button
-					type="button"
-					onClick={reset}
-					className="mt-2 inline-flex items-center gap-1.5 rounded-md bg-cyan px-4 py-2 font-medium text-bg text-sm hover:opacity-90"
+		<main className="flex min-h-[70svh] flex-col items-center justify-center gap-1 px-6 text-center">
+			<Eyebrow style={{ fontSize: 11, color: "var(--destructive)" }}>500</Eyebrow>
+			<h1
+				className="font-display font-bold"
+				style={{
+					fontSize: 40,
+					margin: "8px 0",
+					letterSpacing: "-0.025em",
+				}}
+			>
+				Something broke
+			</h1>
+			<p className="m-0 max-w-[380px] text-sm" style={{ color: "var(--fg-3)" }}>
+				We've logged the error. Try again — if it keeps happening, ping the broadcaster's Discord.
+			</p>
+			{error.digest && (
+				<div
+					className="mt-2 text-[11px]"
+					style={{
+						fontFamily: "var(--font-mono)",
+						color: "var(--fg-4)",
+					}}
 				>
-					Try again
-				</button>
+					ref · {error.digest}
+				</div>
+			)}
+			<div className="mt-4 flex gap-2">
+				<Button onClick={reset}>
+					<RefreshCw aria-hidden /> Reset
+				</Button>
+				<Link href="/">
+					<Button variant="ghost">Back home</Button>
+				</Link>
 			</div>
 		</main>
 	);

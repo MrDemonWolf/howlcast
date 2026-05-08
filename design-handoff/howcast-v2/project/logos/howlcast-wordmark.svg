@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 280 80" fill="none" role="img" aria-label="HowlCast">
+  
+
+  
+  <g transform="translate(10, 10) scale(0.60)">
+    <path d="M 18 64 A 32 32 0 0 1 82 64" stroke="#0FACED" stroke-width="6" stroke-linecap="round" fill="none"></path>
+    <path d="M 30 64 A 20 20 0 0 1 70 64" stroke="#0FACED" stroke-width="6" stroke-linecap="round" fill="none"></path>
+    <path d="M 42 64 A 8 8 0 0 1 58 64" stroke="#0FACED" stroke-width="6" stroke-linecap="round" fill="none"></path>
+    <path d="M 42 64 L 50 80 L 58 64 Z" fill="#0FACED"></path>
+  </g>
+
+  
+  <text x="84" y="52" font-family="&#39;Bricolage Grotesque&#39;, &#39;Geist&#39;, system-ui, sans-serif" font-size="38" font-weight="700" letter-spacing="-1.2" fill="#FFFFFF">HowlCast</text>
+</svg>
