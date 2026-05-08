@@ -1,3 +1,4 @@
+import { BRAND } from "@howlcast/config/brand";
 import { ImageResponse } from "next/og";
 
 export const runtime = "edge";
@@ -16,8 +17,8 @@ export default async function PrivacyOG() {
 				justifyContent: "center",
 				alignItems: "flex-start",
 				padding: "96px",
-				background: "#091533",
-				color: "#e6ecff",
+				background: BRAND.navy,
+				color: BRAND.ogFg,
 				fontFamily: "system-ui, sans-serif",
 			}}
 		>
@@ -27,14 +28,14 @@ export default async function PrivacyOG() {
 					fontFamily: "monospace",
 					letterSpacing: "0.2em",
 					textTransform: "uppercase",
-					color: "#0FACED",
+					color: BRAND.cyan,
 					marginBottom: "32px",
 				}}
 			>
 				LEGAL · PRIVACY
 			</div>
 			<div style={{ fontSize: "104px", fontWeight: 700, lineHeight: 1 }}>Privacy Policy</div>
-			<div style={{ fontSize: "28px", color: "#aab4d3", marginTop: "16px" }}>
+			<div style={{ fontSize: "28px", color: BRAND.ogFgDim, marginTop: "16px" }}>
 				What HowlCast collects, why, and how to opt out.
 			</div>
 		</div>,

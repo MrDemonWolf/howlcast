@@ -6,6 +6,7 @@
 // `lastFiredAt` on success and `lastError` on failure so the dashboard can
 // surface broken webhooks.
 
+import { BRAND } from "@howlcast/config/brand";
 import { createDb } from "@howlcast/db";
 import { webhooks } from "@howlcast/db/schema";
 import { eq } from "drizzle-orm";
@@ -19,8 +20,8 @@ type EmbedInput = {
 	title?: string | null;
 };
 
-const COLOR_LIVE = 0x0faced; // HowlCast cyan
-const COLOR_END = 0x55667a; // muted slate
+const COLOR_LIVE = BRAND.discordLive;
+const COLOR_END = BRAND.discordEnd;
 
 function buildEmbed(event: FanoutEvent, input: EmbedInput) {
 	const isLive = event === "live";

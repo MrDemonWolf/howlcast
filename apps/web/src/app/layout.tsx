@@ -1,3 +1,4 @@
+import { BRAND } from "@howlcast/config/brand";
 import type { Metadata } from "next";
 import { Bricolage_Grotesque, Geist, Geist_Mono } from "next/font/google";
 
@@ -67,7 +68,7 @@ export const metadata: Metadata = {
 		follow: true,
 	},
 	other: {
-		"theme-color": "#091533",
+		"theme-color": BRAND.navy,
 	},
 };
 

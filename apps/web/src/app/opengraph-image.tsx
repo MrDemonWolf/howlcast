@@ -1,3 +1,4 @@
+import { BRAND } from "@howlcast/config/brand";
 import { ImageResponse } from "next/og";
 
 export const runtime = "edge";
@@ -39,8 +40,8 @@ export default async function ChannelOG() {
 				flexDirection: "column",
 				justifyContent: "space-between",
 				padding: "72px",
-				background: "linear-gradient(135deg, #091533 0%, #0a1a40 60%, #0f2a55 100%)",
-				color: "#e6ecff",
+				background: `linear-gradient(135deg, ${BRAND.ogGradStart} 0%, ${BRAND.ogGradMid} 60%, ${BRAND.ogGradEnd} 100%)`,
+				color: BRAND.ogFg,
 				fontFamily: "system-ui, sans-serif",
 			}}
 		>
@@ -53,25 +54,25 @@ export default async function ChannelOG() {
 					fontFamily: "monospace",
 					letterSpacing: "0.2em",
 					textTransform: "uppercase",
-					color: "#0FACED",
+					color: BRAND.cyan,
 				}}
 			>
 				LIVE STREAMING · INVITE ONLY
 			</div>
 			<div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
 				<div style={{ fontSize: "104px", fontWeight: 700, lineHeight: 1 }}>{wl.platformName}</div>
-				<div style={{ fontSize: "32px", color: "#aab4d3" }}>For the inner circle.</div>
+				<div style={{ fontSize: "32px", color: BRAND.ogFgDim }}>For the inner circle.</div>
 			</div>
 			<div
 				style={{
 					display: "flex",
 					justifyContent: "space-between",
 					fontSize: "20px",
-					color: "#7d89b0",
+					color: BRAND.ogFgFaint,
 				}}
 			>
 				<span>{(SERVER_URL || "").replace(/^https?:\/\/(api\.)?/, "")}</span>
-				<span style={{ color: "#0FACED" }}>● LIVE NOW</span>
+				<span style={{ color: BRAND.cyan }}>● LIVE NOW</span>
 			</div>
 		</div>,
 		{ ...size },

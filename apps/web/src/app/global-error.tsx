@@ -1,7 +1,10 @@
 "use client";
 
+import { BRAND } from "@howlcast/config/brand";
+
 // Fallback when error happens inside the root layout itself. Replaces the
-// entire HTML document, so it cannot use the app's layout.
+// entire HTML document, so it cannot use the app's layout (no var() resolution
+// here — must inline brand hex via @howlcast/config/brand).
 export default function GlobalError({ reset }: { error: Error; reset: () => void }) {
 	return (
 		<html lang="en" className="dark">
@@ -11,8 +14,8 @@ export default function GlobalError({ reset }: { error: Error; reset: () => void
 					minHeight: "100vh",
 					display: "grid",
 					placeItems: "center",
-					backgroundColor: "#091533",
-					color: "#e6ecff",
+					backgroundColor: BRAND.navy,
+					color: BRAND.ogFg,
 					fontFamily:
 						'system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
 					padding: "24px",
@@ -24,7 +27,7 @@ export default function GlobalError({ reset }: { error: Error; reset: () => void
 							fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace",
 							fontSize: 10,
 							letterSpacing: "0.2em",
-							color: "#0FACED",
+							color: BRAND.cyan,
 							textTransform: "uppercase",
 							marginBottom: 12,
 						}}
@@ -34,15 +37,15 @@ export default function GlobalError({ reset }: { error: Error; reset: () => void
 					<h1 style={{ fontSize: 28, fontWeight: 600, margin: "0 0 12px" }}>
 						HowlCast hit the floor.
 					</h1>
-					<p style={{ fontSize: 14, color: "#aab4d3", margin: "0 0 20px" }}>
+					<p style={{ fontSize: 14, color: BRAND.ogFgDim, margin: "0 0 20px" }}>
 						The page failed to load. Reload the page or try again later.
 					</p>
 					<button
 						type="button"
 						onClick={reset}
 						style={{
-							background: "#0FACED",
-							color: "#091533",
+							background: BRAND.cyan,
+							color: BRAND.navy,
 							border: 0,
 							padding: "8px 16px",
 							fontSize: 14,
