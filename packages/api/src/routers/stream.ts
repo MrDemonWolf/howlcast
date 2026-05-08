@@ -3,10 +3,17 @@
 // dashboard exists; for now the broadcaster path is just `getBroadcasterToken`.
 
 import { createDb } from "@howlcast/db";
-import { channelConfig, profiles, streamSessions } from "@howlcast/db/schema";
+import {
+	channelConfig,
+	profiles,
+	streamChatMinutes,
+	streamSessions,
+	streamViewerSnapshots,
+} from "@howlcast/db/schema";
 import { env } from "@howlcast/env/server";
 import { TRPCError } from "@trpc/server";
-import { desc, eq, gte } from "drizzle-orm";
+import { asc, desc, eq, gte } from "drizzle-orm";
+import { z } from "zod";
 import { protectedProcedure, publicProcedure, router } from "../index";
 import { assertBroadcaster } from "../lib/broadcaster-guard";
 import { getSiteConfig, SITE_ID } from "../lib/site";
@@ -231,6 +238,7 @@ export const streamRouter = router({
 
 		const totalMinutesLast7d = rows.reduce((sum, r) => sum + (r.totalMinutes ?? 0), 0);
 		const totalSessionsLast7d = rows.length;
+		const totalChatMessagesLast7d = rows.reduce((sum, r) => sum + (r.chatMessageCount ?? 0), 0);
 
 		// Streak: walk back from today; count consecutive days with at least one
 		// session that started on that day. Day boundaries are local UTC.
@@ -264,6 +272,7 @@ export const streamRouter = router({
 		return {
 			totalMinutesLast7d,
 			totalSessionsLast7d,
+			totalChatMessagesLast7d,
 			currentStreak,
 			firstSessionAt: firstEver?.startedAt?.getTime() ?? null,
 			sessions: rows.map((r) => ({
@@ -272,7 +281,66 @@ export const streamRouter = router({
 				endedAt: r.endedAt?.getTime() ?? null,
 				totalMinutes: r.totalMinutes ?? 0,
 				peakViewers: r.peakViewers ?? 0,
+				chatMessageCount: r.chatMessageCount ?? 0,
 			})),
 		};
 	}),
+
+	// Per-session detail. Powers /dashboard/stats/[id] — header + viewer
+	// snapshot line + chat-msgs-per-minute bar chart.
+	getSessionDetail: protectedProcedure
+		.input(z.object({ id: z.string().min(1) }))
+		.query(async ({ ctx, input }) => {
+			await assertBroadcaster(ctx.session.user.id);
+			const db = ctx.db;
+
+			const session = await db
+				.select()
+				.from(streamSessions)
+				.where(eq(streamSessions.id, input.id))
+				.get();
+			if (!session) {
+				throw new TRPCError({ code: "NOT_FOUND", message: "Session not found." });
+			}
+
+			const snapshots = await db
+				.select({
+					sampledAt: streamViewerSnapshots.sampledAt,
+					viewerCount: streamViewerSnapshots.viewerCount,
+				})
+				.from(streamViewerSnapshots)
+				.where(eq(streamViewerSnapshots.sessionId, input.id))
+				.orderBy(asc(streamViewerSnapshots.sampledAt))
+				.all();
+
+			const minutes = await db
+				.select({
+					minuteBucketMs: streamChatMinutes.minuteBucketMs,
+					count: streamChatMinutes.count,
+				})
+				.from(streamChatMinutes)
+				.where(eq(streamChatMinutes.sessionId, input.id))
+				.orderBy(asc(streamChatMinutes.minuteBucketMs))
+				.all();
+
+			return {
+				session: {
+					id: session.id,
+					callId: session.callId,
+					startedAt: session.startedAt.getTime(),
+					endedAt: session.endedAt?.getTime() ?? null,
+					peakViewers: session.peakViewers ?? 0,
+					chatMessageCount: session.chatMessageCount ?? 0,
+					totalMinutes: session.totalMinutes ?? 0,
+				},
+				viewerSnapshots: snapshots.map((s) => ({
+					sampledAt: s.sampledAt.getTime(),
+					viewerCount: s.viewerCount,
+				})),
+				chatMinutes: minutes.map((m) => ({
+					minuteBucketMs: m.minuteBucketMs.getTime(),
+					count: m.count,
+				})),
+			};
+		}),
 });

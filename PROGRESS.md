@@ -2,8 +2,8 @@
 
 > Update this as you go. Claude Code will read it to know where you are.
 
-**Last updated:** 2026-05-08 (Phase 6 layout/Card refactor shipped)
-**Current phase:** Phase 6 polish — only OBS hard test + Web Analytics + cross-browser + ops runbook remain
+**Last updated:** 2026-05-08 (own analytics shipped)
+**Current phase:** Phase 6 polish — only OBS hard test + cross-browser + ops runbook remain
 
 ---
 
@@ -150,7 +150,7 @@
 - [x] Channel home page routed through `ChannelLayout`
 - [x] Card primitive re-skinned to brand defaults + 9 dashboard surfaces swept onto Card/CardHeader/CardContent
 - [x] Dashboard inline-style cleanup (header-strip, sidebar, overview, streamer-mode-toggle)
-- [ ] Cloudflare Web Analytics snippet
+- [x] **Own analytics** — viewer + chat tracking via GetStream webhooks; per-session detail page (`/dashboard/stats/[id]`) with viewer-line + chat/min bar charts; migration 0009 (`chat_message_count`, `stream_viewer_snapshots`, `stream_chat_minutes`); 1-min cron sampler with 7-day prune
 - [ ] Cross-browser tested (Safari, Chrome, Firefox, mobile)
 - [ ] **Hard live OBS test** — RTMPS push, webhook fires, Discord fanout fires, channel page goes live
 - [ ] Operations runbook written (`docs/operations.md`)

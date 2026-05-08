@@ -7,9 +7,15 @@ import { enforceThrottle } from "@howlcast/api/lib/throttle";
 import { appRouter } from "@howlcast/api/routers/index";
 import { createAuth } from "@howlcast/auth";
 import { createDb } from "@howlcast/db";
-import { channelConfig, profiles, streamSessions } from "@howlcast/db/schema";
+import {
+	channelConfig,
+	profiles,
+	streamChatMinutes,
+	streamSessions,
+	streamViewerSnapshots,
+} from "@howlcast/db/schema";
 import { env } from "@howlcast/env/server";
-import { desc, eq, isNull } from "drizzle-orm";
+import { desc, eq, isNull, sql } from "drizzle-orm";
 import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { logger } from "hono/logger";
@@ -114,11 +120,16 @@ app.post("/api/upload/logo", async (c) => {
 // Updates channelConfig.liveStartedAt/liveEndedAt on call.live_started /
 // call.session_ended / call.ended. Discord fanout runs after the DB write.
 //
-// Event types we accept without HMAC verification (GetStream Chat events
-// use a different signing scheme; we don't act on them, just ack).
-const WEBHOOK_NO_VERIFY_EVENTS = new Set([
-	"call.session_participant_joined",
-	"call.session_participant_left",
+// Phase 6 own-analytics: also handles call.session_participant_joined/_left
+// for viewer counts + chat message.new for chat counts. Snapshots written to
+// stream_viewer_snapshots; chat per-minute bucketed into stream_chat_minutes.
+//
+// Trust model:
+//   - Video events (call.*) are HMAC-verified against STREAM_API_SECRET.
+//   - Chat events (message.new) come from GetStream Chat which uses a
+//     different signing scheme. We currently treat the URL secrecy as the
+//     trust boundary for chat. TODO: research and verify chat HMAC.
+const VIDEO_ACK_ONLY_EVENTS = new Set([
 	"call.member_added",
 	"call.member_removed",
 	"call.member_updated",
@@ -126,17 +137,29 @@ const WEBHOOK_NO_VERIFY_EVENTS = new Set([
 	"call.permission_request",
 	"call.recording_started",
 	"call.recording_stopped",
-	"chat.message.new",
-	"chat.message.updated",
-	"chat.message.deleted",
-	"chat.user.banned",
-	"chat.user.unbanned",
 ]);
+const CHAT_ACK_ONLY_EVENTS = new Set([
+	"message.updated",
+	"message.deleted",
+	"user.banned",
+	"user.unbanned",
+]);
+
+const KV_CURRENT_SESSION = "analytics:current_session_id";
+const kvViewersKey = (sessionId: string) => `analytics:viewers:${sessionId}`;
+
+type GetStreamWebhookEvent = {
+	type?: string;
+	call_cid?: string;
+	participant?: { user?: { id?: string } };
+	user?: { id?: string };
+};
+
 app.post("/api/webhooks/getstream", async (c) => {
 	const sig = c.req.header("x-signature") ?? "";
 	const raw = await c.req.text();
 
-	let event: { type?: string; call_cid?: string };
+	let event: GetStreamWebhookEvent;
 	try {
 		event = JSON.parse(raw);
 	} catch {
@@ -148,21 +171,29 @@ app.post("/api/webhooks/getstream", async (c) => {
 	// auto-go-live setting, etc.). Treat both as "we're live now".
 	const isLiveEvent = event.type === "call.live_started" || event.type === "call.session_started";
 	const isEndEvent = event.type === "call.session_ended" || event.type === "call.ended";
+	const isJoined = event.type === "call.session_participant_joined";
+	const isLeft = event.type === "call.session_participant_left";
+	const isChatMessage = event.type === "message.new";
 
-	// Acknowledge events we don't act on (e.g. chat message.new) without
-	// HMAC verification — Chat and Video may use different signing schemes.
-	// HMAC is only enforced for events that trigger DB writes or Discord fanout.
-	// Anything not in the explicit allowlist gets rejected so we don't become
-	// an open ping endpoint.
-	if (!isLiveEvent && !isEndEvent) {
-		if (event.type && WEBHOOK_NO_VERIFY_EVENTS.has(event.type)) {
+	const isVideoEvent = isLiveEvent || isEndEvent || isJoined || isLeft;
+
+	// Ack-only events: events we receive but don't act on. Reject anything
+	// outside the explicit allowlist so we don't become an open ping endpoint.
+	if (!isVideoEvent && !isChatMessage) {
+		if (
+			event.type &&
+			(VIDEO_ACK_ONLY_EVENTS.has(event.type) || CHAT_ACK_ONLY_EVENTS.has(event.type))
+		) {
 			return c.json({ ok: true });
 		}
 		return c.json({ error: "unknown event type" }, 400);
 	}
 
-	const ok = await verifyStreamWebhook(raw, sig, env.STREAM_API_SECRET);
-	if (!ok) return c.json({ error: "invalid signature" }, 401);
+	// HMAC enforced for Video events only — see trust-model note above.
+	if (isVideoEvent) {
+		const ok = await verifyStreamWebhook(raw, sig, env.STREAM_API_SECRET);
+		if (!ok) return c.json({ error: "invalid signature" }, 401);
+	}
 
 	const db = createDb();
 	const now = new Date();
@@ -175,12 +206,14 @@ app.post("/api/webhooks/getstream", async (c) => {
 		// Open a new stream session row. callId is best-effort — the cid format
 		// is "type:id"; we only care about the id half for stats.
 		const callId = event.call_cid?.split(":")[1] ?? null;
-		await db.insert(streamSessions).values({
-			id: crypto.randomUUID(),
-			callId,
-			startedAt: now,
-		});
-	} else {
+		const sessionId = crypto.randomUUID();
+		await db.insert(streamSessions).values({ id: sessionId, callId, startedAt: now });
+		// Seed analytics KV. Subsequent join/leave events bump the counter,
+		// minute cron reads it for periodic snapshots, chat events route to
+		// this session id.
+		await env.EMOTES_KV.put(KV_CURRENT_SESSION, sessionId);
+		await env.EMOTES_KV.put(kvViewersKey(sessionId), "0");
+	} else if (isEndEvent) {
 		await db.update(channelConfig).set({ liveEndedAt: now }).where(eq(channelConfig.id, "site"));
 		// Close the most recent open session (endedAt IS NULL). Compute total
 		// minutes from startedAt → now. If no open row exists (e.g. a duplicate
@@ -198,8 +231,59 @@ app.post("/api/webhooks/getstream", async (c) => {
 				.update(streamSessions)
 				.set({ endedAt: now, totalMinutes: minutes })
 				.where(eq(streamSessions.id, open.id));
+			await env.EMOTES_KV.delete(kvViewersKey(open.id));
 		}
+		await env.EMOTES_KV.delete(KV_CURRENT_SESSION);
+	} else if (isJoined || isLeft) {
+		// Resolve current session + skip broadcaster.
+		const sessionId = await env.EMOTES_KV.get(KV_CURRENT_SESSION);
+		if (!sessionId) return c.json({ ok: true });
+		const cfg = await db.select().from(channelConfig).where(eq(channelConfig.id, "site")).get();
+		const participantId = event.participant?.user?.id ?? event.user?.id ?? null;
+		if (cfg && participantId && participantId === cfg.ownerId) {
+			return c.json({ ok: true });
+		}
+		// Read-modify-write the KV counter. Single-broadcaster scale, no CAS
+		// needed — webhook fan-in is sequential per call.
+		const cur = Number((await env.EMOTES_KV.get(kvViewersKey(sessionId))) ?? "0");
+		const next = isJoined ? cur + 1 : Math.max(0, cur - 1);
+		await env.EMOTES_KV.put(kvViewersKey(sessionId), String(next));
+		await db.insert(streamViewerSnapshots).values({
+			id: crypto.randomUUID(),
+			sessionId,
+			sampledAt: now,
+			viewerCount: next,
+		});
+		if (isJoined) {
+			// Bump peakViewers if we just hit a new high.
+			await db
+				.update(streamSessions)
+				.set({ peakViewers: next })
+				.where(
+					sql`${streamSessions.id} = ${sessionId} AND ${streamSessions.peakViewers} < ${next}`,
+				);
+		}
+	} else if (isChatMessage) {
+		const sessionId = await env.EMOTES_KV.get(KV_CURRENT_SESSION);
+		if (!sessionId) return c.json({ ok: true });
+		// Bump session-total + per-minute bucket. Bucket is millis floored to
+		// the minute so the chart can render bars without re-bucketing.
+		const minuteBucket = new Date(Math.floor(now.getTime() / 60_000) * 60_000);
+		await db
+			.update(streamSessions)
+			.set({ chatMessageCount: sql`${streamSessions.chatMessageCount} + 1` })
+			.where(eq(streamSessions.id, sessionId));
+		await db
+			.insert(streamChatMinutes)
+			.values({ sessionId, minuteBucketMs: minuteBucket, count: 1 })
+			.onConflictDoUpdate({
+				target: [streamChatMinutes.sessionId, streamChatMinutes.minuteBucketMs],
+				set: { count: sql`${streamChatMinutes.count} + 1` },
+			});
+		return c.json({ ok: true });
 	}
+
+	if (!isLiveEvent && !isEndEvent) return c.json({ ok: true });
 
 	// Discord fanout — best-effort, runs after the DB write so live state
 	// is correct even if Discord is down. fanOutDiscord swallows errors.
@@ -227,30 +311,67 @@ app.get("/", (c) => {
 });
 
 // Workers don't accept Hono as default export when we also need a `scheduled`
-// handler for crons — wrap both in a module-style export. The cron is bound
-// in alchemy.run.ts as `0 */12 * * *` (twice daily emote refresh).
+// handler for crons — wrap both in a module-style export. Two crons bound in
+// alchemy.run.ts:
+//   - "0 */12 * * *"  twice-daily emote refresh
+//   - "* * * * *"     1-minute analytics sampler + 7-day snapshot prune
+//
+// Both crons hit the same handler; we dispatch on `controller.cron` (the
+// Cloudflare-supplied schedule string).
+const SNAPSHOT_RETENTION_MS = 7 * 24 * 60 * 60 * 1000;
+
 export default {
 	fetch: app.fetch,
-	async scheduled(_controller: ScheduledController, _env: Env, ctx: ExecutionContext) {
+	async scheduled(controller: ScheduledController, _env: Env, ctx: ExecutionContext) {
+		const schedule = controller.cron;
+		if (schedule === "0 */12 * * *") {
+			ctx.waitUntil(
+				(async () => {
+					// Read the broadcaster's Twitch id from the DB so the setup wizard
+					// can change it without an env redeploy. Fail-soft on every step.
+					const cfg = await createDb()
+						.select()
+						.from(channelConfig)
+						.where(eq(channelConfig.id, "site"))
+						.get();
+					await refreshEmotes(
+						cfg?.broadcasterTwitchId ?? null,
+						{
+							TWITCH_CLIENT_ID: env.TWITCH_CLIENT_ID,
+							TWITCH_CLIENT_SECRET: env.TWITCH_CLIENT_SECRET,
+						},
+						env.EMOTES_KV,
+					).catch(() => {
+						/* providers all failed — pipeline writes nothing this tick */
+					});
+				})(),
+			);
+			return;
+		}
+
+		// Per-minute analytics sampler. Writes a baseline snapshot if a session
+		// is currently live (sparse join/leave sessions still get a flat series),
+		// then prunes snapshots older than the retention window once per hour.
 		ctx.waitUntil(
 			(async () => {
-				// Read the broadcaster's Twitch id from the DB so the setup wizard
-				// can change it without an env redeploy. Fail-soft on every step.
-				const cfg = await createDb()
-					.select()
-					.from(channelConfig)
-					.where(eq(channelConfig.id, "site"))
-					.get();
-				await refreshEmotes(
-					cfg?.broadcasterTwitchId ?? null,
-					{
-						TWITCH_CLIENT_ID: env.TWITCH_CLIENT_ID,
-						TWITCH_CLIENT_SECRET: env.TWITCH_CLIENT_SECRET,
-					},
-					env.EMOTES_KV,
-				).catch(() => {
-					/* providers all failed — pipeline writes nothing this tick */
-				});
+				const sessionId = await env.EMOTES_KV.get(KV_CURRENT_SESSION);
+				const db = createDb();
+				const now = new Date();
+				if (sessionId) {
+					const cur = Number((await env.EMOTES_KV.get(kvViewersKey(sessionId))) ?? "0");
+					await db.insert(streamViewerSnapshots).values({
+						id: crypto.randomUUID(),
+						sessionId,
+						sampledAt: now,
+						viewerCount: cur,
+					});
+				}
+				if (now.getMinutes() === 0) {
+					const cutoff = new Date(now.getTime() - SNAPSHOT_RETENTION_MS);
+					await db
+						.delete(streamViewerSnapshots)
+						.where(sql`${streamViewerSnapshots.sampledAt} < ${cutoff}`);
+				}
 			})(),
 		);
 	},

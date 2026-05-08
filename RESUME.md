@@ -10,8 +10,9 @@
 
 All Phase 5 surface holds (9 dashboard pages, setup wizard, invite-only auth, two-domain workers + custom DNS). Phase 6 polish is now ~80% done — Stats, Streamer Mode, viewer `/account`, white-label, Tiptap legal, error boundaries, 404, loading skeletons, OG images, robots/sitemap all shipped earlier in the phase. Recent work concentrated on internal consolidation (audit findings, helper dedupe, brand-hex centralization, public-mode removal) and a structural UI refactor (layout token scale → shadcn primitives → layout shells → page migrations → Card sweep).
 
-**Recent (latest 15 commits, newest first):**
+**Recent (latest commits, newest first):**
 
+- _pending_ phase 6: own analytics — viewer + chat tracking via GetStream webhooks
 - `6b49085` phase 6: card primitive sweep + dashboard inline-style cleanup
 - `6c0b155` phase 6: route channel page through `ChannelLayout`
 - `8645e46` refactor: serve branding logo via Next.js route + optimize through `<Image>`
@@ -36,10 +37,11 @@ All Phase 5 surface holds (9 dashboard pages, setup wizard, invite-only auth, tw
 
 **Outstanding before Phase 6 ships:**
 
-1. **Hard live OBS test** — push real RTMPS, verify webhook fires, Discord fanout fires, channel page flips to LIVE, Stats page records the session. Only Nathanial can do.
-2. **Cloudflare Web Analytics snippet** — drop into `app/layout.tsx`.
-3. **Cross-browser sweep** — Safari, Chrome, Firefox, iOS, Android. Looking for layout regressions in the new shells + Card surfaces.
-4. **Operations runbook** (`docs/operations.md`) — deploy / rollback / D1 migrate / GetStream rotation.
+1. **Hard live OBS test** — push real RTMPS, verify webhook fires, Discord fanout fires, channel page flips to LIVE, Stats page records the session (incl. peak viewers + chat count + per-session line/bar charts). Only Nathanial can do.
+2. **Cross-browser sweep** — Safari, Chrome, Firefox, iOS, Android. Looking for layout regressions in the new shells + Card surfaces + Stats charts.
+3. **Operations runbook** (`docs/operations.md`) — deploy / rollback / D1 migrate / GetStream rotation.
+
+**Replaced:** Cloudflare Web Analytics dropped — own analytics via GetStream webhooks shipped instead. Per-session detail page at `/dashboard/stats/[id]` with viewer-line + chat-msgs/min charts. 1-minute cron sampler keeps a baseline series + prunes snapshots > 7 days.
 
 **Done since last RESUME refresh:**
 
@@ -167,12 +169,11 @@ be0eac2 docs: phase 5 sweep — progress, resume, need_to_do
 
 **Phase 6 remaining:**
 
-1. **Hard live OBS test** — real RTMPS push, verify webhook fires, Discord fanout fires, channel page goes live, Stats records the session. Only Nathanial can do.
-2. **Cloudflare Web Analytics** snippet in `app/layout.tsx`.
-3. **Cross-browser sweep** — Safari, Chrome, Firefox, iOS, Android. Watch for regressions in the new shells + Card surfaces.
-4. **Operations runbook** (`docs/operations.md`) — deploy / rollback / D1 migrate / GetStream rotation / Resend rotation.
+1. **Hard live OBS test** — real RTMPS push, verify webhook fires, Discord fanout fires, channel page goes live, Stats records the session (peak viewers, chat count, per-minute chat bars).
+2. **Cross-browser sweep** — Safari, Chrome, Firefox, iOS, Android. Watch for regressions in the new shells + Card surfaces + Stats charts.
+3. **Operations runbook** (`docs/operations.md`) — deploy / rollback / D1 migrate / GetStream rotation / Resend rotation.
 
-**Already done in Phase 6** (don't relitigate): Stats, Streamer Mode, viewer `/account`, white-label, Tiptap legal editor, error boundaries, 404, loading skeletons, OG images, robots+sitemap, code-audit pass, brand-hex centralization, API helper dedupe, public-mode removal, layout token scale, shadcn primitives, layout shells, page migrations, Card sweep, inline-style cleanup, branding logo via Next.js route.
+**Already done in Phase 6** (don't relitigate): Stats + own analytics, Streamer Mode, viewer `/account`, white-label, Tiptap legal editor, error boundaries, 404, loading skeletons, OG images, robots+sitemap, code-audit pass, brand-hex centralization, API helper dedupe, public-mode removal, layout token scale, shadcn primitives, layout shells, page migrations, Card sweep, inline-style cleanup, branding logo via Next.js route.
 
 After Phase 6: **Phase 7** is the Astro Starlight docs site at `docs.howlcast.tv`. See `docs/docs-site.md`.
 

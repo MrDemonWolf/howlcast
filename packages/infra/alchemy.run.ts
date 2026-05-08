@@ -73,7 +73,11 @@ export const server = await Worker("server", {
 		TWITCH_CLIENT_ID: alchemy.secret(process.env.TWITCH_CLIENT_ID ?? ""),
 		TWITCH_CLIENT_SECRET: alchemy.secret(process.env.TWITCH_CLIENT_SECRET ?? ""),
 	},
-	crons: ["0 */12 * * *"],
+	// Two crons:
+	//   - twice-daily emote refresh (twitch/7tv/bttv/ffz → KV)
+	//   - 1-minute analytics sampler (baseline viewer count during a live
+	//     session + prunes snapshots > 7 days)
+	crons: ["0 */12 * * *", "* * * * *"],
 	dev: {
 		port: 3000,
 	},

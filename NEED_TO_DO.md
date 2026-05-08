@@ -9,7 +9,10 @@
 
 - [x] **Apply migrations to remote D1** — DONE
 - [x] **Set up `legal@mrdemonwolf.com`** mailbox — DONE
-- [ ] **Test Go Live** end-to-end: 1. Set up stream in dashboard (one click) 2. Copy RTMPS URL + key into OBS 3. Click Start Streaming in OBS 4. Click Go Live in dashboard 5. Verify LIVE badge appears on `tv.mrdemonwolf.com` homepage 6. Verify Discord webhook fires (public + private channels) 7. Verify chat works for both broadcaster + anonymous viewer 8. Verify Stats page shows the session after End
+- [ ] **Test Go Live** end-to-end: 1. Set up stream in dashboard (one click) 2. Copy RTMPS URL + key into OBS 3. Click Start Streaming in OBS 4. Click Go Live in dashboard 5. Verify LIVE badge appears on `tv.mrdemonwolf.com` homepage 6. Verify Discord webhook fires (public + private channels) 7. Verify chat works for both broadcaster + anonymous viewer 8. Verify Stats page shows the session after End — incl. non-zero peak viewers + chat count + per-session detail page (`/dashboard/stats/[id]`) charts
+- [ ] **Apply migration 0009** to remote D1: `bunx wrangler d1 migrations apply howlcast-db --remote`. Adds `chat_message_count` column + `stream_viewer_snapshots` + `stream_chat_minutes` tables. Without it, the new analytics writes will throw on prod.
+- [ ] **GetStream — confirm Chat webhook URL configured.** In GetStream dashboard → Chat → Webhook URL, set `https://api.tv.mrdemonwolf.com/api/webhooks/getstream` (same path as Video). Otherwise chat-message counts stay at 0. Note: Chat HMAC scheme not yet verified — keep webhook URL out of public docs as the trust boundary.
+- [ ] **GetStream — enable participant join/left events.** Confirm Video webhook is subscribed to `call.session_participant_joined` + `call.session_participant_left`. Without these, viewer counts + line chart stay at 0.
 - [ ] Delete orphan workers in Cloudflare dashboard:
       `howlcast` + `howlcast-api` (or `bunx wrangler delete howlcast` /
       `bunx wrangler delete howlcast-api`)

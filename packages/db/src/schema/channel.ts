@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { index, integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
+import { index, integer, primaryKey, sqliteTable, text } from "drizzle-orm/sqlite-core";
 
 import { user } from "./auth";
 
@@ -132,6 +132,9 @@ export const webhooks = sqliteTable("webhooks", {
 // Stream sessions — one row per live session, written by the GetStream
 // webhook handler on call.live_started (insert) + call.session_ended /
 // call.ended (update endedAt + totalMinutes). Powers Phase 6 stats.
+//
+// peakViewers + chatMessageCount populated from GetStream Video/Chat webhooks
+// (call.session_participant_joined/_left for viewers, message.new for chat).
 export const streamSessions = sqliteTable(
 	"stream_sessions",
 	{
@@ -140,9 +143,41 @@ export const streamSessions = sqliteTable(
 		startedAt: integer("started_at", { mode: "timestamp_ms" }).notNull(),
 		endedAt: integer("ended_at", { mode: "timestamp_ms" }),
 		peakViewers: integer("peak_viewers").default(0).notNull(),
+		chatMessageCount: integer("chat_message_count").default(0).notNull(),
 		totalMinutes: integer("total_minutes").default(0).notNull(),
 	},
 	(t) => [index("stream_sessions_started_idx").on(t.startedAt)],
+);
+
+// Per-snapshot viewer counts. Written on every participant join/leave webhook
+// plus a 1-minute cron baseline. Powers the line chart on the per-session
+// detail page. Pruned to 7 days by the same cron.
+export const streamViewerSnapshots = sqliteTable(
+	"stream_viewer_snapshots",
+	{
+		id: text("id").primaryKey(),
+		sessionId: text("session_id")
+			.notNull()
+			.references(() => streamSessions.id, { onDelete: "cascade" }),
+		sampledAt: integer("sampled_at", { mode: "timestamp_ms" }).notNull(),
+		viewerCount: integer("viewer_count").notNull(),
+	},
+	(t) => [index("svs_session_idx").on(t.sessionId, t.sampledAt)],
+);
+
+// Per-minute chat counts. UPSERT'd from message.new webhook keyed off the
+// minute-bucketed timestamp (millis floored to the minute). Powers the bar
+// chart on the per-session detail page. Cascade-deleted with the session.
+export const streamChatMinutes = sqliteTable(
+	"stream_chat_minutes",
+	{
+		sessionId: text("session_id")
+			.notNull()
+			.references(() => streamSessions.id, { onDelete: "cascade" }),
+		minuteBucketMs: integer("minute_bucket_ms", { mode: "timestamp_ms" }).notNull(),
+		count: integer("count").default(0).notNull(),
+	},
+	(t) => [primaryKey({ columns: [t.sessionId, t.minuteBucketMs] })],
 );
 
 // White-label settings — single row, id='site'. Lets the broadcaster (or

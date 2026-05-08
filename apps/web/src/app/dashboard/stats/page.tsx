@@ -6,7 +6,8 @@
 // plus a session list. No charting library — just numbers + a table.
 
 import { useQuery } from "@tanstack/react-query";
-import { Activity, Clock, Flame, History } from "lucide-react";
+import { Activity, Clock, History, MessageSquare, Users } from "lucide-react";
+import Link from "next/link";
 
 import HeaderStrip from "@/components/dashboard/header-strip";
 import { trpc } from "@/utils/trpc";
@@ -16,6 +17,7 @@ export default function StatsPage() {
 
 	const totalMinutes = stats.data?.totalMinutesLast7d ?? 0;
 	const totalSessions = stats.data?.totalSessionsLast7d ?? 0;
+	const totalChatMessages = stats.data?.totalChatMessagesLast7d ?? 0;
 	const streak = stats.data?.currentStreak ?? 0;
 
 	return (
@@ -26,7 +28,7 @@ export default function StatsPage() {
 				eyebrow="STREAM"
 			/>
 
-			<section className="grid grid-cols-1 gap-4 md:grid-cols-3">
+			<section className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
 				<StatCard
 					icon={<Clock className="h-4 w-4 text-cyan" />}
 					label="Total minutes"
@@ -40,7 +42,13 @@ export default function StatsPage() {
 					hint="Distinct go-live events"
 				/>
 				<StatCard
-					icon={<Flame className="h-4 w-4 text-cyan" />}
+					icon={<MessageSquare className="h-4 w-4 text-cyan" />}
+					label="Chat messages"
+					value={String(totalChatMessages)}
+					hint="Total messages over 7 days"
+				/>
+				<StatCard
+					icon={<Users className="h-4 w-4 text-cyan" />}
 					label="Current streak"
 					value={`${streak} day${streak === 1 ? "" : "s"}`}
 					hint="Consecutive days streamed"
@@ -79,23 +87,40 @@ export default function StatsPage() {
 									<th className="px-5 py-2 text-left font-mono uppercase tracking-wider">
 										Duration
 									</th>
-									<th className="px-5 py-2 text-left font-mono uppercase tracking-wider">Ended</th>
 									<th className="px-5 py-2 text-right font-mono uppercase tracking-wider">
 										Peak viewers
+									</th>
+									<th className="px-5 py-2 text-right font-mono uppercase tracking-wider">
+										Chat msgs
 									</th>
 								</tr>
 							</thead>
 							<tbody>
 								{stats.data!.sessions.map((s) => (
-									<tr key={s.id} className="border-border border-t">
-										<td className="px-5 py-3 text-foreground">{formatTime(s.startedAt)}</td>
+									<tr
+										key={s.id}
+										className="cursor-pointer border-border border-t transition hover:bg-[var(--bg-2)]"
+									>
+										<td className="px-5 py-3 text-foreground">
+											<Link href={`/dashboard/stats/${s.id}` as never} className="block">
+												{formatTime(s.startedAt)}
+											</Link>
+										</td>
 										<td className="px-5 py-3 font-mono text-fg-2">
-											{s.endedAt ? formatMinutes(s.totalMinutes) : "live"}
+											<Link href={`/dashboard/stats/${s.id}` as never} className="block">
+												{s.endedAt ? formatMinutes(s.totalMinutes) : "live"}
+											</Link>
 										</td>
-										<td className="px-5 py-3 text-fg-2">
-											{s.endedAt ? formatTime(s.endedAt) : "—"}
+										<td className="px-5 py-3 text-right font-mono text-fg-2">
+											<Link href={`/dashboard/stats/${s.id}` as never} className="block">
+												{s.peakViewers}
+											</Link>
 										</td>
-										<td className="px-5 py-3 text-right font-mono text-fg-2">{s.peakViewers}</td>
+										<td className="px-5 py-3 text-right font-mono text-fg-2">
+											<Link href={`/dashboard/stats/${s.id}` as never} className="block">
+												{s.chatMessageCount}
+											</Link>
+										</td>
 									</tr>
 								))}
 							</tbody>

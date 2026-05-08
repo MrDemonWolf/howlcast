@@ -362,6 +362,18 @@ export const auditLog = sqliteTable(
 );
 ```
 
+### Stream analytics (own-built, not Cloudflare)
+
+Phase 6 ships our own viewer + chat analytics piped from GetStream webhooks instead of Cloudflare Web Analytics. Schema:
+
+- `stream_sessions` — one row per live session. `peak_viewers` updated from `call.session_participant_joined` events (broadcaster excluded). `chat_message_count` incremented from `message.new` events.
+- `stream_viewer_snapshots` — `(session_id, sampled_at, viewer_count)`. Written on every join/leave webhook plus a 1-minute cron baseline. Pruned at 7-day retention.
+- `stream_chat_minutes` — `(session_id, minute_bucket_ms, count)` with composite PK. UPSERT'd from each chat `message.new`. Powers the per-minute bar chart.
+
+Live count for the current session lives in KV (`analytics:viewers:{sessionId}`) plus a pointer key `analytics:current_session_id` set on `call.live_started` and cleared on session end. KV is the source of truth for "right now"; D1 owns history.
+
+Trust model: Video webhooks HMAC-verified against the GetStream API secret. Chat webhooks (currently) use URL secrecy as the trust boundary — TODO: research and verify the chat HMAC scheme.
+
 ---
 
 ## Why split workers, not one
