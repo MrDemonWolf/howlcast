@@ -44,6 +44,15 @@
 	--radius-lg: 14px;
 	--radius-xl: 18px;
 
+	/* Layout — content widths + gutters codified from design-handoff */
+	--container-narrow: 440px; /* auth, invite, single-card flows */
+	--container-form: 720px; /* settings/account forms */
+	--container-prose: 960px; /* channel page main column, legal docs */
+	--container-wide: 1280px; /* dashboard widescreen content */
+	--gutter-x: 1.5rem; /* 24px default page gutter */
+	--gutter-x-lg: 2rem; /* 32px at lg+ */
+	--section-y: 2.5rem; /* 40px between major page sections */
+
 	/* Fonts */
 	--font-display: "Bricolage Grotesque", ui-sans-serif, system-ui, sans-serif;
 	--font-ui: "Geist", ui-sans-serif, system-ui, sans-serif;
@@ -129,6 +138,11 @@
 	--radius-md: var(--radius);
 	--radius-lg: var(--radius-lg);
 	--radius-xl: var(--radius-xl);
+
+	--container-narrow: var(--container-narrow);
+	--container-form: var(--container-form);
+	--container-prose: var(--container-prose);
+	--container-wide: var(--container-wide);
 }
 
 @layer base {
