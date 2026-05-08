@@ -45,7 +45,7 @@ const VIEWER_ID = "viewer-1";
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function ctx(userId: string | null): any {
 	if (!userId) {
-		return { session: null, auth: null, headers: new Headers(), hono: {} };
+		return { session: null, db: testDb, headers: new Headers(), hono: {} };
 	}
 	const now = new Date();
 	return {
@@ -60,7 +60,7 @@ function ctx(userId: string | null): any {
 				expiresAt: new Date(now.getTime() + 86400000),
 			},
 		},
-		auth: null,
+		db: testDb,
 		headers: new Headers(),
 		hono: {},
 	};

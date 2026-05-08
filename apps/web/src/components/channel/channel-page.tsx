@@ -258,10 +258,6 @@ function StreamerInfo({
 				<div className="mt-1 truncate text-sm" style={{ color: "var(--fg-2)" }}>
 					{title ?? "No stream title yet."}
 				</div>
-				{/* Tags are part of the design but DESIGN-DECISIONS removes them.
-				    Render any title-derived metadata only — keep this slot for
-				    future feature expansion. */}
-				<TagRow />
 			</div>
 			<div className="flex gap-1">
 				<Button variant="ghost" size="icon" aria-label="Share" title="Share">
@@ -276,12 +272,6 @@ function StreamerInfo({
 			</div>
 		</div>
 	);
-}
-
-function TagRow() {
-	// Single-tenant, no discovery — render zero generic tags. Kept as a
-	// component so future "Now playing"-type pills slot in cleanly.
-	return null;
 }
 
 type Panel = {

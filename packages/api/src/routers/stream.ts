@@ -8,6 +8,8 @@ import { env } from "@howlcast/env/server";
 import { TRPCError } from "@trpc/server";
 import { desc, eq, gte } from "drizzle-orm";
 import { protectedProcedure, publicProcedure, router } from "../index";
+import { assertBroadcaster } from "../lib/broadcaster-guard";
+import { getSiteConfig, SITE_ID } from "../lib/site";
 import {
 	createCall,
 	getCall,
@@ -18,12 +20,8 @@ import {
 	StreamNotConfiguredError,
 } from "../lib/stream";
 
-const SITE_ID = "site";
-
 async function loadConfig() {
-	const db = createDb();
-	const row = await db.select().from(channelConfig).where(eq(channelConfig.id, SITE_ID)).get();
-	return row ?? null;
+	return getSiteConfig(createDb());
 }
 
 function streamNotConfigured(): TRPCError {
@@ -90,7 +88,7 @@ export const streamRouter = router({
 			// Check if the signed-in user is the broadcaster so we emit the correct
 			// role — GetStream rejects a JWT with role:"user" when the server-side
 			// user record already has role:"broadcaster".
-			const db = createDb();
+			const db = ctx.db;
 			const me = await db
 				.select({ role: profiles.role })
 				.from(profiles)
@@ -119,20 +117,8 @@ export const streamRouter = router({
 	getBroadcasterToken: protectedProcedure.query(async ({ ctx }) => {
 		if (!env.STREAM_API_KEY || !env.STREAM_API_SECRET) throw streamNotConfigured();
 
-		const db = createDb();
-		const me = await db
-			.select()
-			.from(profiles)
-			.where(eq(profiles.userId, ctx.session.user.id))
-			.get();
-		if (!me || me.role !== "broadcaster") {
-			throw new TRPCError({
-				code: "FORBIDDEN",
-				message: "Broadcaster role required.",
-			});
-		}
-
-		const cfg = await loadConfig();
+		const { cfg } = await assertBroadcaster(ctx.session.user.id);
+		const db = ctx.db;
 		const userToken = await signStreamUserToken(env.STREAM_API_SECRET, {
 			user_id: ctx.session.user.id,
 			role: "broadcaster",
@@ -171,19 +157,8 @@ export const streamRouter = router({
 	provision: protectedProcedure.mutation(async ({ ctx }) => {
 		if (!env.STREAM_API_KEY || !env.STREAM_API_SECRET) throw streamNotConfigured();
 
-		const db = createDb();
-		const cfg = await loadConfig();
-		if (!cfg) {
-			throw new TRPCError({ code: "NOT_FOUND", message: "Channel not initialized." });
-		}
-		const me = await db
-			.select()
-			.from(profiles)
-			.where(eq(profiles.userId, ctx.session.user.id))
-			.get();
-		if (!me || me.role !== "broadcaster") {
-			throw new TRPCError({ code: "FORBIDDEN", message: "Broadcaster only." });
-		}
+		await assertBroadcaster(ctx.session.user.id);
+		const db = ctx.db;
 
 		// Use the broadcaster's user id as the call id — single tenant means
 		// it's stable, and the matching chat channel cid is deterministic.
@@ -214,15 +189,12 @@ export const streamRouter = router({
 	goLive: protectedProcedure.mutation(async ({ ctx }) => {
 		if (!env.STREAM_API_KEY || !env.STREAM_API_SECRET) throw streamNotConfigured();
 
-		const cfg = await loadConfig();
-		if (!cfg?.streamCallId) {
+		const { cfg } = await assertBroadcaster(ctx.session.user.id);
+		if (!cfg.streamCallId) {
 			throw new TRPCError({
 				code: "PRECONDITION_FAILED",
 				message: "Run provision first to set up the GetStream call.",
 			});
-		}
-		if (ctx.session.user.id !== cfg.ownerId) {
-			throw new TRPCError({ code: "FORBIDDEN", message: "Broadcaster only." });
 		}
 
 		await goLive(env.STREAM_API_KEY, env.STREAM_API_SECRET, cfg.streamCallId);
@@ -233,12 +205,9 @@ export const streamRouter = router({
 	stopLive: protectedProcedure.mutation(async ({ ctx }) => {
 		if (!env.STREAM_API_KEY || !env.STREAM_API_SECRET) throw streamNotConfigured();
 
-		const cfg = await loadConfig();
-		if (!cfg?.streamCallId) {
+		const { cfg } = await assertBroadcaster(ctx.session.user.id);
+		if (!cfg.streamCallId) {
 			throw new TRPCError({ code: "PRECONDITION_FAILED", message: "No active call." });
-		}
-		if (ctx.session.user.id !== cfg.ownerId) {
-			throw new TRPCError({ code: "FORBIDDEN", message: "Broadcaster only." });
 		}
 
 		await stopLive(env.STREAM_API_KEY, env.STREAM_API_SECRET, cfg.streamCallId);
@@ -249,15 +218,8 @@ export const streamRouter = router({
 	// rows (written by the GetStream webhook on call.live_started /
 	// call.session_ended). Returns 3 top-line numbers + the session list.
 	getStats: protectedProcedure.query(async ({ ctx }) => {
-		const db = createDb();
-		const me = await db
-			.select({ role: profiles.role })
-			.from(profiles)
-			.where(eq(profiles.userId, ctx.session.user.id))
-			.get();
-		if (me?.role !== "broadcaster") {
-			throw new TRPCError({ code: "FORBIDDEN", message: "Broadcaster only." });
-		}
+		await assertBroadcaster(ctx.session.user.id);
+		const db = ctx.db;
 
 		const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
 		const rows = await db

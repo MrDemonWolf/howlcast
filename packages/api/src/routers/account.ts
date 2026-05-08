@@ -5,7 +5,6 @@
 // Single-tenant note: profiles is keyed by user.id, so "edit my profile"
 // always means "edit my own row" regardless of role.
 
-import { createDb } from "@howlcast/db";
 import { profiles, session, user } from "@howlcast/db/schema";
 import { TRPCError } from "@trpc/server";
 import { and, desc, eq } from "drizzle-orm";
@@ -16,7 +15,7 @@ import { protectedProcedure, router } from "../index";
 export const accountRouter = router({
 	// Returns the signed-in user's profile + base account fields.
 	me: protectedProcedure.query(async ({ ctx }) => {
-		const db = createDb();
+		const db = ctx.db;
 		const u = await db
 			.select({
 				id: user.id,
@@ -59,8 +58,8 @@ export const accountRouter = router({
 			}),
 		)
 		.mutation(async ({ ctx, input }) => {
-			const db = createDb();
-			const patch: Record<string, unknown> = {};
+			const db = ctx.db;
+			const patch: Partial<typeof profiles.$inferInsert> = {};
 			if (input.displayName !== undefined) patch.displayName = input.displayName.trim();
 			if (input.bio !== undefined) patch.bio = input.bio?.trim() || null;
 			if (input.pronouns !== undefined) patch.pronouns = input.pronouns?.trim() || null;
@@ -69,7 +68,7 @@ export const accountRouter = router({
 		}),
 
 	listSessions: protectedProcedure.query(async ({ ctx }) => {
-		const db = createDb();
+		const db = ctx.db;
 		const rows = await db
 			.select({
 				id: session.id,
@@ -96,7 +95,7 @@ export const accountRouter = router({
 	revokeSession: protectedProcedure
 		.input(z.object({ sessionId: z.string() }))
 		.mutation(async ({ ctx, input }) => {
-			const db = createDb();
+			const db = ctx.db;
 			// Scope to the calling user's sessions only — never revoke someone
 			// else's row even if a sessionId leaks.
 			await db
@@ -106,7 +105,7 @@ export const accountRouter = router({
 		}),
 
 	deleteMe: protectedProcedure.mutation(async ({ ctx }) => {
-		const db = createDb();
+		const db = ctx.db;
 		// profiles + sessions cascade via FK onDelete in the schema.
 		// Broadcasters cannot delete their account this way — they must transfer
 		// channelConfig.ownerId first or the channel gets stranded.

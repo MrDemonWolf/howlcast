@@ -1,9 +1,14 @@
 // Emote rehype plugin tests. Verifies the word-level matcher produces
 // img nodes for matches and leaves non-matching text alone.
 
+import type { Element, ElementContent } from "hast";
 import { describe, expect, it } from "vitest";
 
 import { emoteRehypePlugin, type EmoteRecord } from "./emote-renderer";
+
+function isElement(c: ElementContent): c is Element {
+	return c.type === "element";
+}
 
 // Build a minimal hast tree manually rather than wiring up
 // remark→rehype: tests stay fast and the plugin only cares about the
@@ -35,10 +40,12 @@ describe("emoteRehypePlugin", () => {
 		const map = new Map([[FEELS_GOOD.name, FEELS_GOOD]]);
 		emoteRehypePlugin(map)()(tree);
 		const p = tree.children[0]!;
-		const img = p.children.find((c: any) => c.type === "element" && c.tagName === "img") as any;
+		const img = (p.children as ElementContent[]).find(
+			(c): c is Element => isElement(c) && c.tagName === "img",
+		);
 		expect(img).toBeDefined();
-		expect(img.properties.src).toBe(FEELS_GOOD.url1x);
-		expect(img.properties.alt).toBe(FEELS_GOOD.name);
+		expect(img!.properties.src).toBe(FEELS_GOOD.url1x);
+		expect(img!.properties.alt).toBe(FEELS_GOOD.name);
 	});
 
 	it("leaves non-matching text alone", () => {
@@ -46,7 +53,9 @@ describe("emoteRehypePlugin", () => {
 		const map = new Map([[FEELS_GOOD.name, FEELS_GOOD]]);
 		emoteRehypePlugin(map)()(tree);
 		const p = tree.children[0]!;
-		const hasImg = p.children.some((c: any) => c.type === "element" && c.tagName === "img");
+		const hasImg = (p.children as ElementContent[]).some(
+			(c) => isElement(c) && c.tagName === "img",
+		);
 		expect(hasImg).toBe(false);
 	});
 
@@ -55,7 +64,9 @@ describe("emoteRehypePlugin", () => {
 		const map = new Map<string, EmoteRecord>();
 		emoteRehypePlugin(map)()(tree);
 		const p = tree.children[0]!;
-		const hasImg = p.children.some((c: any) => c.type === "element" && c.tagName === "img");
+		const hasImg = (p.children as ElementContent[]).some(
+			(c) => isElement(c) && c.tagName === "img",
+		);
 		expect(hasImg).toBe(false);
 	});
 
@@ -64,7 +75,9 @@ describe("emoteRehypePlugin", () => {
 		const map = new Map([[FEELS_GOOD.name, FEELS_GOOD]]);
 		emoteRehypePlugin(map)()(tree);
 		const p = tree.children[0]!;
-		const hasImg = p.children.some((c: any) => c.type === "element" && c.tagName === "img");
+		const hasImg = (p.children as ElementContent[]).some(
+			(c) => isElement(c) && c.tagName === "img",
+		);
 		expect(hasImg).toBe(false);
 	});
 });

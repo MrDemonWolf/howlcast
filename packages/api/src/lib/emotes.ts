@@ -7,6 +7,8 @@
 // Per DESIGN-DECISIONS.md: no R2 proxy. Emote URLs point directly at each
 // provider's CDN; the browser caches them. Only metadata lives in KV.
 
+import { getTwitchAppToken } from "./twitch";
+
 export type EmoteProvider = "twitch" | "7tv" | "bttv" | "ffz";
 
 export type Emote = {
@@ -23,7 +25,6 @@ export type EmoteMap = {
 };
 
 const KV_KEY = "emotes:current";
-const TWITCH_TOKEN_KEY = "twitch:apptoken";
 
 // Twitch app credentials live in env (server config); the broadcaster's
 // Twitch user id lives in the DB (channelConfig.broadcasterTwitchId) so the
@@ -35,38 +36,12 @@ type TwitchAppEnv = {
 
 // ─── Twitch ───────────────────────────────────────────────────────────────
 
-async function getTwitchAppToken(
-	kv: KVNamespace,
-	clientId: string,
-	clientSecret: string,
-): Promise<string | null> {
-	if (!clientId || !clientSecret) return null;
-
-	const cached = await kv.get<{ token: string; exp: number }>(TWITCH_TOKEN_KEY, "json");
-	if (cached && cached.exp > Date.now() + 60_000) return cached.token;
-
-	const res = await fetch("https://id.twitch.tv/oauth2/token", {
-		method: "POST",
-		headers: { "Content-Type": "application/x-www-form-urlencoded" },
-		body: new URLSearchParams({
-			client_id: clientId,
-			client_secret: clientSecret,
-			grant_type: "client_credentials",
-		}),
-	});
-	if (!res.ok) return null;
-
-	const data = (await res.json()) as { access_token: string; expires_in: number };
-	const exp = Date.now() + data.expires_in * 1000;
-	await kv.put(TWITCH_TOKEN_KEY, JSON.stringify({ token: data.access_token, exp }), {
-		expirationTtl: Math.max(60, data.expires_in - 300),
-	});
-	return data.access_token;
-}
-
 async function fetchTwitch(env: TwitchAppEnv, twitchId: string, kv: KVNamespace): Promise<Emote[]> {
 	if (!twitchId) return [];
-	const token = await getTwitchAppToken(kv, env.TWITCH_CLIENT_ID, env.TWITCH_CLIENT_SECRET);
+	const token = await getTwitchAppToken(kv, {
+		clientId: env.TWITCH_CLIENT_ID,
+		clientSecret: env.TWITCH_CLIENT_SECRET,
+	});
 	if (!token) return [];
 
 	const res = await fetch(`https://api.twitch.tv/helix/chat/emotes?broadcaster_id=${twitchId}`, {

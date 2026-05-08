@@ -24,7 +24,6 @@ export default function Header() {
 					/* Custom uploaded logo — bypass next/image to avoid registering
 					   every R2 host in remote patterns. */
 					<>
-						{}
 						<img
 							src={wl.logoUrl}
 							alt={wl.platformName}
