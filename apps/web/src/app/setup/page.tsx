@@ -8,6 +8,7 @@
 
 import { BrandMark } from "@howlcast/ui/components/brand-mark";
 
+import { PageContainer } from "@/components/layout";
 import SetupWizard from "@/components/setup/setup-wizard";
 
 export const metadata = {
@@ -16,7 +17,7 @@ export const metadata = {
 
 export default function SetupPage() {
 	return (
-		<main className="mx-auto flex min-h-svh w-full max-w-3xl flex-col px-6 py-10">
+		<PageContainer variant="form" className="flex min-h-svh flex-col py-10">
 			<div className="mb-10 flex flex-col items-center gap-3">
 				<BrandMark size={28} />
 				<div className="text-center">
@@ -39,6 +40,6 @@ export default function SetupPage() {
 			<footer className="eyebrow mt-10 text-center" style={{ color: "var(--fg-4)" }}>
 				HOWLCAST · SELF-HOSTED ON CLOUDFLARE
 			</footer>
-		</main>
+		</PageContainer>
 	);
 }

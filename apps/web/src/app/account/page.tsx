@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import AccountProfileForm from "@/components/account/profile-form";
 import DangerZone from "@/components/account/danger-zone";
 import SessionsList from "@/components/account/sessions-list";
+import { PageContainer } from "@/components/layout";
 import { authClient } from "@/lib/auth-client";
 
 export const metadata = { title: "Account · HowlCast" };
@@ -18,7 +19,7 @@ export default async function AccountPage() {
 	}
 
 	return (
-		<main className="mx-auto flex w-full max-w-3xl flex-col gap-5 px-6 py-10 lg:px-8">
+		<PageContainer variant="form" className="flex flex-col gap-5 py-10">
 			<header className="border-border border-b pb-5">
 				<span className="font-mono text-[10px] text-cyan uppercase tracking-[0.2em]">Account</span>
 				<h1 className="mt-2 font-display font-semibold text-3xl text-foreground tracking-tight">
@@ -49,6 +50,6 @@ export default async function AccountPage() {
 			</section>
 
 			<DangerZone />
-		</main>
+		</PageContainer>
 	);
 }
