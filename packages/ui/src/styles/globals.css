@@ -52,6 +52,7 @@
 	--gutter-x: 1.5rem; /* 24px default page gutter */
 	--gutter-x-lg: 2rem; /* 32px at lg+ */
 	--section-y: 2.5rem; /* 40px between major page sections */
+	--chat-dock-w: 360px; /* channel page chat dock at lg+ */
 
 	/* Fonts */
 	--font-display: "Bricolage Grotesque", ui-sans-serif, system-ui, sans-serif;

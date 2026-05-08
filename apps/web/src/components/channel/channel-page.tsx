@@ -26,6 +26,7 @@ import dynamic from "next/dynamic";
 import { useCallback, useState } from "react";
 
 import { authClient } from "@/lib/auth-client";
+import { ChannelLayout } from "@/components/layout";
 import SiteFooter from "@/components/site-footer";
 import { trpc } from "@/utils/trpc";
 
@@ -108,40 +109,39 @@ export default function ChannelPage() {
 
 	return (
 		<div className="flex min-h-svh flex-col">
-			<main className="grid flex-1 grid-cols-1 lg:grid-cols-[minmax(0,1fr)_360px] lg:gap-0">
-				<section className="scroll-y px-4 py-6 lg:px-6">
-					<PlayerSurface
-						isLive={isLive}
-						viewerCount={viewerCount}
-						displayName={broadcaster?.displayName ?? null}
-						credentials={
-							canMountStream && isLive
-								? {
-										apiKey: viewerToken.data!.apiKey,
-										userId: viewerToken.data!.userId,
-										token: viewerToken.data!.token,
-										callId: credentials.data!.callId!,
-										isGuest,
-									}
-								: null
-						}
-						onViewerCount={handleViewerCount}
-					/>
+			<ChannelLayout
+				className="flex-1"
+				main={
+					<>
+						<PlayerSurface
+							isLive={isLive}
+							viewerCount={viewerCount}
+							displayName={broadcaster?.displayName ?? null}
+							credentials={
+								canMountStream && isLive
+									? {
+											apiKey: viewerToken.data!.apiKey,
+											userId: viewerToken.data!.userId,
+											token: viewerToken.data!.token,
+											callId: credentials.data!.callId!,
+											isGuest,
+										}
+									: null
+							}
+							onViewerCount={handleViewerCount}
+						/>
 
-					<StreamerInfo
-						displayName={broadcaster?.displayName ?? "HowlCast"}
-						verified={broadcaster?.verified ?? false}
-						title={title}
-						isLive={isLive}
-					/>
+						<StreamerInfo
+							displayName={broadcaster?.displayName ?? "HowlCast"}
+							verified={broadcaster?.verified ?? false}
+							title={title}
+							isLive={isLive}
+						/>
 
-					<PanelsGrid panels={panelsQuery.data ?? []} />
-				</section>
-
-				<aside
-					className="lg:sticky lg:top-0 lg:h-svh"
-					style={{ borderLeft: "1px solid var(--line)" }}
-				>
+						<PanelsGrid panels={panelsQuery.data ?? []} />
+					</>
+				}
+				chat={
 					<ChatDock
 						credentials={
 							canMountStream
@@ -163,8 +163,8 @@ export default function ChannelPage() {
 								: null
 						}
 					/>
-				</aside>
-			</main>
+				}
+			/>
 			<SiteFooter />
 		</div>
 	);
@@ -236,7 +236,7 @@ function StreamerInfo({
 	isLive: boolean;
 }) {
 	return (
-		<div className="mt-4 flex items-start gap-4">
+		<div className="flex items-start gap-4">
 			<Avatar size={56} name={displayName} hue={252} halo live={isLive} />
 			<div className="min-w-0 flex-1">
 				<div className="flex items-center gap-2">
@@ -282,7 +282,7 @@ type Panel = {
 function PanelsGrid({ panels }: { panels: Panel[] }) {
 	if (panels.length === 0) return null;
 	return (
-		<div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+		<div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
 			{panels.map((p) => (
 				<PanelCard key={p.id} panel={p} />
 			))}
