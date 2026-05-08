@@ -94,11 +94,14 @@ export default function ChannelPage() {
 	// requires invite via canPost flag).
 	if (isPrivate && !isSignedIn && !session.isPending) {
 		return (
-			<PrivateGate
-				displayName={broadcaster?.displayName ?? null}
-				avatarUrl={null}
-				isLive={isLive}
-			/>
+			<div className="flex min-h-svh flex-col">
+				<PrivateGate
+					displayName={broadcaster?.displayName ?? null}
+					avatarUrl={null}
+					isLive={isLive}
+				/>
+				<SiteFooter />
+			</div>
 		);
 	}
 

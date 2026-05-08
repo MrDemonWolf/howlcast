@@ -20,10 +20,10 @@
 import { Button } from "@howlcast/ui/components/button";
 import { Input } from "@howlcast/ui/components/input";
 import { Label } from "@howlcast/ui/components/label";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { ArrowLeft, BadgeCheck, Check, Eye, Lock, PawPrint, Tv, Users } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { type FormEvent, useMemo, useState } from "react";
+import { type FormEvent, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 
 import { trpc } from "@/utils/trpc";
@@ -53,6 +53,15 @@ const STEP_LABEL: Record<Step, string> = {
 
 export default function SetupWizard() {
 	const router = useRouter();
+
+	// Client-side setup-completed gate. Avoids the unreliable Worker→Worker
+	// SSR fetch the page-level redirect used to do.
+	const status = useQuery(trpc.setup.getStatus.queryOptions());
+	useEffect(() => {
+		if (status.data?.setupCompleted) {
+			router.replace("/");
+		}
+	}, [status.data?.setupCompleted, router]);
 
 	const [step, setStep] = useState<Step>("twitch");
 	const [resolved, setResolved] = useState<LookupResult | null>(null);

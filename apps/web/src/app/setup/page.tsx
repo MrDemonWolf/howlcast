@@ -1,13 +1,12 @@
 // First-run installer. Public — no session needed; the wizard creates the
-// initial broadcaster account itself. Once setup has completed, the page
-// redirects home so a re-visit can't trigger any commit attempt (the API
-// already refuses, but stopping here is cleaner UX).
+// initial broadcaster account itself. Setup-completed redirect happens
+// client-side inside <SetupWizard /> via the same tRPC client used elsewhere
+// (avoids unreliable Worker→Worker subrequests during SSR).
 //
 // Layout matches design v2 prototype's SetupPage shell: BrandMark up top,
 // stepper inside the wizard, mono footer.
 
 import { BrandMark } from "@howlcast/ui/components/brand-mark";
-import { redirect } from "next/navigation";
 
 import SetupWizard from "@/components/setup/setup-wizard";
 
@@ -15,21 +14,7 @@ export const metadata = {
 	title: "Set up your den · HowlCast",
 };
 
-const SERVER_URL = process.env.NEXT_PUBLIC_SERVER_URL ?? "http://localhost:3000";
-
-export default async function SetupPage() {
-	const res = await fetch(`${SERVER_URL}/api/trpc/setup.getStatus`, {
-		cache: "no-store",
-	});
-	if (res.ok) {
-		const json = (await res.json()) as {
-			result?: { data?: { setupCompleted?: boolean } };
-		};
-		if (json.result?.data?.setupCompleted) {
-			redirect("/");
-		}
-	}
-
+export default function SetupPage() {
 	return (
 		<main className="mx-auto flex min-h-svh w-full max-w-3xl flex-col px-6 py-10">
 			<div className="mb-10 flex flex-col items-center gap-3">
