@@ -27,7 +27,6 @@ export const channelRouter = router({
 			return {
 				setupCompleted: false,
 				title: null,
-				visibility: "public" as const,
 				matureContent: false,
 				broadcaster: null,
 				isLive: false,
@@ -48,7 +47,6 @@ export const channelRouter = router({
 		return {
 			setupCompleted: !!cfg.setupCompletedAt,
 			title: cfg.title,
-			visibility: cfg.visibility,
 			matureContent: cfg.matureContent,
 			broadcaster: broadcaster
 				? {
@@ -64,24 +62,22 @@ export const channelRouter = router({
 		};
 	}),
 
-	// Broadcaster-only. Updates the editable channel config fields (title,
-	// visibility). Used by the dashboard Live → Stream page. Title is
-	// nullable (clearing makes the player show "No stream title yet").
+	// Broadcaster-only. Updates the editable channel config (just `title`
+	// today — visibility was removed when public mode was retired). Title
+	// is nullable; clearing makes the player show "No stream title yet".
 	updateConfig: protectedProcedure
 		.input(
 			z.object({
 				title: z.string().max(140).nullable().optional(),
-				visibility: z.enum(["public", "invite_only"]).optional(),
 			}),
 		)
 		.mutation(async ({ ctx, input }) => {
 			await assertBroadcaster(ctx.session.user.id);
-			const db = ctx.db;
-			const patch: Partial<{ title: string | null; visibility: "public" | "invite_only" }> = {};
-			if (input.title !== undefined) patch.title = input.title;
-			if (input.visibility !== undefined) patch.visibility = input.visibility;
-			if (Object.keys(patch).length === 0) return { ok: true };
-			await db.update(channelConfig).set(patch).where(eq(channelConfig.id, SITE_ID));
+			if (input.title === undefined) return { ok: true };
+			await ctx.db
+				.update(channelConfig)
+				.set({ title: input.title })
+				.where(eq(channelConfig.id, SITE_ID));
 			return { ok: true };
 		}),
 

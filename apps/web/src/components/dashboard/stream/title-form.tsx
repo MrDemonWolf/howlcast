@@ -1,14 +1,14 @@
 "use client";
 
-// Title + visibility editor. Both fields autosave on blur via
-// channel.updateConfig. Optimistic update via tanstack-query so the
-// UI doesn't flicker waiting for the round trip.
+// Stream-title editor. Autosaves on blur via channel.updateConfig.
+// Optimistic invalidation via tanstack-query keeps the UI snappy.
+// Visibility toggle was removed when public mode was retired — every
+// den is invite-only by design.
 
-import { Button } from "@howlcast/ui/components/button";
 import { Input } from "@howlcast/ui/components/input";
 import { Label } from "@howlcast/ui/components/label";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Lock, Pencil, Users } from "lucide-react";
+import { Pencil } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
@@ -18,12 +18,10 @@ export default function TitleForm() {
 	const queryClient = useQueryClient();
 	const info = useQuery(trpc.channel.getInfo.queryOptions());
 	const [title, setTitle] = useState("");
-	const [visibility, setVisibility] = useState<"public" | "invite_only">("invite_only");
 
 	useEffect(() => {
 		if (info.data) {
 			setTitle(info.data.title ?? "");
-			setVisibility(info.data.visibility);
 		}
 	}, [info.data]);
 
@@ -40,12 +38,6 @@ export default function TitleForm() {
 		const next = title.trim() || null;
 		if (next === (info.data?.title ?? null)) return;
 		update.mutate({ title: next });
-	}
-
-	function setMode(next: "public" | "invite_only") {
-		if (next === visibility) return;
-		setVisibility(next);
-		update.mutate({ visibility: next });
 	}
 
 	return (
@@ -67,32 +59,6 @@ export default function TitleForm() {
 				/>
 				<p className="text-muted-foreground text-xs">Saves automatically on blur.</p>
 			</div>
-
-			<fieldset className="flex flex-col gap-1.5">
-				<Label>Visibility</Label>
-				<div className="grid grid-cols-2 gap-2">
-					<Button
-						type="button"
-						variant={visibility === "invite_only" ? "default" : "outline"}
-						onClick={() => setMode("invite_only")}
-						disabled={update.isPending}
-						className="justify-start"
-					>
-						<Lock className="mr-1.5 h-3.5 w-3.5" aria-hidden />
-						Invite-only
-					</Button>
-					<Button
-						type="button"
-						variant={visibility === "public" ? "default" : "outline"}
-						onClick={() => setMode("public")}
-						disabled={update.isPending}
-						className="justify-start"
-					>
-						<Users className="mr-1.5 h-3.5 w-3.5" aria-hidden />
-						Public
-					</Button>
-				</div>
-			</fieldset>
 		</section>
 	);
 }

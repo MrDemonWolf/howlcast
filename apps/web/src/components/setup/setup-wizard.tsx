@@ -1,27 +1,26 @@
 "use client";
 
-// First-run setup wizard. Three steps in one page (state machine):
+// First-run setup wizard. Two steps in one page (state machine):
 //   1. Twitch lookup — username -> Helix profile + emote-provider probe
 //   2. Account     — email + password (creates the broadcaster login)
-//   3. Mode        — public / invite-only
 //
 // On commit the server creates the user (signUpEmail), writes the
 // broadcaster profile + channelConfig, and sets the session cookie.
-// Client redirects to /dashboard signed-in.
+// Client redirects to /dashboard signed-in. HowlCast is invite-only by
+// design — no visibility selector, every den is private.
 //
 // UX rules applied:
-//   - One primary action per step, "Step N of 3 · Label" indicator
+//   - One primary action per step, "Step N of 2 · Label" indicator
 //   - Inline errors (red strip under input), not just toasts
 //   - Recap card prominent on step 2; account form below
 //   - Password strength meter (4 segments, length+char-class basis)
-//   - Visibility step uses larger choice cards with icons
 //   - Final commit shows a brief "Welcome to the den" success state
 
 import { Button } from "@howlcast/ui/components/button";
 import { Input } from "@howlcast/ui/components/input";
 import { Label } from "@howlcast/ui/components/label";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { ArrowLeft, BadgeCheck, Check, Eye, Lock, PawPrint, Tv, Users } from "lucide-react";
+import { ArrowLeft, BadgeCheck, Check, Eye, PawPrint, Tv } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { type FormEvent, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
@@ -43,12 +42,11 @@ type LookupResult = {
 	};
 };
 
-type Step = "twitch" | "account" | "mode";
-const STEP_ORDER: Step[] = ["twitch", "account", "mode"];
+type Step = "twitch" | "account";
+const STEP_ORDER: Step[] = ["twitch", "account"];
 const STEP_LABEL: Record<Step, string> = {
 	twitch: "Twitch",
 	account: "Account",
-	mode: "Visibility",
 };
 
 export default function SetupWizard() {
@@ -69,7 +67,6 @@ export default function SetupWizard() {
 	const [email, setEmail] = useState("");
 	const [emailError, setEmailError] = useState<string | null>(null);
 	const [password, setPassword] = useState("");
-	const [visibility, setVisibility] = useState<"public" | "invite_only">("invite_only");
 	const [lookupError, setLookupError] = useState<string | null>(null);
 	const [done, setDone] = useState(false);
 
@@ -108,20 +105,15 @@ export default function SetupWizard() {
 		lookup.mutate({ username });
 	}
 
-	function continueToMode(e: FormEvent<HTMLFormElement>) {
+	function submitAccount(e: FormEvent<HTMLFormElement>) {
 		e.preventDefault();
+		if (!resolved) return;
 		const ok = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 		if (!ok) {
 			setEmailError("Enter a valid email address.");
 			return;
 		}
 		setEmailError(null);
-		setStep("mode");
-	}
-
-	function submitFinal(e: FormEvent<HTMLFormElement>) {
-		e.preventDefault();
-		if (!resolved) return;
 		commit.mutate({
 			email,
 			password,
@@ -130,7 +122,6 @@ export default function SetupWizard() {
 			displayName: displayName.trim(),
 			bio: resolved.user.description,
 			avatarUrl: resolved.user.profileImageUrl,
-			visibility,
 		});
 	}
 
@@ -178,7 +169,7 @@ export default function SetupWizard() {
 					<div className="mt-6">
 						<RecapCard resolved={resolved} />
 					</div>
-					<form onSubmit={continueToMode} className="mt-6 flex flex-col gap-4">
+					<form onSubmit={submitAccount} className="mt-6 flex flex-col gap-4">
 						<div className="flex flex-col gap-1.5">
 							<Label htmlFor="su-display">Display name</Label>
 							<Input
@@ -230,60 +221,19 @@ export default function SetupWizard() {
 								type="button"
 								variant="outline"
 								onClick={() => setStep("twitch")}
+								disabled={commit.isPending}
 								className="flex-none"
 								aria-label="Back"
 							>
 								<ArrowLeft className="h-4 w-4" aria-hidden />
 							</Button>
-							<Button type="submit" className="flex-1">
-								Continue
+							<Button type="submit" className="flex-1" disabled={commit.isPending}>
+								<PawPrint className="mr-1.5 h-4 w-4" aria-hidden />
+								{commit.isPending ? "Creating your den…" : "Open the den"}
 							</Button>
 						</div>
 					</form>
 				</>
-			) : null}
-
-			{step === "mode" ? (
-				<form onSubmit={submitFinal} className="mt-6 flex flex-col gap-4">
-					<fieldset className="flex flex-col gap-2">
-						<Label>Channel visibility</Label>
-						<div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-							<VisibilityCard
-								checked={visibility === "invite_only"}
-								onSelect={() => setVisibility("invite_only")}
-								icon={Lock}
-								title="Invite-only"
-								body="Anyone can watch. Only invited members can post in chat."
-							/>
-							<VisibilityCard
-								checked={visibility === "public"}
-								onSelect={() => setVisibility("public")}
-								icon={Users}
-								title="Public"
-								body="Anyone can watch and post — full open chat."
-							/>
-						</div>
-						<p className="mt-1 text-muted-foreground text-xs">
-							You can change this anytime from the dashboard.
-						</p>
-					</fieldset>
-					<div className="mt-1 flex gap-2">
-						<Button
-							type="button"
-							variant="outline"
-							onClick={() => setStep("account")}
-							disabled={commit.isPending}
-							className="flex-none"
-							aria-label="Back"
-						>
-							<ArrowLeft className="h-4 w-4" aria-hidden />
-						</Button>
-						<Button type="submit" className="flex-1" disabled={commit.isPending}>
-							<PawPrint className="mr-1.5 h-4 w-4" aria-hidden />
-							{commit.isPending ? "Creating your den…" : "Open the den"}
-						</Button>
-					</div>
-				</form>
 			) : null}
 		</div>
 	);
@@ -408,46 +358,6 @@ function ProviderBadge({ name, count, ok }: { name: string; count: number; ok: b
 				{count}
 			</div>
 		</div>
-	);
-}
-
-function VisibilityCard({
-	checked,
-	onSelect,
-	icon: Icon,
-	title,
-	body,
-}: {
-	checked: boolean;
-	onSelect: () => void;
-	icon: typeof Lock;
-	title: string;
-	body: string;
-}) {
-	return (
-		<button
-			type="button"
-			onClick={onSelect}
-			aria-pressed={checked}
-			className={`flex w-full flex-col items-start gap-2 rounded-lg border p-5 text-left transition ${
-				checked
-					? "border-cyan bg-cyan-glow"
-					: "border-border bg-bg-2 hover:border-line-3 hover:bg-bg-3"
-			}`}
-		>
-			<div className="flex w-full items-center justify-between">
-				<span
-					className={`grid h-9 w-9 place-items-center rounded-md ${
-						checked ? "bg-cyan/20 text-cyan" : "bg-bg-3 text-fg-3"
-					}`}
-				>
-					<Icon className="h-4 w-4" aria-hidden />
-				</span>
-				{checked ? <Check className="h-4 w-4 text-cyan" aria-hidden /> : null}
-			</div>
-			<span className="font-display font-semibold text-foreground">{title}</span>
-			<p className="text-muted-foreground text-xs leading-snug">{body}</p>
-		</button>
 	);
 }
 

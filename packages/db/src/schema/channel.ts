@@ -38,8 +38,12 @@ export const profiles = sqliteTable(
 
 // Channel config — single row, id = "site". Single-tenant install.
 // `setupCompletedAt` flips when the first-run wizard finishes (Phase 6).
-// Phase 3 only touches: ownerId, title, visibility, liveStartedAt/EndedAt,
+// Phase 3 only touches: ownerId, title, liveStartedAt/EndedAt,
 // streamCallId, chatChannelCid, broadcasterTwitchId.
+//
+// HowlCast is invite-only by design (no public mode). The legacy
+// `visibility` column was dropped in migration 0008 — every den is private,
+// `profiles.isInvited` is the per-user permission flag.
 //
 // FK note: ownerId has no `onDelete` clause. SQLite/D1 default is `no action`,
 // which functions like `restrict` — the broadcaster row can't be deleted while
@@ -51,9 +55,6 @@ export const channelConfig = sqliteTable("channel_config", {
 		.notNull()
 		.references(() => user.id),
 	title: text("title"),
-	visibility: text("visibility", { enum: ["public", "invite_only"] })
-		.notNull()
-		.default("public"),
 	matureContent: integer("mature", { mode: "boolean" }).default(false).notNull(),
 	liveStartedAt: integer("live_started_at", { mode: "timestamp_ms" }),
 	liveEndedAt: integer("live_ended_at", { mode: "timestamp_ms" }),

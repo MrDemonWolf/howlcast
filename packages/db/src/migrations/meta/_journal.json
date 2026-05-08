@@ -57,6 +57,13 @@
       "when": 1778540000000,
       "tag": "0007_drop_user_bans_and_invite_indexes",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "6",
+      "when": 1778626400000,
+      "tag": "0008_drop_visibility",
+      "breakpoints": true
     }
   ]
 }

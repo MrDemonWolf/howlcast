@@ -106,7 +106,6 @@ export const setupRouter = router({
 				displayName: z.string().min(1).max(40),
 				bio: z.string().max(500).nullable(),
 				avatarUrl: z.string().url().nullable(),
-				visibility: z.enum(["public", "invite_only"]),
 			}),
 		)
 		.mutation(async ({ ctx, input }) => {
@@ -171,7 +170,6 @@ export const setupRouter = router({
 					.update(channelConfig)
 					.set({
 						ownerId: userId,
-						visibility: input.visibility,
 						broadcasterTwitchId: input.twitchId,
 						setupCompletedAt: now,
 						updatedAt: now,
@@ -181,7 +179,6 @@ export const setupRouter = router({
 				await db.insert(channelConfig).values({
 					id: SITE_ID,
 					ownerId: userId,
-					visibility: input.visibility,
 					broadcasterTwitchId: input.twitchId,
 					setupCompletedAt: now,
 					updatedAt: now,

@@ -5,10 +5,9 @@
 // `1fr 360px` grid on desktop with the player surface + meta row + 6-panel
 // grid in the left column and the chat dock on the right.
 //
-// Visibility:
-//   - public           → anyone watches; chat open to invited members.
-//   - invite_only      → signed-in viewers see the Den; signed-out viewers
-//                        see <PrivateGate>.
+// HowlCast is invite-only. Signed-out visitors see <PrivateGate>. Signed-in
+// viewers watch the stream; chat posting is gated by `profiles.isInvited`
+// (canPost flag). Public-mode was retired in migration 0008.
 //
 // The Player + Chat slots are filled by lazy-loaded GetStream SDK
 // components — 200KB+ minified. Loading them dynamically means anonymous
@@ -83,16 +82,14 @@ export default function ChannelPage() {
 	const handleViewerCount = useCallback((n: number) => setViewerCount(n), []);
 
 	const isLive = !!live.data?.isLive;
-	const visibility = info.data?.visibility ?? "public";
-	const isPrivate = visibility === "invite_only";
 	const broadcaster = info.data?.broadcaster ?? null;
 	const title = info.data?.title ?? null;
 	const isSignedIn = !!session.data?.user;
 
-	// Gate: invite-only + not signed in → PrivateGate. Public stream is open
-	// to anyone — they can watch even when signed-out (chat posting still
-	// requires invite via canPost flag).
-	if (isPrivate && !isSignedIn && !session.isPending) {
+	// Every den is private. Signed-out visitor → PrivateGate. The pending-
+	// session window also gates so we don't flash the channel layout to a
+	// signed-out viewer while better-auth resolves.
+	if (!isSignedIn) {
 		return (
 			<div className="flex min-h-svh flex-col">
 				<PrivateGate
@@ -146,7 +143,6 @@ export default function ChannelPage() {
 					style={{ borderLeft: "1px solid var(--line)" }}
 				>
 					<ChatDock
-						isPrivate={isPrivate}
 						credentials={
 							canMountStream
 								? isGuest
@@ -346,13 +342,7 @@ type ChatCreds =
 			canPost: boolean;
 	  };
 
-function ChatDock({
-	isPrivate,
-	credentials,
-}: {
-	isPrivate: boolean;
-	credentials: ChatCreds | null;
-}) {
+function ChatDock({ credentials }: { credentials: ChatCreds | null }) {
 	return (
 		<div
 			className="flex h-full min-h-[600px] flex-col"
@@ -407,7 +397,7 @@ function ChatDock({
 						className="flex h-full items-center justify-center px-6 text-center text-xs"
 						style={{ color: "var(--fg-3)" }}
 					>
-						Chat opens when {isPrivate ? "the den" : "the broadcaster"} is live.
+						Chat opens when the den is live.
 					</div>
 				)}
 				{credentials && !credentials.canPost && <LockedComposerOverlay />}
