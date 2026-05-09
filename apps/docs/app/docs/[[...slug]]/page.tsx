@@ -1,7 +1,7 @@
 import { DocsBody, DocsDescription, DocsPage, DocsTitle } from "fumadocs-ui/page";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { source } from "@/lib/source.ts";
+import { getPageImage, source } from "@/lib/source.ts";
 import { getMDXComponents } from "@/mdx-components.tsx";
 
 interface Props {
@@ -43,8 +43,16 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 		notFound();
 	}
 
+	const image = getPageImage(page);
 	return {
 		title: page.data.title,
 		description: page.data.description,
+		openGraph: {
+			images: image.url,
+		},
+		twitter: {
+			card: "summary_large_image",
+			images: image.url,
+		},
 	};
 }

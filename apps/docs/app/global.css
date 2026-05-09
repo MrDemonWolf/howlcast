@@ -1,48 +1,319 @@
 @import "tailwindcss";
-@import "fumadocs-ui/css/neutral.css";
+@import "fumadocs-ui/css/ocean.css";
 @import "fumadocs-ui/css/preset.css";
 
+/* ──────────────────────────────────────────────────────────
+   HowlCast docs — wolfwave-style minimal, HowlCast brand
+   Navy #091533 + cyan #0FACED. Dark mode default.
+   ────────────────────────────────────────────────────────── */
+
 @theme {
-	--color-fd-background: #f8fafc;
-	--color-fd-foreground: #0f172a;
-	--color-fd-muted: #f1f5f9;
-	--color-fd-muted-foreground: #64748b;
-	--color-fd-border: #e2e8f0;
-	--color-fd-accent: #f1f5f9;
-	--color-fd-accent-foreground: #0f172a;
 	--color-fd-primary: #0faced;
 	--color-fd-primary-foreground: #ffffff;
-	--color-fd-card: #ffffff;
-	--color-fd-card-foreground: #0f172a;
+	--color-fd-background: hsl(0 0% 100%);
+	--color-fd-foreground: hsl(240 6% 10%);
+	--color-fd-muted: hsl(240 5% 96%);
+	--color-fd-muted-foreground: hsl(240 4% 45%);
+	--color-fd-secondary: hsl(240 5% 92%);
+	--color-fd-secondary-foreground: hsl(240 6% 10%);
+	--color-fd-accent: hsl(195 95% 96%);
+	--color-fd-accent-foreground: hsl(195 95% 28%);
+	--color-fd-card: hsl(240 5% 98%);
+	--color-fd-card-foreground: hsl(240 6% 10%);
+	--color-fd-popover: hsl(0 0% 100%);
+	--color-fd-popover-foreground: hsl(240 6% 10%);
+	--color-fd-border: hsl(240 6% 86%);
 	--color-fd-ring: #0faced;
-	--color-fd-secondary: #f1f5f9;
-	--color-fd-secondary-foreground: #0f172a;
-	--color-fd-popover: #ffffff;
-	--color-fd-popover-foreground: #0f172a;
+	--color-fd-overlay: hsla(220 60% 5% / 0.4);
 }
 
 .dark {
-	color-scheme: dark;
-	--color-fd-background: #091533;
-	--color-fd-foreground: #e2e8f0;
-	--color-fd-muted: #0f1f4a;
-	--color-fd-muted-foreground: #94a3b8;
-	--color-fd-border: #1e3a5f;
-	--color-fd-accent: #0f2440;
-	--color-fd-accent-foreground: #e2e8f0;
 	--color-fd-primary: #0faced;
 	--color-fd-primary-foreground: #091533;
-	--color-fd-card: #0c1d3d;
-	--color-fd-card-foreground: #e2e8f0;
-	--color-fd-ring: #0faced;
+	--color-fd-background: #050b1f;
+	--color-fd-foreground: #e2e8f0;
+	--color-fd-muted: #0c1838;
+	--color-fd-muted-foreground: #94a3b8;
 	--color-fd-secondary: #0f1f4a;
 	--color-fd-secondary-foreground: #e2e8f0;
+	--color-fd-accent: #0a223e;
+	--color-fd-accent-foreground: #5fcdf3;
+	--color-fd-card: #091533;
+	--color-fd-card-foreground: #e2e8f0;
 	--color-fd-popover: #0c1d3d;
 	--color-fd-popover-foreground: #e2e8f0;
+	--color-fd-border: #1e3a5f;
+	--color-fd-ring: #0faced;
+	--color-fd-overlay: hsla(220 60% 0% / 0.7);
+
+	--shiki-dark: #e1e4e8;
+	--shiki-dark-bg: #0a132d;
 }
 
+:root {
+	--shiki-light: #1d1d1f;
+	--shiki-light-bg: #f5f5f7;
+}
+
+@media (prefers-color-scheme: dark) {
+	:root:not(.light) {
+		color-scheme: dark;
+	}
+}
+
+/* ── Brand tokens (light defaults; dark below) ──────────── */
+:root {
+	--brand-500: #0faced;
+	--brand-600: #0c8cc4;
+	--brand-50: #e0f7ff;
+
+	--bg-base: #ffffff;
+	--bg-surface: #f5f7fb;
+	--bg-elev: #fbfcfe;
+	--txt-1: #0a132d;
+	--txt-2: #4a5568;
+	--hairline: #d8dee9;
+}
+
+.dark {
+	--brand-500: #0faced;
+	--brand-600: #4cc4f0;
+	--brand-50: rgba(15, 172, 237, 0.1);
+
+	--bg-base: #050b1f;
+	--bg-surface: #091533;
+	--bg-elev: #0c1d3d;
+	--txt-1: #f1f5f9;
+	--txt-2: #94a3b8;
+	--hairline: #1e3a5f;
+}
+
+@media (prefers-color-scheme: dark) {
+	:root:not(.light) {
+		--brand-500: #0faced;
+		--brand-600: #4cc4f0;
+		--brand-50: rgba(15, 172, 237, 0.1);
+		--bg-base: #050b1f;
+		--bg-surface: #091533;
+		--bg-elev: #0c1d3d;
+		--txt-1: #f1f5f9;
+		--txt-2: #94a3b8;
+		--hairline: #1e3a5f;
+	}
+}
+
+/* ── Sidebar override ────────────────────────────────────── */
 .dark #nd-sidebar {
-	--color-fd-muted: #0a1835;
-	--color-fd-secondary: #0f2440;
+	--color-fd-muted: #07102a;
+	--color-fd-secondary: #0c1838;
 	--color-fd-muted-foreground: #cbd5e1;
+}
+
+/* ── Typography ──────────────────────────────────────────── */
+.hc-font {
+	font-family:
+		"Geist",
+		-apple-system,
+		BlinkMacSystemFont,
+		"SF Pro Text",
+		"Inter",
+		"Segoe UI",
+		system-ui,
+		sans-serif;
+	font-feature-settings: "ss01", "cv11";
+}
+
+.hc-display {
+	font-family:
+		"Bricolage Grotesque",
+		-apple-system,
+		BlinkMacSystemFont,
+		"Inter",
+		system-ui,
+		sans-serif;
+	font-weight: 700;
+	letter-spacing: -0.025em;
+	line-height: 1.05;
+}
+
+.hc-mono {
+	font-family: "Geist Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+}
+
+/* ── Surfaces ────────────────────────────────────────────── */
+.hc-bg-base {
+	background-color: var(--bg-base);
+}
+.hc-bg-surface {
+	background-color: var(--bg-surface);
+}
+.hc-bg-elev {
+	background-color: var(--bg-elev);
+}
+
+.hc-text-1 {
+	color: var(--txt-1);
+}
+.hc-text-2 {
+	color: var(--txt-2);
+}
+.hc-text-brand {
+	color: var(--brand-500);
+}
+
+.hc-hairline {
+	border-color: var(--hairline);
+}
+
+/* ── Hero glow ──────────────────────────────────────────── */
+.hc-hero-glow {
+	position: absolute;
+	inset: -10% -10% auto -10%;
+	height: 70%;
+	background: radial-gradient(
+		ellipse 60% 55% at 50% 30%,
+		rgba(15, 172, 237, 0.12) 0%,
+		transparent 65%
+	);
+	pointer-events: none;
+	z-index: 0;
+}
+
+.dark .hc-hero-glow {
+	background: radial-gradient(
+		ellipse 60% 55% at 50% 30%,
+		rgba(15, 172, 237, 0.22) 0%,
+		transparent 65%
+	);
+}
+
+/* ── Buttons ─────────────────────────────────────────────── */
+.hc-btn {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: 0.5rem;
+	padding: 0.85rem 1.4rem;
+	border-radius: 980px;
+	font-size: 0.95rem;
+	font-weight: 500;
+	letter-spacing: -0.01em;
+	transition:
+		background-color 0.15s ease,
+		color 0.15s ease,
+		transform 0.1s ease;
+}
+.hc-btn:active {
+	transform: scale(0.98);
+}
+
+.hc-btn-primary {
+	background-color: var(--brand-500);
+	color: #091533;
+}
+.hc-btn-primary:hover {
+	background-color: var(--brand-600);
+}
+
+.hc-btn-secondary {
+	background-color: transparent;
+	color: var(--brand-500);
+}
+.hc-btn-secondary:hover {
+	text-decoration: underline;
+	text-underline-offset: 3px;
+}
+
+.hc-btn-ghost {
+	background-color: var(--bg-surface);
+	color: var(--txt-1);
+}
+.hc-btn-ghost:hover {
+	background-color: color-mix(in srgb, var(--bg-surface) 80%, var(--brand-500));
+}
+
+/* ── Card ────────────────────────────────────────────────── */
+.hc-card {
+	background-color: var(--bg-surface);
+	border-radius: 1.25rem;
+	padding: 2rem;
+	transition: transform 0.25s ease;
+}
+.hc-card-hover:hover {
+	transform: translateY(-2px);
+}
+
+/* ── Pill ────────────────────────────────────────────────── */
+.hc-pill {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.4rem;
+	padding: 0.4rem 0.9rem;
+	border-radius: 980px;
+	background-color: var(--bg-surface);
+	color: var(--txt-2);
+	font-size: 0.8rem;
+	font-weight: 500;
+}
+
+/* ── LIVE pulse ──────────────────────────────────────────── */
+.hc-pulse-ring {
+	animation: hc-pulse 3.6s ease-in-out infinite;
+}
+@keyframes hc-pulse {
+	0%,
+	100% {
+		box-shadow: 0 0 0 0 rgba(15, 172, 237, 0);
+	}
+	50% {
+		box-shadow: 0 0 0 8px rgba(15, 172, 237, 0.12);
+	}
+}
+
+/* ── Reveal on load ──────────────────────────────────────── */
+.hc-reveal {
+	opacity: 0;
+	transform: translateY(8px);
+	animation: hc-rise 0.5s ease forwards;
+}
+.hc-reveal-1 {
+	animation-delay: 0.05s;
+}
+.hc-reveal-2 {
+	animation-delay: 0.15s;
+}
+.hc-reveal-3 {
+	animation-delay: 0.25s;
+}
+@keyframes hc-rise {
+	to {
+		opacity: 1;
+		transform: translateY(0);
+	}
+}
+
+/* ── Code block ──────────────────────────────────────────── */
+.hc-code {
+	background-color: var(--bg-elev);
+	color: var(--txt-1);
+	border: 1px solid var(--hairline);
+	border-radius: 0.9rem;
+	padding: 1.25rem 1.4rem;
+	font-family: ui-monospace, "Geist Mono", Menlo, Consolas, monospace;
+	font-size: 0.82rem;
+	line-height: 1.7;
+	overflow-x: auto;
+}
+.dark .hc-code {
+	background-color: #0a132d;
+}
+
+/* ── Reduced motion ──────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+	.hc-pulse-ring,
+	.hc-reveal {
+		animation: none !important;
+		opacity: 1 !important;
+		transform: none !important;
+	}
 }

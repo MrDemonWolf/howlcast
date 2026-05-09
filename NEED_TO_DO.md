@@ -1,91 +1,80 @@
 # NEED TO DO — your turn
 
-> Stuff Claude can't do for you. Three blocks: now, whenever, later.
-> Each row = one action, one link, one outcome.
+> Stuff Claude can't do for you. Each row = one action, one outcome.
 
 ---
 
 ## 🚀 RIGHT NOW (unblocks launch)
 
-- [x] **Apply migrations to remote D1** — DONE
-- [x] **Set up `legal@mrdemonwolf.com`** mailbox — DONE
-- [ ] **Test Go Live** end-to-end: 1. Set up stream in dashboard (one click) 2. Copy RTMPS URL + key into OBS 3. Click Start Streaming in OBS 4. Click Go Live in dashboard 5. Verify LIVE badge appears on `tv.mrdemonwolf.com` homepage 6. Verify Discord webhook fires (public + private channels) 7. Verify chat works for both broadcaster + anonymous viewer 8. Verify Stats page shows the session after End — incl. non-zero peak viewers + chat count + per-session detail page (`/dashboard/stats/[id]`) charts
-- [x] **Apply migration 0009** to remote D1 — DONE
-- [x] **Enable GitHub Pages** for the repo — DONE
-- [ ] **GetStream — confirm Chat webhook URL configured.** In GetStream dashboard → Chat → Webhook URL, set `https://tv-api.mrdemonwolf.workers.dev/api/webhooks/getstream` (same path as Video). Otherwise chat-message counts stay at 0. Note: Chat HMAC scheme not yet verified — keep webhook URL out of public docs as the trust boundary.
-- [ ] **GetStream — enable participant join/left events.** Confirm Video webhook (also at `https://tv-api.mrdemonwolf.workers.dev/api/webhooks/getstream`) is subscribed to `call.session_participant_joined` + `call.session_participant_left`. Without these, viewer counts + line chart stay at 0.
-- [ ] Delete orphan workers in Cloudflare dashboard:
-      `howlcast` + `howlcast-api` (or `bunx wrangler delete howlcast` /
-      `bunx wrangler delete howlcast-api`)
-- [x] **Update GetStream Video webhook URL** — DONE
-- [x] **GetStream Chat webhook 401 unblocking** — DONE (commit `c1a9003`,
-      handler now skips HMAC for non-`call.*` events)
+- [ ] **Hard live OBS test** end-to-end:
+  1. Dashboard → **Set up your stream** (one click)
+  2. Copy RTMPS URL + key into OBS
+  3. Click **Start Streaming** in OBS
+  4. Click **Go live** in dashboard
+  5. Verify LIVE badge appears on `tv.mrdemonwolf.com`
+  6. Verify Discord webhooks fire (public + private)
+  7. Verify chat works for broadcaster + anonymous viewer
+  8. After **End**: verify Stats shows non-zero peak viewers + chat count + per-session detail charts (`/dashboard/stats/[id]`)
+- [ ] **GetStream — confirm Chat webhook URL configured.** Dashboard → Chat → Webhook URL → `https://tv-api.mrdemonwolf.workers.dev/api/webhooks/getstream` subscribed to `message.new`. Without it, chat counts stay at 0.
+- [ ] **GetStream — enable participant join/left events.** Video webhook (same URL) subscribed to `call.session_participant_joined` + `call.session_participant_left`. Without these, viewer counts stay at 0.
+- [ ] **Delete orphan workers** in Cloudflare dashboard: `howlcast` + `howlcast-api` (left over from rename).
 
 ---
 
-## 🟡 WHENEVER (does not block code work)
+## 🟡 WHENEVER (does not block launch)
 
-### Twitch dev app — 10 min
+### Resend domain verify
 
-- [ ] Go to <https://dev.twitch.tv/console/apps/create>
-- [ ] **Name:** `HowlCast`
-- [ ] **OAuth Redirect URL:** `https://tv.mrdemonwolf.com/auth/twitch/callback` _(placeholder — we use client_credentials grant, this URL is never hit)_
-- [ ] **Category:** Application Integration
-- [ ] **Client Type:** Confidential
-- [ ] **Organization:** None
-- [ ] Click Create → copy `Client ID` + generate `Client Secret`
-- [ ] Paste into:
-  - `apps/server/.env` as `TWITCH_CLIENT_ID=...` and `TWITCH_CLIENT_SECRET=...`
-  - GitHub Actions secrets with the same names
+Magic-link emails fall back to mailpit / console without this.
 
-> ✅ Your Twitch user id is auto-detected by the setup wizard (`/setup` page). No need to look it up.
+- [ ] [resend.com/domains](https://resend.com/domains) → Add domain → set the SPF / DKIM / DMARC records
+- [ ] Wait ~15 min for verification
+- [ ] Push API key as `RESEND_API_KEY` (locally + GH Actions)
 
-### 7TV signup — 5 min
+### 7TV signup
 
-- [ ] Go to <https://7tv.app>
-- [ ] Sign in with Twitch → done. Your account exists.
+Get more channel emotes flowing.
+
+- [ ] [7tv.app](https://7tv.app) → sign in with Twitch
 - [ ] Profile → Emotes → upload PNGs
-- [ ] Pipeline picks them up on next 12h cron (or hit "Refresh emotes" in dashboard)
+- [ ] Pipeline picks them up on next 12h cron, or **Refresh** in dashboard
 
-### FFZ emotes — 5 min upload + 1–7 days for approval
+### FFZ emotes
 
-- [ ] Go to <https://www.frankerfacez.com/>
-- [ ] Sign in with Twitch
-- [ ] Submit a New Emote → upload PNG → wait for moderator approval
-- [ ] After approval, pipeline picks it up
+- [ ] [frankerfacez.com](https://www.frankerfacez.com/) → sign in with Twitch
+- [ ] Submit a New Emote → upload PNG → wait for moderator approval (1–7 days)
 
-### Resend domain verify — whenever
+### Custom domain for docs
 
-Real magic-link emails (currently mailpit / console fallback in dev):
+Currently at `mrdemonwolf.github.io/howlcast/`. To point `docs.howlcast.tv`:
 
-- [ ] Go to <https://resend.com/domains> → Add domain
-- [ ] Add the SPF / DKIM / DMARC DNS records they show you
-- [ ] Wait ~15 min for DNS to propagate + verification
-- [ ] Copy the API key → paste as `RESEND_API_KEY` in `.env` + GH Actions secrets
+- [ ] Add a `CNAME` file to `apps/docs/public/` containing `docs.howlcast.tv`
+- [ ] Cloudflare DNS → CNAME `docs` → `mrdemonwolf.github.io`
+- [ ] GitHub repo → Settings → Pages → Custom domain → `docs.howlcast.tv`
 
 ---
 
-## 🟢 LATER (now in the dashboard UI — go fill these in)
+## 🟢 LATER (configure from dashboard)
 
-Phase 5 shipped — log in and configure these from `/dashboard`:
-
-| What                        | Where in the dashboard                                       |
-| --------------------------- | ------------------------------------------------------------ |
-| Discord webhooks            | Dashboard → **Notifications** → paste the two URLs           |
-| Send invite emails          | Dashboard → **Invite emails** → enter email, magic link goes |
-| Add panels                  | Dashboard → **Panels** → Add panel                           |
-| Edit bio / pronouns         | Dashboard → **Account**                                      |
-| Pop out chat for OBS        | Dashboard → **Chat** → Pop out (or paste `/popout/chat`)     |
-| `howlcast.tv` domain attach | After you buy via Cloudflare Registrar (~$30/yr)             |
+| What                 | Where                                |
+| -------------------- | ------------------------------------ |
+| Discord webhooks     | Dashboard → **Notifications**        |
+| Send invite emails   | Dashboard → **Invites**              |
+| Add panels           | Dashboard → **Panels**               |
+| Edit bio / pronouns  | Dashboard → **Account**              |
+| Privacy + Terms text | Dashboard → **Branding** → Legal tab |
+| Logo + platform name | Dashboard → **Branding**             |
+| Pop out chat for OBS | Dashboard → **Chat** → Pop out       |
 
 ---
 
-## CI/CD — how it works (reference)
+## CI/CD — reference
 
-Three workflows in `.github/workflows/`:
+Workflows in `.github/workflows/`:
 
-- **`ci.yml`** — runs on every push and PR to `main`. Type-check + lint + format check.
-- **`deploy.yml`** — runs after `ci.yml` succeeds on `main`. Runs `bun run deploy` (Alchemy → Cloudflare Workers). Smoke-tests `/api/health`.
-- **`update-license-year.yml`** — annual cron Jan 1st 06:00 UTC.
+- **`ci.yml`** — every push + PR. Type-check + lint + format.
+- **`deploy.yml`** — after CI green on main. Alchemy → Cloudflare. Smoke-tests `/api/health`.
+- **`deploy-docs.yml`** — on `apps/docs/**` change. Builds + deploys to GitHub Pages.
+- **`update-license-year.yml`** — annual cron Jan 1.
 
-Concurrency group is `deploy` so two pushes don't race.
+Concurrency: `deploy` and `deploy-docs` each have their own group; pushes don't race.

@@ -1,4 +1,4 @@
-import { loader } from "fumadocs-core/source";
+import { type InferPageType, loader } from "fumadocs-core/source";
 import { docs } from "@/.source/server.ts";
 
 // fumadocs-mdx@11.5+ returns files as a lazy function,
@@ -12,3 +12,14 @@ export const source = loader({
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	source: { ...raw, files } as any,
 });
+
+// Per-page OG image URL helper. Used by both generateMetadata
+// (so each doc page links its own OG image) and generateStaticParams
+// in the OG route (so each path gets pre-rendered).
+export function getPageImage(page: InferPageType<typeof source>) {
+	const segments = [...page.slugs, "image.png"];
+	return {
+		segments,
+		url: `/og/docs/${segments.join("/")}`,
+	};
+}

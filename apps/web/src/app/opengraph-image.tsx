@@ -49,7 +49,7 @@ export default async function ChannelOG() {
 				style={{
 					display: "flex",
 					alignItems: "center",
-					gap: "16px",
+					gap: "20px",
 					fontSize: "20px",
 					fontFamily: "monospace",
 					letterSpacing: "0.2em",
@@ -57,7 +57,37 @@ export default async function ChannelOG() {
 					color: BRAND.cyan,
 				}}
 			>
-				LIVE STREAMING · INVITE ONLY
+				<svg
+					width="56"
+					height="56"
+					viewBox="0 0 100 100"
+					fill="none"
+					xmlns="http://www.w3.org/2000/svg"
+				>
+					<path
+						d="M 18 64 A 32 32 0 0 1 82 64"
+						stroke="#0FACED"
+						strokeWidth="6"
+						strokeLinecap="round"
+						fill="none"
+					/>
+					<path
+						d="M 30 64 A 20 20 0 0 1 70 64"
+						stroke="#0FACED"
+						strokeWidth="6"
+						strokeLinecap="round"
+						fill="none"
+					/>
+					<path
+						d="M 42 64 A 8 8 0 0 1 58 64"
+						stroke="#0FACED"
+						strokeWidth="6"
+						strokeLinecap="round"
+						fill="none"
+					/>
+					<path d="M 42 64 L 50 80 L 58 64 Z" fill="#0FACED" />
+				</svg>
+				<span>LIVE STREAMING · INVITE ONLY</span>
 			</div>
 			<div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
 				<div style={{ fontSize: "104px", fontWeight: 700, lineHeight: 1 }}>{wl.platformName}</div>

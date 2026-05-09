@@ -172,8 +172,12 @@ _See [`docs/docs-site.md`](docs/docs-site.md) for the live plan. Mirrors `MrDemo
 - [x] Troubleshooting — Common issues, OBS not pushing, Chat not working
 - [x] Changelog (high-level by phase)
 - [x] GitHub Actions workflow (`.github/workflows/deploy-docs.yml`)
-- [ ] Repo Settings → Pages → Source: GitHub Actions (one-time, manual — see NEED_TO_DO.md)
-- [ ] First push triggers initial build → site live at `https://mrdemonwolf.github.io/howlcast/`
+- [x] Repo Settings → Pages → Source: GitHub Actions
+- [x] Wolfwave-style landing page — hero, audiences (broadcasters / viewers / self-hosters), chat preview, invite CTA, code block, privacy, big CTA, footer
+- [x] Logo on docs nav (`/logo.svg`) + favicon `app/icon.svg`
+- [x] Per-page OG images via `fumadocs-ui/og` at `/og/docs/[slug]/image.png`
+- [x] Landing OG image (`app/opengraph-image.tsx`)
+- [x] Brand-aligned global.css mirroring wolfwave's `--bg-base / --bg-surface / --hairline / --brand-500` token system + reveal animations + pulse ring
 - [ ] Real screenshots after first OBS stream
 - [ ] Search (Pagefind) — deferred
 - [ ] Custom domain `docs.howlcast.tv` — deferred
