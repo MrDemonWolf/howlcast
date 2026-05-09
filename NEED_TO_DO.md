@@ -29,19 +29,10 @@ Same dashboard → **Video & Audio** → Webhook URL (same URL as above).
 
 Without the participant events, peak viewers + the line chart on the per-session detail page stay at 0.
 
-### 3. Delete orphan workers
+### 3. Delete orphan workers — DONE
 
-[dash.cloudflare.com](https://dash.cloudflare.com) → Workers & Pages.
-
-- [ ] Delete worker `howlcast` (left over from rename to `tv`)
-- [ ] Delete worker `howlcast-api` (left over from rename to `tv-api`)
-
-Or via CLI:
-
-```bash
-bunx wrangler delete howlcast
-bunx wrangler delete howlcast-api
-```
+- [x] `howlcast` — already gone (wrangler returned 10007)
+- [x] `howlcast-api` — already gone (wrangler returned 10007)
 
 ### 4. Hard live OBS test (end-to-end)
 
