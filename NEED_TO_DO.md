@@ -6,18 +6,56 @@
 
 ## 🚀 RIGHT NOW (unblocks launch)
 
-- [ ] **Hard live OBS test** end-to-end:
-  1. Dashboard → **Set up your stream** (one click)
-  2. Copy RTMPS URL + key into OBS
-  3. Click **Start Streaming** in OBS
-  4. Click **Go live** in dashboard
-  5. Verify LIVE badge appears on `tv.mrdemonwolf.com`
-  6. Verify Discord webhooks fire (public + private)
-  7. Verify chat works for broadcaster + anonymous viewer
-  8. After **End**: verify Stats shows non-zero peak viewers + chat count + per-session detail charts (`/dashboard/stats/[id]`)
-- [ ] **GetStream — confirm Chat webhook URL configured.** Dashboard → Chat → Webhook URL → `https://tv-api.mrdemonwolf.workers.dev/api/webhooks/getstream` subscribed to `message.new`. Without it, chat counts stay at 0.
-- [ ] **GetStream — enable participant join/left events.** Video webhook (same URL) subscribed to `call.session_participant_joined` + `call.session_participant_left`. Without these, viewer counts stay at 0.
-- [ ] **Delete orphan workers** in Cloudflare dashboard: `howlcast` + `howlcast-api` (left over from rename).
+> Do 1 → 2 → 3 first. Then 4 (OBS test depends on them).
+
+### 1. GetStream — Chat webhook
+
+[dashboard.getstream.io](https://dashboard.getstream.io) → your app → **Chat** → Webhook URL.
+
+- [ ] Set URL → `https://tv-api.mrdemonwolf.workers.dev/api/webhooks/getstream`
+- [ ] Subscribe to `message.new`
+- [ ] Save
+
+Without this, the chat-message counter on Stats stays at 0.
+
+### 2. GetStream — Video participant events
+
+Same dashboard → **Video & Audio** → Webhook URL (same URL as above).
+
+- [ ] Confirm `call.live_started` (or `call.session_started`) subscribed
+- [ ] Confirm `call.session_ended` / `call.ended` subscribed
+- [ ] **Add** `call.session_participant_joined`
+- [ ] **Add** `call.session_participant_left`
+
+Without the participant events, peak viewers + the line chart on the per-session detail page stay at 0.
+
+### 3. Delete orphan workers
+
+[dash.cloudflare.com](https://dash.cloudflare.com) → Workers & Pages.
+
+- [ ] Delete worker `howlcast` (left over from rename to `tv`)
+- [ ] Delete worker `howlcast-api` (left over from rename to `tv-api`)
+
+Or via CLI:
+
+```bash
+bunx wrangler delete howlcast
+bunx wrangler delete howlcast-api
+```
+
+### 4. Hard live OBS test (end-to-end)
+
+After 1–3 are done. Health check section in [`docs/operations.md`](docs/operations.md).
+
+- [ ] Dashboard → **Set up your stream** (one click)
+- [ ] Copy RTMPS URL + stream key into OBS → Settings → Stream → Service: **Custom**
+- [ ] Click **Start Streaming** in OBS
+- [ ] Click **Go live** in dashboard
+- [ ] Verify LIVE badge flips on `tv.mrdemonwolf.com` within ~10s
+- [ ] Verify Discord webhooks fire (public + private)
+- [ ] Verify chat works for broadcaster + anonymous viewer
+- [ ] After **End** → Dashboard → **Stats** shows non-zero peak viewers + chat count
+- [ ] Click into session row → `/dashboard/stats/[id]` renders viewer line chart + chat-msgs/min bars
 
 ---
 
